@@ -20,4 +20,4 @@ Documentation
 Client and command line documentation can be found on `Blackfynn’s
 documentation website`_.
 
-.. _Blackfynn’s documentation website: http://docs.blackfynn.io/client_tools/clients/python_index.html
+.. _Blackfynn’s documentation website: http://docs.blackfynn.io/platform/clients/index.html#python-client
