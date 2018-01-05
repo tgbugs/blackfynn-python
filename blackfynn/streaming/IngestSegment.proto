@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package com.blackfynn.streaming;
+
+message IngestSegment {
+  string channelId = 1;
+  uint64 startTime= 2;
+  double samplePeriod = 3;
+  repeated double data = 4 [packed = true];
+}
+
+
