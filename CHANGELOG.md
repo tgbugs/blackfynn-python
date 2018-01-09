@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 Documentation at http://docs.blackfynn.io
 
+## [2.1.3]
+### Changed
+- Updated `_update_self` to more reliably rely on model IDs for self verification
+
 ## [2.1.1]
 ### Changed
 - Fixed re-authentication by maintaining organization context

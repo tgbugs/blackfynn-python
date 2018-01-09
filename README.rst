@@ -1,5 +1,5 @@
-blackfynn-py
-============
+blackfynn-python
+================
 
 Python client and command line tool for Blackfynn.
 
