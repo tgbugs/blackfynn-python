@@ -40,11 +40,11 @@ def get_package_class(data):
 
     return p
 
-def update_self(self, new):
-    if type(self) != type(new):
-        raise Exception("cannot update a(n) {} using a(n) {}".format(type(self), type(new)))
+def _update_self(self, updated):
+    if self.id != updated.id:
+        raise Exception("cannot update {} with {}".format(self, updated))
 
-    self.__dict__.update(new.__dict__)
+    self.__dict__.update(updated.__dict__)
 
     return self
 
@@ -385,7 +385,7 @@ class BaseDataNode(BaseNode):
         """
         self._check_exists()
         r = self._api.core.update(self, **kwargs)
-        update_self(self, r)
+        _update_self(self, r)
 
     def delete(self):
         """
