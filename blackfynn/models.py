@@ -778,7 +778,7 @@ class DataPackage(BaseDataNode):
         """
         self._check_exists()
         return self._api.packages.get_view(self)
-    
+
     @classmethod
     def from_dict(cls, data, *args, **kwargs):
         item = super(DataPackage, cls).from_dict(data, *args, **kwargs)
