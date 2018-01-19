@@ -2,7 +2,6 @@
 import urllib
 
 # blackfynn
-from blackfynn import settings
 from blackfynn.models import get_package_class
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -10,7 +9,7 @@ from blackfynn.models import get_package_class
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class APIBase(object):
-    host = settings.api_host
+    host = None
     base_uri = ''
     name = ''
 
