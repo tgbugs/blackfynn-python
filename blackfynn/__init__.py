@@ -2,7 +2,7 @@
 __title__ = 'blackfynn'
 __version__ = '2.1.3'
 
-from .config import settings
+from .config import settings, Settings
 
 # main client
 from .client import Blackfynn

@@ -3,7 +3,7 @@
 import requests
 
 # blackfynn-specific
-from blackfynn import settings
+from blackfynn import Settings
 from blackfynn.models import Dataset
 from blackfynn.api.transfers import IOAPI
 from blackfynn.api.compute import ComputeAPI
@@ -24,9 +24,8 @@ class Blackfynn(object):
     ability to retrieve, add, and manipulate data.
 
     Args:
-        api_token (str, optional): User's API token
-        host (str, optional): API address
-        streaming_host (str, optional): Streaming API address
+        profile (str, optional): Preferred profile to use
+        overrides (dict, optional): Settings to override
 
     Examples:
         Load the client library and initialize::
@@ -65,24 +64,20 @@ class Blackfynn(object):
         are properly set.
 
     """
-    def __init__(self, profile=None, api_token=None, api_secret=None, host=None, streaming_host=None):
+    def __init__(self, profile=None, overrides=None):
         #Set profile, if present
-        settings.use_profile(profile)
+        self.settings = Settings(profile, overrides)
 
-        #Set variables from named arguments, or settings
-        api_token      = api_token      if api_token      is not None else settings.api_token
-        api_secret     = api_secret     if api_secret     is not None else settings.api_secret
-        host           = host           if host           is not None else settings.api_host
-        streaming_host = streaming_host if streaming_host is not None else settings.streaming_api_host
-
-        if api_token  is None: raise Exception('Error: No API token found. Cannot connect to Blackfynn.')
-        if api_secret is None: raise Exception('Error: No API secret found. Cannot connect to Blackfynn.')
-
-        self.host = host
-        self.streaming_host = streaming_host
+        if self.settings.api_token  is None: raise Exception('Error: No API token found. Cannot connect to Blackfynn.')
+        if self.settings.api_secret is None: raise Exception('Error: No API secret found. Cannot connect to Blackfynn.')
 
         # direct interface to REST API.
-        self._api = ClientSession(api_token=api_token, api_secret=api_secret, host=host, streaming_host=streaming_host)
+        self._api = ClientSession(
+                api_token=self.settings.api_token,
+                api_secret=self.settings.api_secret,
+                host=self.settings.host,
+                streaming_host=self.settings.streaming_host
+            )
 
         # account
         try:

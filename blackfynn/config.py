@@ -5,19 +5,23 @@ import tempfile
 import configparser
 
 class Settings(object):
-    def __init__(self):
+    def __init__(self, profile=None, overrides=None):
         self.profiles = {}
 
         self._load_defaults()
         self._load_global()
         self._load_profiles()
 
+        # Load default profile first
         try:
-            self.use_profile(self.config['global']['default_profile'])
+            self._switch_profile(self.config['global']['default_profile'])
         except:
-            self.use_profile('global')
+            self._switch_profile('global')
 
-        self._load_eVars()
+        # Load specific profile if it is specified
+        self._switch_profile(profile)
+
+        self._update(overrides)
 
         if not os.path.exists(self.cache_dir) and self.use_cache:
             os.makedirs(self.cache_dir)
@@ -39,10 +43,10 @@ class Settings(object):
         self.config = configparser.ConfigParser()
         self.config.read(self.config_file)
 
-            
+
         # DEFAULT SETTINGS
         #=============================================
-        self.defaults = {    
+        self.defaults = {
             # blackfynn api locations
             'api_host'                    : 'https://api.blackfynn.io',
             'streaming_api_host'          : 'https://streaming.blackfynn.io',
@@ -59,7 +63,7 @@ class Settings(object):
             # all requests
             'max_request_time'            : 120, # two minutes
             'max_request_timeout_retries' : 2,
-            
+
             #io
             'max_upload_workers'          : 10,
 
@@ -80,6 +84,22 @@ class Settings(object):
             'ts_page_size'                : 3600,
             'use_cache'                   : True,
         }
+
+    # _update safely updates settings to the internal __dict__
+    def _update(self, settings):
+        if settings is None or type(settings) != dict:
+            return
+        for k in self.defaults:
+            if k in settings:
+                self.__dict__[k] = settings[k]
+
+    @property
+    def host(self):
+        return self.api_host
+
+    @property
+    def streaming_host(self):
+        return self.streaming_api_host
 
     @property
     def _working_dataset_file(self):
@@ -135,44 +155,6 @@ class Settings(object):
                 elif value.isdigit()          : self.profiles['global'][key] = int(value)
                 else                          : self.profiles['global'][key] = str(value)
 
-    def _load_eVars(self):
-        eVars_dict = {
-            'api_host'               : ('BLACKFYNN_API_LOC', str),
-            'streaming_api_host'     : ('BLACKFYNN_STREAMING_API_LOC', str),
-            'api_token'              : ('BLACKFYNN_API_TOKEN', str),
-            'api_secret'             : ('BLACKFYNN_API_SECRET', str),
-            'stream_name'            : ('BLACKFYNN_STREAM_NAME', str),
-            'working_dataset'        : ('BLACKFYNN_WORKING_DATASET', str),
-            
-            'cache_max_size'         : ('BLACKFYNN_CACHE_MAX_SIZE', int),
-            'cache_inspect_interval' : ('BLACKFYNN_CACHE_INSPECT_EVERY', int),
-            'ts_page_size'           : ('BLACKFYNN_TS_PAGE_SIZE', int),
-            'use_cache'              : ('BLACKFYNN_USE_CACHE', lambda x: bool(int(x))),
-            'log_level'              : ('BLACKFYNN_LOG_LEVEL', str),
-            'default_profile'        : ('BLACKFYNN_PROFILE', str),
-
-            # advanced
-            's3_host'                : ('S3_HOST', str),
-            's3_port'                : ('S3_PORT', str)
-        }
-
-        self.eVars = {}
-        values_override = {}
-        for key, (evar, typefunc) in eVars_dict.items():
-            value = os.environ.get(evar,None)
-            if value is not None:
-                v = typefunc(value)
-                self.eVars[key] = [v, evar]
-                values_override[key] = v
-
-        if 'default_profile' in self.eVars:
-            try:
-                self.use_profile(self.eVars['default_profile'][0])
-            except:
-                sys.exit("Invalid value '{}' for environment variable {}".format(self.eVars['default_profile'][0],self.eVars['default_profile'][1]))
-
-        self.__dict__.update(values_override)
-                
     def _load_profiles(self):
         for name in self.config.sections():
             if name is not 'global':
@@ -184,15 +166,14 @@ class Settings(object):
                     elif value.isdigit()          : self.profiles[name][key] = int(value)
                     else                          : self.profiles[name][key] = str(value)
 
-    def use_profile(self, name):
-        if name is not None:
-            if name not in self.profiles:
-                raise Exception('Invaid profile name')
-            else:
-                self.__dict__.update(self.profiles[name])
-                self.active_profile = name
-                if name is 'global': self.active_profile = 'none'
-
-        return self
+    def _switch_profile(self, name):
+        if name is None:
+            return
+        if name not in self.profiles:
+            raise Exception('Invaid profile name')
+        else:
+            self.__dict__.update(self.profiles[name])
+            self.active_profile = name
+            if name is 'global': self.active_profile = 'none'
 
 settings = Settings()
