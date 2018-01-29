@@ -136,8 +136,9 @@ class BaseNode(object):
     _api = None
     _object_key = 'content'
 
-    def __init__(self, id=None):
+    def __init__(self, id=None, **kwargs):
         self.id = id
+        kwargs.pop('storage', None)
 
 
     @classmethod
