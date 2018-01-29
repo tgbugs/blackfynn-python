@@ -19,7 +19,6 @@ from blackfynn.models import (
     File, TimeSeries,TimeSeriesChannel, TimeSeriesAnnotation,
     get_package_class, TimeSeriesAnnotation, TimeSeriesAnnotationLayer
 )
-from blackfynn import settings
 from blackfynn.cache import get_cache
 
 cache = None
