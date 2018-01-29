@@ -10,13 +10,13 @@ global options:
 '''
 
 from docopt import docopt
+from blackfynn.cache import get_cache
 
-def main():
+def main(client):
     args = docopt(__doc__)
 
-    from blackfynn.cache import get_cache
-    cache = get_cache(init=False)
-	
+    cache = get_cache(client.settings, init=False)
+
     if args['clear']:
         print "Clearing cache..."
         cache.clear()

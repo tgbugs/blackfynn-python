@@ -23,7 +23,6 @@ from blackfynn import settings
 from blackfynn.cache import get_cache
 
 cache = None
-page_size = settings.ts_page_size
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Helpers
@@ -63,14 +62,15 @@ vec_usecs_to_datetime = np.vectorize(usecs_to_datetime)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class ChannelPage(object):
-    def __init__(self, channel, page, use_cache=True):
+    def __init__(self, channel, page, settings, use_cache=True):
         self.channel   = channel
         self.page      = long(page)
         self.use_cache = use_cache
 
-        global cache, page_size
+        page_size = settings.ts_page_size
+        global cache
         if self.use_cache and cache is None:
-            cache = get_cache(start_compaction=True)
+            cache = get_cache(settings, start_compaction=True)
             page_size = cache.page_size
 
         # fixed page -- determined from epoch(0)
@@ -167,7 +167,7 @@ class ChannelIterator(object):
         self.api        = api
 
         # page delta (usecs) for channel
-        self.page_delta = channel._page_delta(page_size)
+        self.page_delta = channel._page_delta(api.settings.ts_page_size)
 
         # page iteration
         self.page_start = long(math.floor(self.start/(1.0*self.page_delta)))
@@ -194,6 +194,7 @@ class ChannelIterator(object):
                 try: p = next(pages)
                 except: break
                 page = ChannelPage(
+                        settings = self.api.settings,
                         channel   = self.channel,
                         page      = p,
                         use_cache = self.use_cache)

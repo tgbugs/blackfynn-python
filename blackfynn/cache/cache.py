@@ -48,13 +48,12 @@ def remove_old_pages(cache, mbdiff):
     return n
 
 
-def compact_cache():
+def compact_cache(max_mb):
     cache = get_cache()
     log.debug('Inspecting cache...')
     wait = 2
-    max_mb = settings.cache_max_size
     current_mb = (cache.size/(1024.0*1024))
-    desired_mb = 0.9*max_mb 
+    desired_mb = 0.9*max_mb
     while current_mb > desired_mb:
         log.debug('Cache - current: {:02f} MB, maximum: {} MB'.format(current_mb, max_mb))
         try:
@@ -86,7 +85,7 @@ def read_segment(channel, bytes):
 
 
 class Cache(object):
-    def __init__(self):
+    def __init__(self, settings):
         self._conn         = None
         self.dir           = settings.cache_dir
         self.index_loc     = settings.cache_index
@@ -95,6 +94,7 @@ class Cache(object):
         # this might be replaced with existing page size (from DB)
         self.page_size = settings.ts_page_size
 
+        self.settings = settings
         self.init_dir()
 
     @property
@@ -244,7 +244,7 @@ class Cache(object):
             return None if r is None else bool(r[0])
 
     def get_page_data(self, channel, page):
-        has_data = self.page_has_data(channel, page) 
+        has_data = self.page_has_data(channel, page)
         if has_data is None:
             # page not present in cache
             return None
@@ -269,7 +269,7 @@ class Cache(object):
     def update_page(self, channel, page, has_data=True):
        with self.index_con as con:
             q = """
-                UPDATE ts_pages 
+                UPDATE ts_pages
                 SET access_count = access_count + 1,
                     last_access  = '{now}',
                     has_data     = {has_data}
@@ -278,7 +278,7 @@ class Cache(object):
                        page=page,
                        has_data=int(has_data),
                        now=datetime.now().isoformat())
-            con.execute(q) 
+            con.execute(q)
 
     def page_written(self):
         # cache compaction?
@@ -290,10 +290,10 @@ class Cache(object):
     def start_compaction(self, async=True):
         if async:
             # spawn cache compact job
-            p = mp.Process(target=compact_cache)
-            p.start() 
+            p = mp.Process(target=compact_cache, args=(self.settings.cache_max_size))
+            p.start()
         else:
-            compact_cache()
+            compact_cache(self.settings.cache_max_size)
 
     def remove_pages(self, channel_id, *pages):
         # remove page data files
@@ -356,8 +356,8 @@ class Cache(object):
         all_files = self.page_files + [self.index_loc]
         return sum(map(lambda x: os.stat(x).st_size, all_files))
 
-def get_cache(start_compaction=False, init=True):
-    cache = Cache() 
+def get_cache(settings, start_compaction=False, init=True):
+    cache = Cache(settings)
     if start_compaction:
         async = platform.system().lower() != 'windows'
         cache.start_compaction(async=async)
