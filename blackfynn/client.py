@@ -78,12 +78,7 @@ class Blackfynn(object):
         if self.settings.api_secret is None: raise Exception('Error: No API secret found. Cannot connect to Blackfynn.')
 
         # direct interface to REST API.
-        self._api = ClientSession(
-                api_token=self.settings.api_token,
-                api_secret=self.settings.api_secret,
-                host=self.settings.host,
-                streaming_host=self.settings.streaming_host
-            )
+        self._api = ClientSession(self.settings)
 
         # account
         try:
