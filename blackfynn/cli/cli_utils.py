@@ -103,34 +103,3 @@ def get_item(identifier, bf):
     except:
         exit("{} does not exist.".format(identifier))
 
-def load_eVars():
-    eVars_dict = {
-        'api_host'               : ('BLACKFYNN_API_LOC', str),
-        'streaming_api_host'     : ('BLACKFYNN_STREAMING_API_LOC', str),
-        'api_token'              : ('BLACKFYNN_API_TOKEN', str),
-        'api_secret'             : ('BLACKFYNN_API_SECRET', str),
-        'stream_name'            : ('BLACKFYNN_STREAM_NAME', str),
-        'working_dataset'        : ('BLACKFYNN_WORKING_DATASET', str),
-
-        'cache_max_size'         : ('BLACKFYNN_CACHE_MAX_SIZE', int),
-        'cache_inspect_interval' : ('BLACKFYNN_CACHE_INSPECT_EVERY', int),
-        'ts_page_size'           : ('BLACKFYNN_TS_PAGE_SIZE', int),
-        'use_cache'              : ('BLACKFYNN_USE_CACHE', lambda x: bool(int(x))),
-        'log_level'              : ('BLACKFYNN_LOG_LEVEL', str),
-        'default_profile'        : ('BLACKFYNN_PROFILE', str),
-
-        # advanced
-        's3_host'                : ('S3_HOST', str),
-        's3_port'                : ('S3_PORT', str)
-    }
-
-    values_override = {}
-    by_evar = {}
-    for key, (evar, typefunc) in eVars_dict.items():
-        value = os.environ.get(evar,None)
-        if value is not None:
-            v = typefunc(value)
-            by_evar[evar] = v
-            values_override[key] = v
-
-    return values_override, by_evar

@@ -13,7 +13,7 @@ description:
 usage:
   bf profile [options] [<command>] [<args>...]
 
-commands: 
+commands:
   create <name>              Create new profile
   delete <name>              Delete profile
   set-default (none|<name>)  Set default profile (or none).
@@ -30,7 +30,7 @@ global options:
   --profile=<name>          Use specified profile (instead of default)
 
 advanced commands:
-  set (global|<name>) <key> <value>   Set key/value pair for given profile, or globally 
+  set (global|<name>) <key> <value>   Set key/value pair for given profile, or globally
   unset (global|<name>) <key>         Unset key/value pair for given profile, or globally
   keys                                List all available keys and their default values
 '''
@@ -39,24 +39,25 @@ import os
 from docopt import docopt
 
 from cli_utils import settings
+from blackfynn import DEFAULT_SETTINGS
 
 def main():
     args = docopt(__doc__)
 
     if not os.path.exists(settings.config_file):
         setup_assistant()
-        
-    elif args['<command>'] == 'create'      : create_profile(args['<args>']) 
+
+    elif args['<command>'] == 'create'      : create_profile(args['<args>'])
     elif args['<command>'] == 'delete'      : delete_profile(args['<args>'], args['--force'])
     elif args['<command>'] == 'set-default' : set_default(args['<args>'])
     elif args['<command>'] == 'list' or args['--contents']: list_profiles(args['--contents'])
 
     elif args['<command>'] == 'show' : show_profile(args['<args>'])
-    
+
     elif args['<command>'] == 'set'         : set_key(args['<args>'],args['--force'])
     elif args['<command>'] == 'unset'       : unset_key(args['<args>'],args['--force'])
     elif args['<command>'] == 'keys'        : list_keys()
-    
+
     elif args['<command>'] in [None, 'help']:
         print(__doc__.strip('\n'))
 
@@ -68,7 +69,7 @@ def main():
 
 def setup_assistant():
     settings.config.clear()
-    
+
     print("Blackfynn profile setup assistant")
 
     settings.config['global'] = {'default_profile' : 'none'}
@@ -77,7 +78,7 @@ def setup_assistant():
     create_profile()
 
     print("Setup complete. Enter 'bf profile help' for available commands and actions")
-        
+
 #User commands
 #=======================================================
 def create_profile(name=[]):
@@ -89,7 +90,7 @@ def create_profile(name=[]):
 
     else:
         invalid_usage()
-    
+
     if name in settings.config:
         if name == 'global':
             print("Profile name 'global' reserved for system. Please try a different name")
@@ -101,11 +102,11 @@ def create_profile(name=[]):
 
         settings.config[name]['api_token']  = raw_input('  API token: ')
         settings.config[name]['api_secret'] = raw_input('  API secret: ')
-            
+
         if settings.config['global']['default_profile'] == 'none':
             settings.config['global']['default_profile'] = name
             print("Default profile: {}".format(name))
-            
+
         else:
             set_default = raw_input("Would you like to set '{}' as default (Y/n)? ".format(name,settings.config['global']['default_profile'])).lower() in ['y','yes']
             if set_default:
@@ -119,7 +120,7 @@ def delete_profile(name,f):
     if valid_name(name):
         if not f:
             f = raw_input("Delete profile '{}' (Y/n)? ".format(name)).lower() in ['y','yes']
-            
+
         if f:
             print("Deleting profile '{}'".format(name))
             settings.config.remove_section(name)
@@ -129,7 +130,7 @@ def delete_profile(name,f):
                 print("\033[31m* Warning: default profile unset. Use 'bf profile set-default <name>' to set a new default\033[0m")
         else:
             print('abort')
-                
+
 def list_profiles(contents):
     '''
     Lists all profiles
@@ -152,7 +153,7 @@ def list_profiles(contents):
 def set_default(name):
     if len(name) != 1: invalid_usage()
     else: name = name[0]
-    
+
     if name == 'none':
         print("Default profile unset. Using global settings and environment variables")
         settings.config['global']['default_profile'] = 'none'
@@ -167,7 +168,7 @@ def show_profile(name):
     if name == 'global' or valid_name(name):
         print('{} contents:'.format(name))
         print_profile(name,2,True)
-         
+
 #Advanced commands
 #=======================================================
 def set_key(args,force):
@@ -175,7 +176,7 @@ def set_key(args,force):
 
     name,key,value = args
 
-    if not key in settings.defaults:
+    if not key in DEFAULT_SETTINGS:
         print("Invalid key: '{}'\n see 'bf profile keys' for available keys".format(key))
         return
 
@@ -186,7 +187,7 @@ def set_key(args,force):
     if not force and key in settings.config[name]:
         force = raw_input("{}: {} already set. Overwrite (Y/n)? ".format(name,key)).lower() in ['y','yes']
     else: force = True
-        
+
     if force:
         print("{}: {}={}".format(name,key,value))
         settings.config[name][key] = value
@@ -203,7 +204,7 @@ def unset_key(args,force):
     if not key in settings.config[name]:
         print("{}: {} not set".format(name,key))
         return
-        
+
     if not force:
         if key in settings.config[name]: force = raw_input("{}: Unset {} (Y/n)? ".format(name,key)).lower() in ['y','yes']
 
