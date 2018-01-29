@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import requests
-
 # blackfynn-specific
 from blackfynn import Settings
 from blackfynn.models import Dataset

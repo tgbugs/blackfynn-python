@@ -2,7 +2,6 @@
 
 import json
 import base64
-import logging
 import requests
 from concurrent.futures import TimeoutError
 from requests_futures.sessions import FuturesSession
@@ -10,7 +9,6 @@ from requests_futures.sessions import FuturesSession
 # blackfynn
 from blackfynn.utils import log
 from blackfynn.models import User
-
 
 class UnauthorizedException(Exception):
     pass
