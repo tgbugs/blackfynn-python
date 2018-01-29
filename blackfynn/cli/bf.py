@@ -39,7 +39,7 @@ import os
 
 import blackfynn
 from blackfynn import Blackfynn
-from cli_utils import settings, load_evars
+from cli_utils import settings
 
 def blackfynn_cli():
     args = docopt(__doc__,
@@ -62,9 +62,8 @@ def blackfynn_cli():
         print("\033[31m* Warning: No config file found, run 'bf profile' to start the setup assistant\033[0m")
 
     # Try to use profile specified by --profile, exit if invalid
-    overrides, _ = load_evars()
     try:
-        bf = Blackfynn(args['--profile'], overrides)
+        bf = Blackfynn(args['--profile'])
     except Exception, e:
         exit(e)
 

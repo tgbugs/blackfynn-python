@@ -64,9 +64,15 @@ class Blackfynn(object):
         are properly set.
 
     """
-    def __init__(self, profile=None, overrides=None):
-        #Set profile, if present
-        self.settings = Settings(profile, overrides)
+    def __init__(self, profile=None, api_token=None, api_secret=None, host=None, streaming_host=None, env_override=True, **overrides):
+
+        overrides.update({
+            'api_token': api_token,
+            'api_secret': api_secret,
+            'api_host': host,
+            'api_streaming_host': streaming_host,
+            })
+        self.settings = Settings(profile, overrides, env_override)
 
         if self.settings.api_token  is None: raise Exception('Error: No API token found. Cannot connect to Blackfynn.')
         if self.settings.api_secret is None: raise Exception('Error: No API secret found. Cannot connect to Blackfynn.')

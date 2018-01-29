@@ -98,9 +98,12 @@ class Settings(object):
         # use specific profile if specified
         self._switch_profile(profile)
 
+        # update with override values passed into settings
+        self._update(overrides)
+
         # override with env variables
         if env_override:
-            self._update(overrides)
+            self._update(environs)
 
         # check and create cache dir
         if not os.path.exists(self.cache_dir) and self.use_cache:
