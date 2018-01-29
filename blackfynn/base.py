@@ -3,7 +3,6 @@
 import json
 import base64
 import logging
-from blackfynn import settings
 import requests
 from concurrent.futures import TimeoutError
 from requests_futures.sessions import FuturesSession
@@ -169,9 +168,9 @@ class ClientSession(object):
 
     def _get_result(self, req, count=0):
         try:
-            resp = req.result(timeout=settings.max_request_time)
+            resp = req.result(timeout=self.settings.max_request_time)
         except TimeoutError as e:
-            if count < settings.max_request_timeout_retries:
+            if count < self.settings.max_request_timeout_retries:
                 # timeout! trying again...
                 resp = self._get_result(req.call(), count=count+1)
         except UnauthorizedException as e:
