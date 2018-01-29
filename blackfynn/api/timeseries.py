@@ -16,7 +16,7 @@ from blackfynn.utils import (
     usecs_to_datetime, usecs_since_epoch, infer_epoch, log
 )
 from blackfynn.models import (
-    File, TimeSeries,TimeSeriesChannel, TimeSeriesAnnotation, 
+    File, TimeSeries,TimeSeriesChannel, TimeSeriesAnnotation,
     get_package_class, TimeSeriesAnnotation, TimeSeriesAnnotationLayer
 )
 from blackfynn import settings
@@ -67,12 +67,12 @@ class ChannelPage(object):
         self.channel   = channel
         self.page      = long(page)
         self.use_cache = use_cache
-        
+
         global cache, page_size
         if self.use_cache and cache is None:
             cache = get_cache(start_compaction=True)
             page_size = cache.page_size
-        
+
         # fixed page -- determined from epoch(0)
         pg_delta = channel._page_delta(page_size)
         self.start = long(self.page  * pg_delta)
@@ -139,7 +139,7 @@ class ChannelPage(object):
 
         # handle data response
         times = np.array( [t[0] for t in resp] )
-        data  = np.array( [d[1] for d in resp] ) 
+        data  = np.array( [d[1] for d in resp] )
         # fix -- sometimes API responds out-of-order
         order = np.argsort(times)
         times = times[order]
@@ -154,7 +154,7 @@ class ChannelPage(object):
 
 class ChannelIterator(object):
     """
-    We make requests to API/cache using some fixed page-size, but the 
+    We make requests to API/cache using some fixed page-size, but the
     user typically wants data results in some specified "chunk size".
     This accumulates the data pages in order to serve the data back
     in the specified chunk size.
@@ -279,7 +279,7 @@ class TimeSeriesAPI(APIBase):
         """
         pkg_id = self._get_id(pkg)
         channel_id = self._get_id(channel)
-        
+
         path = self._uri('/{pkg_id}/channels/{id}', pkg_id=pkg_id, id=channel_id)
         resp = self._get(path)
 
@@ -323,7 +323,7 @@ class TimeSeriesAPI(APIBase):
         """
         Deletes a timeseries channel on the platform.
         """
-        
+
         ch_id = self._get_id(channel)
         pkg_id = self._get_id(channel._pkg)
         path = self._uri('/{pkg_id}/channels/{id}', pkg_id=pkg_id, id=ch_id)
@@ -347,7 +347,7 @@ class TimeSeriesAPI(APIBase):
     # Data
     # ~~~~~~~~~~~~~~~~~~~
 
-    def get_ts_data_iter(self, ts, start, end, channels, chunk_size, 
+    def get_ts_data_iter(self, ts, start, end, channels, chunk_size,
                          use_cache,length=None):
         """
         Iterator will be constructed based over timespan (start,end) or (start, start+seconds)
@@ -387,7 +387,7 @@ class TimeSeriesAPI(APIBase):
         # determine start (usecs)
         the_start = ts.start if start is None else infer_epoch(start)
 
-        # chunk 
+        # chunk
         if chunk_size is not None and isinstance(chunk_size, basestring):
             chunk_size = parse_timedelta(chunk_size)
 
@@ -424,9 +424,9 @@ class TimeSeriesAPI(APIBase):
             # no more results?
             if not [1 for v in values if v is not None]:
                 break
-            # make dataframe 
+            # make dataframe
             data_map = {c.name: v for c,v in zip(channels,values) if v is not None}
-            yield pd.DataFrame.from_dict(data_map) 
+            yield pd.DataFrame.from_dict(data_map)
 
     def get_ts_data(self, ts, start, end, length, channels, use_cache):
         """
@@ -443,7 +443,7 @@ class TimeSeriesAPI(APIBase):
         """
         Stream timeseries data
         """
-        stream = TimeSeriesStream(ts)
+        stream = TimeSeriesStream(ts, settings=self.session.settings)
         return stream.send_data(dataframe)
 
     def stream_channel_data(self, channel, series):
@@ -451,10 +451,10 @@ class TimeSeriesAPI(APIBase):
         Stream channel data
         """
         raise NotImplementedError
-        
+
 
     # ~~~~~~~~~~~~~~~~~~~
-    # Annotation Layers 
+    # Annotation Layers
     # ~~~~~~~~~~~~~~~~~~~
 
     def create_annotation_layer(self, ts, layer, description):
@@ -482,8 +482,8 @@ class TimeSeriesAPI(APIBase):
                 layer.__dict__.update(tmp_layer.__dict__)
             return tmp_layer
 
-    def get_annotation_layer(self, ts, layer): 
-        ts_id = self._get_id(ts) 
+    def get_annotation_layer(self, ts, layer):
+        ts_id = self._get_id(ts)
         layer_id = self._get_id(layer)
         path = self._uri('/{id}/layers/{layer_id}',id=ts_id,layer_id=str(layer_id))
         resp = self._get(path)
@@ -538,7 +538,7 @@ class TimeSeriesAPI(APIBase):
             annotations = [annotations]
 
         for annot in annotations:
-            tmp = self.create_annotation(layer=layer,annotation=annot)                
+            tmp = self.create_annotation(layer=layer,annotation=annot)
             all_annotations.append(tmp)
 
         #if adding single annotation, return annotation object, else return list
@@ -827,9 +827,9 @@ class TimeSeriesAPI(APIBase):
         return params
 
     def _channel_list(self, ts, channels):
-        """ 
+        """
         Get list of channel objects provided flexible input values
-        """ 
+        """
         ts_id = self._get_id(ts)
 
         if channels is None:
@@ -850,7 +850,7 @@ class TimeSeriesAPI(APIBase):
                 # Assume channel ID, get object
                 ch = self.session.get(ch)
             else:
-                raise Exception('Expecting TimeSeries instance or ID') 
+                raise Exception('Expecting TimeSeries instance or ID')
 
         return channels
 

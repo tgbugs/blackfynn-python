@@ -8,7 +8,6 @@ import numpy as np
 import pandas as pd
 
 # blackfynn
-from blackfynn import settings
 from blackfynn.streaming.segment_pb2 import IngestSegment
 from blackfynn.utils import usecs_since_epoch
 
@@ -18,7 +17,7 @@ from blackfynn.utils import usecs_since_epoch
 
 class TimeSeriesStream():
 
-    def __init__(self, ts):
+    def __init__(self, ts, settings=None):
         self.name = settings.stream_name
         self.max_segment_size = settings.stream_max_segment_size
 
@@ -30,7 +29,7 @@ class TimeSeriesStream():
         self._channels = ts.channels
 
         self.registered = False
-    
+
     @property
     def status(self):
         r = conn.describe_stream(self.name)
@@ -59,7 +58,7 @@ class TimeSeriesStream():
         start = datetime.datetime.now()
         while self.status != 'ACTIVE':
             # sleep for a second
-            time.sleep(1.5) 
+            time.sleep(1.5)
             now = datetime.datetime.now()
             if (now-start).total_seconds() > timeout:
                 raise Exception("Timeout waiting for stream connection.")
@@ -126,13 +125,13 @@ class TimeSeriesStream():
 
     def send_data(self, df):
         """
-        Provided a Pandas DataFrame, send streaming data to server. Data 
-        is streamed in contiguous chunks. 
+        Provided a Pandas DataFrame, send streaming data to server. Data
+        is streamed in contiguous chunks.
 
         1) Channels *must* already exist on platform.
 
-        2) For each channel, the sample rate *must* match the rate of 
-           the channel on the platform. 
+        2) For each channel, the sample rate *must* match the rate of
+           the channel on the platform.
 
         3) df.columns should reflect channels of timeseries packages, where
            df.values are data points. Columns can be channel names or IDs.
@@ -164,7 +163,7 @@ class TimeSeriesStream():
             self.registered = True
 
         # period in microseconds
-        period = 1e6/channel.rate 
+        period = 1e6/channel.rate
 
         # find timestamp differences
         ind = series.index.values

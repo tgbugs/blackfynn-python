@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
- 
+
 import json
 import base64
 import logging
@@ -50,11 +50,11 @@ class BlackfynnRequest(object):
 
 
 class ClientSession(object):
-    def __init__(self, api_token=None, api_secret=None, host=None, streaming_host=None):
-        self._host = host
-        self._streaming_host = streaming_host
-        self._api_token = api_token
-        self._api_secret = api_secret
+    def __init__(self, settings):
+        self._host = settings.api_host
+        self._streaming_host = settings.api_streaming_host
+        self._api_token = settings.api_token
+        self._api_secret = settings.api_secret
 
         self._session = None
         self._token = None
@@ -62,6 +62,7 @@ class ClientSession(object):
         self._context = None
         self._organization = None
         self.profile = None
+        self.settings = settings
 
     def authenticate(self, organization = None):
         """
@@ -189,10 +190,10 @@ class ClientSession(object):
 
     def register(self, *components):
         """
-        Register API component with session. Components should all be of 
-        APIBase type and have a name and base_uri property. 
+        Register API component with session. Components should all be of
+        APIBase type and have a name and base_uri property.
 
-        The registered component will have reference to base session to 
+        The registered component will have reference to base session to
         make higher-level calls outside of its own scope, if needed.
         """
         # initialize
