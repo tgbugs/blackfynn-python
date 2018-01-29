@@ -25,7 +25,12 @@ class Blackfynn(object):
 
     Args:
         profile (str, optional): Preferred profile to use
-        overrides (dict, optional): Settings to override
+        api_token (str, optional): Preferred api token to use
+        api_secret (str, optional): Preferred api secret to use
+        host (str, optional): Preferred host to use
+        streaming_host (str, optional): Preferred streaming host to use
+        env_override (bool, optional): Should environment variables override settings
+        **overrides (dict, optional): Settings to override
 
     Examples:
         Load the client library and initialize::
