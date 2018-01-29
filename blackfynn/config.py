@@ -36,9 +36,6 @@ DEFAULTS = {
     's3_host'                     : '',
     's3_port'                     : '',
 
-    # logging
-    'log_level'                   : 'INFO',
-
     # directories
     'blackfynn_dir'               : BLACKFYNN_DIR_DEFAULT,
     'cache_dir'                   : CACHE_DIR_DEFAULT,
@@ -65,7 +62,6 @@ ENVIRONMENT_VARIABLES = {
     'cache_inspect_interval' : ('BLACKFYNN_CACHE_INSPECT_EVERY', int),
     'ts_page_size'           : ('BLACKFYNN_TS_PAGE_SIZE', int),
     'use_cache'              : ('BLACKFYNN_USE_CACHE', lambda x: bool(int(x))),
-    'log_level'              : ('BLACKFYNN_LOG_LEVEL', str),
     'default_profile'        : ('BLACKFYNN_PROFILE', str),
 
     # advanced
@@ -103,6 +99,7 @@ class Settings(object):
 
         # override with env variables
         if env_override:
+            self._switch_profile(environs.get("default_profile"))
             self._update(environs)
 
         # check and create cache dir

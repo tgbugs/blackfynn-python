@@ -4,13 +4,11 @@ import logging
 import datetime
 import numpy as np
 import pandas as pd
-
-# blackfynn
-from blackfynn import settings
+import os
 
 logging.basicConfig()
 log = logging.getLogger('blackfynn')
-log.setLevel(settings.log_level)
+log.setLevel(os.environ.get('BLACKFYNN_LOG_LEVEL', 'INFO'))
 
 # data type helpers
 
