@@ -668,6 +668,12 @@ class BaseCollection(BaseDataNode):
 
         return contains
 
+    def as_dict(self):
+        d = super(BaseCollection, self).as_dict()
+        if self.owner_id is not None:
+            d['owner'] = self.owner_id
+        return d
+    
     @classmethod
     def from_dict(cls, data, *args, **kwargs):
         item = super(BaseCollection, cls).from_dict(data, *args, **kwargs)
@@ -781,6 +787,12 @@ class DataPackage(BaseDataNode):
         self._check_exists()
         return self._api.packages.get_view(self)
 
+    def as_dict(self):
+        d = super(DataPackage, self).as_dict()
+        if self.owner_id is not None:
+            d['owner'] = self.owner_id
+        return d
+    
     @classmethod
     def from_dict(cls, data, *args, **kwargs):
         item = super(DataPackage, cls).from_dict(data, *args, **kwargs)
