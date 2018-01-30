@@ -787,12 +787,6 @@ class DataPackage(BaseDataNode):
         self._check_exists()
         return self._api.packages.get_view(self)
 
-    def as_dict(self):
-        d = super(DataPackage, self).as_dict()
-        if self.owner_id is not None:
-            d['owner'] = self.owner_id
-        return d
-    
     @classmethod
     def from_dict(cls, data, *args, **kwargs):
         item = super(DataPackage, cls).from_dict(data, *args, **kwargs)
@@ -828,6 +822,7 @@ class File(BaseDataNode):
         s3_key (str):    S3 key of file
         s3_bucket (str): S3 bucket of file
         file_type (str): Type of file, e.g. 'MPEG', 'PDF'
+        file_size (long): Size of file
 
     Note:
         ``file_type`` must be a supported file type. See our file type registry
@@ -837,12 +832,13 @@ class File(BaseDataNode):
     """
     _type_name = 'fileType'
 
-    def __init__(self, name, s3_key, s3_bucket, file_type, pkg_id=None, **kwargs):
+    def __init__(self, name, s3_key, s3_bucket, file_type, file_size, pkg_id=None, **kwargs):
         super(File, self).__init__(name, type=file_type, **kwargs)
 
         # data
         self.s3_key = s3_key
         self.s3_bucket = s3_bucket
+        self.file_size = file_size
         self.pkg_id = pkg_id
         self.local_path = None
 
@@ -850,7 +846,8 @@ class File(BaseDataNode):
         d = super(File, self).as_dict()
         d.update({
             "s3bucket": self.s3_bucket,
-            "s3key": self.s3_key
+            "s3key": self.s3_key,
+            "size": self.file_size
         })
         d.pop('parent', None)
         props = d.pop('properties')
@@ -901,8 +898,8 @@ class File(BaseDataNode):
         return f_local
 
     def __repr__(self):
-        return u"<File name='{}' type='{}' key='{}' bucket='{}' id='{}'>" \
-                    .format(self.name, self.type, self.s3_key, self.s3_bucket, self.id)
+        return u"<File name='{}' type='{}' key='{}' bucket='{}' size='{}' id='{}'>" \
+                    .format(self.name, self.type, self.s3_key, self.s3_bucket, self.file_size, self.id)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
