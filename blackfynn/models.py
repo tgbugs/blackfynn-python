@@ -828,7 +828,7 @@ class File(BaseDataNode):
         s3_key (str):    S3 key of file
         s3_bucket (str): S3 bucket of file
         file_type (str): Type of file, e.g. 'MPEG', 'PDF'
-        file_size (long): Size of file
+        size (long): Size of file
 
     Note:
         ``file_type`` must be a supported file type. See our file type registry
@@ -838,13 +838,13 @@ class File(BaseDataNode):
     """
     _type_name = 'fileType'
 
-    def __init__(self, name, s3_key, s3_bucket, file_type, file_size, pkg_id=None, **kwargs):
+    def __init__(self, name, s3_key, s3_bucket, file_type, size, pkg_id=None, **kwargs):
         super(File, self).__init__(name, type=file_type, **kwargs)
 
         # data
         self.s3_key = s3_key
         self.s3_bucket = s3_bucket
-        self.file_size = file_size
+        self.size = size
         self.pkg_id = pkg_id
         self.local_path = None
 
@@ -853,7 +853,7 @@ class File(BaseDataNode):
         d.update({
             "s3bucket": self.s3_bucket,
             "s3key": self.s3_key,
-            "size": self.file_size
+            "size": self.size
         })
         d.pop('parent', None)
         props = d.pop('properties')
@@ -905,7 +905,7 @@ class File(BaseDataNode):
 
     def __repr__(self):
         return u"<File name='{}' type='{}' key='{}' bucket='{}' size='{}' id='{}'>" \
-                    .format(self.name, self.type, self.s3_key, self.s3_bucket, self.file_size, self.id)
+                    .format(self.name, self.type, self.s3_key, self.s3_bucket, self.size, self.id)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
