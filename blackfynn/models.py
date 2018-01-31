@@ -484,12 +484,12 @@ class BaseCollection(BaseDataNode):
     Base class used for both ``Dataset`` and ``Collection``.
     """
     def __init__(self, name, package_type, **kwargs):
+        self.storage = kwargs.pop('storage', None)
         super(BaseCollection, self).__init__(name, package_type, **kwargs)
 
         # items is None until an API response provides the item objects 
         # to be parsed, which then updates this instance.
         self._items = None
-        self.storage = kwargs.pop('storage', None)
 
     def add(self, *items):
         """
@@ -707,10 +707,10 @@ class DataPackage(BaseDataNode):
     """
 
     def __init__(self, name, package_type, **kwargs):
+        self.storage = kwargs.pop('storage', None)
         super(DataPackage, self).__init__(name=name, type=package_type, **kwargs)
         # local-only attribute
         self.session = None
-        self.storage = kwargs.pop('storage', None)
 
     def set_view(self, *files):
         """
@@ -1686,6 +1686,7 @@ class User(BaseNode):
             *args,
             **kwargs):
         kwargs.pop('preferredOrganization', None)
+        self.storage = kwargs.pop('storage', None)
         super(User, self).__init__(*args, **kwargs)
 
         self.email = email
@@ -1698,7 +1699,6 @@ class User(BaseNode):
         self.authy_id = authy_id
         self.accepted_terms = ''
         self.is_super_admin = is_super_admin
-        self.storage = kwargs.pop('storage', None)
 
     def __repr__(self):
         return u"<User email=\'{}\' id=\'{}\'>".format(self.email, self.id)
@@ -1719,6 +1719,7 @@ class Organization(BaseNode):
             features=None,
             subscription_state=None,
             *args, **kwargs):
+        self.storage = kwargs.pop('storage', None)
         super(Organization, self).__init__(*args, **kwargs)
 
         self.name = name
@@ -1727,7 +1728,6 @@ class Organization(BaseNode):
         self.subscription_state = subscription_state
         self.encryption_key_id = encryption_key_id
         self.slug = name.lower().replace(' ','-') if slug is None else slug
-        self.storage = kwargs.pop('storage', None)
 
     @property
     def datasets(self):
