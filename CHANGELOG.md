@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 Documentation at http://docs.blackfynn.io
 
+## [2.1.4]
+### Added
+- A field for `size` to the File model
+
+### Changed
+- Models after updates to package, dataset, user, and organization API endpoints
+
 ## [2.1.3]
 ### Changed
 - Updated `_update_self` to more reliably rely on model IDs for self verification
