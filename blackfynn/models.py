@@ -484,12 +484,12 @@ class BaseCollection(BaseDataNode):
     Base class used for both ``Dataset`` and ``Collection``.
     """
     def __init__(self, name, package_type, **kwargs):
+        self.storage = kwargs.pop('storage', None)
         super(BaseCollection, self).__init__(name, package_type, **kwargs)
 
         # items is None until an API response provides the item objects 
         # to be parsed, which then updates this instance.
         self._items = None
-        self.storage = kwargs.pop('storage', None)
 
     def add(self, *items):
         """
@@ -673,7 +673,7 @@ class BaseCollection(BaseDataNode):
         if self.owner_id is not None:
             d['owner'] = self.owner_id
         return d
-    
+
     @classmethod
     def from_dict(cls, data, *args, **kwargs):
         item = super(BaseCollection, cls).from_dict(data, *args, **kwargs)
@@ -707,10 +707,10 @@ class DataPackage(BaseDataNode):
     """
 
     def __init__(self, name, package_type, **kwargs):
+        self.storage = kwargs.pop('storage', None)
         super(DataPackage, self).__init__(name=name, type=package_type, **kwargs)
         # local-only attribute
         self.session = None
-        self.storage = kwargs.pop('storage', None)
 
     def set_view(self, *files):
         """
@@ -787,6 +787,12 @@ class DataPackage(BaseDataNode):
         self._check_exists()
         return self._api.packages.get_view(self)
 
+    def as_dict(self):
+        d = super(DataPackage, self).as_dict()
+        if self.owner_id is not None:
+            d['owner'] = self.owner_id
+        return d
+
     @classmethod
     def from_dict(cls, data, *args, **kwargs):
         item = super(DataPackage, cls).from_dict(data, *args, **kwargs)
@@ -822,7 +828,7 @@ class File(BaseDataNode):
         s3_key (str):    S3 key of file
         s3_bucket (str): S3 bucket of file
         file_type (str): Type of file, e.g. 'MPEG', 'PDF'
-        file_size (long): Size of file
+        size (long): Size of file
 
     Note:
         ``file_type`` must be a supported file type. See our file type registry
@@ -832,13 +838,13 @@ class File(BaseDataNode):
     """
     _type_name = 'fileType'
 
-    def __init__(self, name, s3_key, s3_bucket, file_type, file_size, pkg_id=None, **kwargs):
+    def __init__(self, name, s3_key, s3_bucket, file_type, size, pkg_id=None, **kwargs):
         super(File, self).__init__(name, type=file_type, **kwargs)
 
         # data
         self.s3_key = s3_key
         self.s3_bucket = s3_bucket
-        self.file_size = file_size
+        self.size = size
         self.pkg_id = pkg_id
         self.local_path = None
 
@@ -847,7 +853,7 @@ class File(BaseDataNode):
         d.update({
             "s3bucket": self.s3_bucket,
             "s3key": self.s3_key,
-            "size": self.file_size
+            "size": self.size
         })
         d.pop('parent', None)
         props = d.pop('properties')
@@ -899,7 +905,7 @@ class File(BaseDataNode):
 
     def __repr__(self):
         return u"<File name='{}' type='{}' key='{}' bucket='{}' size='{}' id='{}'>" \
-                    .format(self.name, self.type, self.s3_key, self.s3_bucket, self.file_size, self.id)
+                    .format(self.name, self.type, self.s3_key, self.s3_bucket, self.size, self.id)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1686,6 +1692,7 @@ class User(BaseNode):
             *args,
             **kwargs):
         kwargs.pop('preferredOrganization', None)
+        self.storage = kwargs.pop('storage', None)
         super(User, self).__init__(*args, **kwargs)
 
         self.email = email
@@ -1698,7 +1705,6 @@ class User(BaseNode):
         self.authy_id = authy_id
         self.accepted_terms = ''
         self.is_super_admin = is_super_admin
-        self.storage = kwargs.pop('storage', None)
 
     def __repr__(self):
         return u"<User email=\'{}\' id=\'{}\'>".format(self.email, self.id)
@@ -1719,6 +1725,7 @@ class Organization(BaseNode):
             features=None,
             subscription_state=None,
             *args, **kwargs):
+        self.storage = kwargs.pop('storage', None)
         super(Organization, self).__init__(*args, **kwargs)
 
         self.name = name
@@ -1727,7 +1734,6 @@ class Organization(BaseNode):
         self.subscription_state = subscription_state
         self.encryption_key_id = encryption_key_id
         self.slug = name.lower().replace(' ','-') if slug is None else slug
-        self.storage = kwargs.pop('storage', None)
 
     @property
     def datasets(self):
