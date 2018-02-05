@@ -13,13 +13,12 @@ global options:
 from docopt import docopt
 import sys
 
-from cli_utils import get_client, get_working_dataset, print_collaborator_edit_resp
+from working_dataset import require_working_dataset
 
-def main():
+def main(bf):
     args = docopt(__doc__)
 
-    bf = get_client()
-    ds = get_working_dataset(bf)
+    ds = require_working_dataset(bf)
 
     if args['collaborators']:
         resp = ds.collaborators
@@ -46,3 +45,10 @@ def main():
 
         resp = ds.remove_collaborators(*ids)
         print_collaborator_edit_resp(resp)
+
+def print_collaborator_edit_resp(resp):
+    for key, value in resp['changes'].iteritems():
+        if value['success']:
+            print " - {}: Success".format(key)
+        else:
+            print " - {}: Error - {}".format(key, value['message'])

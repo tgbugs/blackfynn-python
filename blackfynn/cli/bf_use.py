@@ -9,16 +9,15 @@ global options:
 
 from docopt import docopt
 
-from cli_utils import get_client, settings
+from working_dataset import set_working_dataset
 
-def main():
+def main(bf):
     args = docopt(__doc__)
 
-    bf = get_client()
     dataset_id_or_name = args['<dataset>']
 
     try:
         dataset = bf.get_dataset(dataset_id_or_name)
-        settings.set_working_dataset(dataset)
+        set_working_dataset(dataset)
     except Exception, e:
         exit(e)

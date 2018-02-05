@@ -54,7 +54,6 @@ ENVIRONMENT_VARIABLES = {
     'api_token'              : ('BLACKFYNN_API_TOKEN', str),
     'api_secret'             : ('BLACKFYNN_API_SECRET', str),
     'stream_name'            : ('BLACKFYNN_STREAM_NAME', str),
-    'working_dataset'        : ('BLACKFYNN_WORKING_DATASET', str),
 
     'blackfynn_dir'          : ('BLACKFYNN_LOCAL_DIR', str),
     'cache_dir'              : ('BLACKFYNN_CACHE_LOC', str),
@@ -105,8 +104,6 @@ class Settings(object):
         # check and create cache dir
         if not os.path.exists(self.cache_dir) and self.use_cache:
             os.makedirs(self.cache_dir)
-
-        self.using_cli = False
 
     def _load_env(self):
         override = {}
@@ -169,48 +166,5 @@ class Settings(object):
     @property
     def streaming_host(self):
         return self.streaming_api_host
-
-    @property
-    def _working_dataset_file(self):
-        try:
-            if os.name == 'nt':
-                parent_shell_pid = psutil.Process(os.getpid()).parent().parent().pid
-            else:
-                parent_shell_pid = psutil.Process(os.getpid()).parent().pid
-        except:
-            return None
-        fname = 'blackfynn_working_dataset_{}'.format(parent_shell_pid)
-        return os.path.join(tempfile.gettempdir(), fname)
-
-    @property
-    def working_dataset(self):
-        """
-        Note: only works when using CLI
-        """
-        if not self.using_cli:
-            return None
-        ds_file = self._working_dataset_file
-        if os.path.exists(ds_file):
-            try:
-                with open(ds_file, 'r+') as f:
-                    ds_id = f.read().strip()
-                    return ds_id
-            except:
-                pass
-        return None
-
-    def set_working_dataset(self, dataset):
-        if not self.using_cli:
-            return None
-        ds_file = self._working_dataset_file
-        try:
-            with open(ds_file, 'w+') as f:
-                f.write(dataset.id)
-            # double check
-            assert self.working_dataset is not None, "Error writing to working dataset file"
-        except:
-            print "We encountered an error while setting your working dataset.\n\n" + \
-                  "Please use the --dataset flag where appropriate, instead."
-        return None
 
 settings = Settings()

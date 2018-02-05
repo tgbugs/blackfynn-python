@@ -10,12 +10,12 @@ global options:
 from docopt import docopt
 from blackfynn import Collection
 
-from cli_utils import get_client, get_working_dataset, get_item
+from cli_utils import get_item
 
-def main():
+from working_dataset import require_working_dataset
+
+def main(bf):
     args = docopt(__doc__)
-
-    bf = get_client()
 
     collection = Collection(args['<name>'])
 
@@ -23,7 +23,7 @@ def main():
         parent = get_item(args['<destination>'], bf)
         resp = parent.add(collection)
     else:
-        dataset = get_working_dataset(bf)
+        dataset = require_working_dataset(bf)
         resp = dataset.add(collection)
 
     print(collection)

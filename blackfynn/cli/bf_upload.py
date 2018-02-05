@@ -12,10 +12,8 @@ from docopt import docopt
 from cli_utils import recursively_upload, get_client, settings
 import os
 
-def main():
+def main(bf):
     args = docopt(__doc__)
-
-    bf = get_client()
 
     files = args['<file>']
 

@@ -40,6 +40,8 @@ import os
 import blackfynn
 from blackfynn import Blackfynn, Settings
 
+from working_dataset import set_working_dataset
+
 def blackfynn_cli():
     args = docopt(__doc__,
                   version='bf version {}'.format(blackfynn.__version__),
@@ -73,7 +75,7 @@ def blackfynn_cli():
             from cli_utils import get_client
             bf = get_client()
             dataset = bf.get_dataset(args['--dataset'])
-            settings.set_working_dataset(dataset.id)
+            set_working_dataset(dataset.id)
     except Exception, e:
         exit(e)
 
