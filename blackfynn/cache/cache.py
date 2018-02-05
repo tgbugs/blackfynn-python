@@ -10,7 +10,6 @@ from itertools import groupby
 from datetime import datetime
 
 # blackfynn-specific
-from blackfynn import settings
 from blackfynn.utils import usecs_to_datetime, usecs_since_epoch, log
 from blackfynn.models import DataPackage, TimeSeriesChannel
 from .cache_segment_pb2 import CacheSegment
@@ -158,7 +157,7 @@ class Cache(object):
             """.format(
                 page_size = self.page_size,
                 format    = 'PROTOBUF',
-                max_bytes = settings.cache_max_size,
+                max_bytes = self.settings.cache_max_size,
                 time      = datetime.now().isoformat())
             con.execute(q)
 
@@ -179,12 +178,12 @@ class Cache(object):
             if result is not None:
                 #  page size entry exists
                 self.page_size = result[0]
-                if settings.ts_page_size != self.page_size:
+                if self.settings.ts_page_size != self.page_size:
                     log.warn('Using existing page_size={} from DB settings (user specified page_size={})' \
-                        .format( self.page_size, settings.ts_page_size))
+                        .format( self.page_size, self.settings.ts_page_size))
             else:
                 # somehow, there is no page size entry
-                self.page_size = settings.ts_page_size
+                self.page_size = self.settings.ts_page_size
 
 
     def set_page(self, channel, page, has_data):
@@ -283,7 +282,7 @@ class Cache(object):
     def page_written(self):
         # cache compaction?
         self.write_counter += 1
-        if self.write_counter > settings.cache_inspect_interval:
+        if self.write_counter > self.settings.cache_inspect_interval:
             self.write_counter = 0
             self.start_compaction()
 

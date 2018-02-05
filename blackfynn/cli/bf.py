@@ -38,8 +38,7 @@ from docopt import docopt
 import os
 
 import blackfynn
-from blackfynn import Blackfynn
-from cli_utils import settings
+from blackfynn import Blackfynn, Settings
 
 def blackfynn_cli():
     args = docopt(__doc__,
@@ -58,6 +57,7 @@ def blackfynn_cli():
         return
 
     # Display warning message if config.ini is not found
+    settings = Settings() # create a dummy settings object to load environment variables and defaults only
     if not os.path.exists(settings.config_file):
         print("\033[31m* Warning: No config file found, run 'bf profile' to start the setup assistant\033[0m")
 
