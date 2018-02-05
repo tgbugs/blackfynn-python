@@ -12,10 +12,10 @@ global options:
 from docopt import docopt
 from blackfynn.cache import get_cache
 
-def main(client):
+def main(bf):
     args = docopt(__doc__)
 
-    cache = get_cache(client.settings, init=False)
+    cache = get_cache(bf.settings, init=False)
 
     if args['clear']:
         print "Clearing cache..."

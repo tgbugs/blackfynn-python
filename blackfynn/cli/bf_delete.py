@@ -11,12 +11,10 @@ global options:
 from docopt import docopt
 from blackfynn import DataPackage, Collection
 
-from cli_utils import get_client, get_item
+from cli_utils import get_item
 
-def main():
+def main(bf):
     args = docopt(__doc__)
-
-    bf = get_client()
 
     try:
         item = get_item(args['<item>'], bf)

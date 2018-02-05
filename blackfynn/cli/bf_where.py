@@ -9,12 +9,10 @@ global options:
 '''
 
 from docopt import docopt
-from cli_utils import print_path_tree, get_client, get_item
-        
-def main():
-    args = docopt(__doc__)
+from cli_utils import print_path_tree, get_item
 
-    bf = get_client()
+def main(bf):
+    args = docopt(__doc__)
 
     item = get_item(args['<item>'], bf)
     print_path_tree(bf, [item])

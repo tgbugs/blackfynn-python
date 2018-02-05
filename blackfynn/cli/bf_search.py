@@ -12,12 +12,10 @@ global options:
 '''
 
 from docopt import docopt
-from cli_utils import print_path_tree, get_client
+from cli_utils import print_path_tree
 
-def main():
+def main(bf):
     args = docopt(__doc__)
-
-    bf = get_client()
 
     terms = ' '.join(args['<term>'])
     results = bf._api.search.query(terms)

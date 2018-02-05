@@ -72,8 +72,6 @@ def blackfynn_cli():
     #Try to use dataset specified by --dataset, exit if invalid
     try:
         if args['--dataset'] is not None:
-            from cli_utils import get_client
-            bf = get_client()
             dataset = bf.get_dataset(args['--dataset'])
             set_working_dataset(dataset.id)
     except Exception, e:
