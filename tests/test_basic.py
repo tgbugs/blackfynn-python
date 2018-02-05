@@ -207,9 +207,9 @@ def test_package_objects(client, superuser_client, dataset):
     assert not pkg.exists
 
     # some files (local for now)
-    source = File(name='My Source File', s3_key='s3/source', s3_bucket='my-bucket', file_type="JSON")
-    file   = File(name='My File', s3_key='s3/file', s3_bucket='my-bucket', file_type="CSV")
-    view   = File(name='My View File', s3_key='s3/view', s3_bucket='my-bucket', file_type="NIFTI")
+    source = File(name='My Source File', s3_key='s3/source', s3_bucket='my-bucket', file_type="JSON", size=1000)
+    file   = File(name='My File', s3_key='s3/file', s3_bucket='my-bucket', file_type="CSV", size=1000)
+    view   = File(name='My View File', s3_key='s3/view', s3_bucket='my-bucket', file_type="NIFTI", size=1000)
 
     # get dataset (but as super-user)
     superuser_dataset = superuser_client._api.datasets.get(dataset.id)
