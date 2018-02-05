@@ -44,5 +44,5 @@ def main(bf):
     print "  User               : {}".format(bf.profile.email)
     print "  Organization       : {} (id: {})".format(bf.context.name, bf.context.id)
     print "  Dataset            : {}".format(working_dataset_status)
-    print "  API Location       : {}".format(bf.host)
+    print "  API Location       : {}".format(bf.settings.api_host)
     print "  Streaming API      : {}".format(bf.settings.streaming_api_host)
