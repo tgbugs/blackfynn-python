@@ -38,25 +38,25 @@ advanced commands:
 import os
 from docopt import docopt
 
-from cli_utils import settings
-from blackfynn import DEFAULT_SETTINGS
+from blackfynn import Settings, DEFAULT_SETTINGS
 
 def main():
     args = docopt(__doc__)
 
+    settings = Settings()
     if not os.path.exists(settings.config_file):
-        setup_assistant()
+        setup_assistant(settings)
 
-    elif args['<command>'] == 'create'      : create_profile(args['<args>'])
-    elif args['<command>'] == 'delete'      : delete_profile(args['<args>'], args['--force'])
-    elif args['<command>'] == 'set-default' : set_default(args['<args>'])
-    elif args['<command>'] == 'list' or args['--contents']: list_profiles(args['--contents'])
+    elif args['<command>'] == 'create'      : create_profile(settings, args['<args>'])
+    elif args['<command>'] == 'delete'      : delete_profile(settings, args['<args>'], args['--force'])
+    elif args['<command>'] == 'set-default' : set_default(settings, args['<args>'])
+    elif args['<command>'] == 'list' or args['--contents']: list_profiles(settings, args['--contents'])
 
-    elif args['<command>'] == 'show' : show_profile(args['<args>'])
+    elif args['<command>'] == 'show' : show_profile(settings, args['<args>'])
 
-    elif args['<command>'] == 'set'         : set_key(args['<args>'],args['--force'])
-    elif args['<command>'] == 'unset'       : unset_key(args['<args>'],args['--force'])
-    elif args['<command>'] == 'keys'        : list_keys()
+    elif args['<command>'] == 'set'         : set_key(settings, args['<args>'],args['--force'])
+    elif args['<command>'] == 'unset'       : unset_key(settings, args['<args>'],args['--force'])
+    elif args['<command>'] == 'keys'        : list_keys(settings)
 
     elif args['<command>'] in [None, 'help']:
         print(__doc__.strip('\n'))
@@ -67,7 +67,7 @@ def main():
     with open(settings.config_file,'w') as configfile:
         settings.config.write(configfile)
 
-def setup_assistant():
+def setup_assistant(settings):
     settings.config.clear()
 
     print("Blackfynn profile setup assistant")
@@ -75,13 +75,13 @@ def setup_assistant():
     settings.config['global'] = {'default_profile' : 'none'}
 
     print("Create a profile:")
-    create_profile()
+    create_profile(settings)
 
     print("Setup complete. Enter 'bf profile help' for available commands and actions")
 
 #User commands
 #=======================================================
-def create_profile(name=[]):
+def create_profile(settings, name=[]bf):
     if len(name) == 0:
         name = raw_input('  Profile name [default]: ') or 'default'
 
@@ -113,7 +113,7 @@ def create_profile(name=[]):
                 settings.config['global']['default_profile'] = name
                 print("Default profile: {}".format(name))
 
-def delete_profile(name,f):
+def delete_profile(settings, name,f):
     if len(name) != 1: invalid_usage()
     else: name = name[0]
 
@@ -131,7 +131,7 @@ def delete_profile(name,f):
         else:
             print('abort')
 
-def list_profiles(contents):
+def list_profiles(settings, contents):
     '''
     Lists all profiles
     '''
@@ -150,7 +150,7 @@ def list_profiles(contents):
             print_profile('global',2)
 
 
-def set_default(name):
+def set_default(settings, name):
     if len(name) != 1: invalid_usage()
     else: name = name[0]
 
@@ -161,7 +161,7 @@ def set_default(name):
         print("Default profile: {}".format(name))
         settings.config['global']['default_profile'] = name
 
-def show_profile(name):
+def show_profile(settings, name):
     if len(name) != 1: invalid_usage()
     else: name = name[0]
 
@@ -171,7 +171,7 @@ def show_profile(name):
 
 #Advanced commands
 #=======================================================
-def set_key(args,force):
+def set_key(settings, args,force):
     if len(args) != 3: invalid_usage()
 
     name,key,value = args
@@ -192,7 +192,7 @@ def set_key(args,force):
         print("{}: {}={}".format(name,key,value))
         settings.config[name][key] = value
 
-def unset_key(args,force):
+def unset_key(settings, args,force):
     if len(args) != 2: invalid_usage()
 
     name,key = args
@@ -212,7 +212,7 @@ def unset_key(args,force):
         print("{}: {} unset".format(name,key))
         settings.config[name].pop(key)
 
-def list_keys():
+def list_keys(settings):
     print('Keys and default values:')
     for key, value in sorted(settings.defaults.items()):
         print('  {} : {}'.format(key, value))
