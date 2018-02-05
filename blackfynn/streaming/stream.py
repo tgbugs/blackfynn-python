@@ -17,11 +17,11 @@ from blackfynn.utils import usecs_since_epoch
 
 class TimeSeriesStream():
 
-    def __init__(self, ts, settings=None):
-        self.name = settings.stream_name
-        self.max_segment_size = settings.stream_max_segment_size
+    def __init__(self, ts, name, max_segment_size, aws_region):
+        self.name = name
+        self.max_segment_size = max_segment_size
 
-        self.conn = boto3.client('kinesis', region_name=settings.stream_aws_region)
+        self.conn = boto3.client('kinesis', region_name=aws_region)
 
         # reference time-series
         self.ts = ts

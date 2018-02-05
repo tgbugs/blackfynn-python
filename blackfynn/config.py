@@ -86,9 +86,13 @@ class Settings(object):
 
         # use default profile first
         try:
+            # first apply config default profile
             self._switch_profile(self.config['global']['default_profile'])
         except:
             self._switch_profile('global')
+
+        # apply BLACKFYNN_PROFILE
+        self._switch_profile(environs.get("default_profile"))
 
         # use specific profile if specified
         self._switch_profile(profile)
@@ -98,7 +102,6 @@ class Settings(object):
 
         # override with env variables
         if env_override:
-            self._switch_profile(environs.get("default_profile"))
             self._update(environs)
 
         # check and create cache dir

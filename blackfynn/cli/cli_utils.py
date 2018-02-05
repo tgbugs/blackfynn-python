@@ -69,7 +69,7 @@ def recursively_upload(bf, destination, files):
 def print_datasets(bf):
     wd = working_dataset_id()
     for dataset in bf.datasets():
-        if dataset.id == wd :
+        if dataset.id == wd:
             print "\033[32m* {} (id: {})\033[0m".format(dataset.name, dataset.id)
         else:
             print "  {} (id: {})".format(dataset.name, dataset.id)

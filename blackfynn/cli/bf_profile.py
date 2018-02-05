@@ -7,8 +7,8 @@ description:
   Settings are loaded in the following order, with each tier overriding the last:
     1. Global settings - global settings are loaded first
     2. Default profile - if set, the default profile is loaded
-    3. Environment variables - e.g.: BLACKFYNN_API_TOKEN
-    4. Command line arguments - e.g.: --profile=<name>
+    3. Command line arguments - e.g.: --profile=<name>
+    4. Environment variables - e.g.: BLACKFYNN_API_TOKEN
 
 usage:
   bf profile [options] [<command>] [<args>...]
@@ -43,7 +43,7 @@ from blackfynn import Settings, DEFAULT_SETTINGS
 def main():
     args = docopt(__doc__)
 
-    settings = Settings()
+    settings = Settings(args['--profile'])
     if not os.path.exists(settings.config_file):
         setup_assistant(settings)
 

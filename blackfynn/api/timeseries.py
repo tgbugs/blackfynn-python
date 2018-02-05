@@ -443,7 +443,12 @@ class TimeSeriesAPI(APIBase):
         """
         Stream timeseries data
         """
-        stream = TimeSeriesStream(ts, settings=self.session.settings)
+        stream = TimeSeriesStream(
+            ts,
+            self.session.settings.stream_name,
+            self.session.settings.stream_max_segment_size,
+            self.session.settings.stream_aws_region,
+        )
         return stream.send_data(dataframe)
 
     def stream_channel_data(self, channel, series):

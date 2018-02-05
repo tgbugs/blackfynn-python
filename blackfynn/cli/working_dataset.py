@@ -6,8 +6,7 @@ def set_working_dataset(dataset):
         # double check
         assert working_dataset_id() is not None, "Error writing to working dataset file"
     except:
-        print "We encountered an error while setting your working dataset.\n\n" + \
-              "Please use the --dataset flag where appropriate, instead."
+        print "We encountered an error while setting your working dataset."
     return None
 
 def get_dataset_file():
