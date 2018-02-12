@@ -47,8 +47,7 @@ def remove_old_pages(cache, mbdiff):
     return n
 
 
-def compact_cache(max_mb):
-    cache = get_cache()
+def compact_cache(cache, max_mb):
     log.debug('Inspecting cache...')
     wait = 2
     current_mb = (cache.size/(1024.0*1024))
@@ -289,10 +288,10 @@ class Cache(object):
     def start_compaction(self, async=True):
         if async:
             # spawn cache compact job
-            p = mp.Process(target=compact_cache, args=(self.settings.cache_max_size))
+            p = mp.Process(target=compact_cache, args=(self, self.settings.cache_max_size))
             p.start()
         else:
-            compact_cache(self.settings.cache_max_size)
+            compact_cache(self, self.settings.cache_max_size)
 
     def remove_pages(self, channel_id, *pages):
         # remove page data files
