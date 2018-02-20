@@ -81,7 +81,7 @@ def setup_assistant(settings):
 
 #User commands
 #=======================================================
-def create_profile(settings, name=[]bf):
+def create_profile(settings, name=[]):
     if len(name) == 0:
         name = raw_input('  Profile name [default]: ') or 'default'
 
