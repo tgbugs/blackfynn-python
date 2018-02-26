@@ -10,6 +10,9 @@ SUPERADMIN_TOKEN = os.environ['SUPERADMIN_TOKEN']
 TESTUSER_SECRET = os.environ['TESTUSER_SECRET']
 TESTUSER_TOKEN = os.environ['TESTUSER_TOKEN']
 
+# remoe these conflicting environment variables which will override the above
+del os.environ['BLACKFYNN_API_TOKEN']
+del os.environ['BLACKFYNN_API_SECRET']
 
 def pytest_addoption(parser):
     parser.addoption("--devserver", default=[], help=("Test against dev server (not local)"))
@@ -20,7 +23,7 @@ def pytest_generate_tests(metafunc):
     if 'devserver' in metafunc.fixturenames:
         use_dev = metafunc.config.option.devserver
     metafunc.parametrize("use_dev", [use_dev], scope='session')
-    
+
 
 @pytest.fixture(scope='session')
 def client(use_dev):
@@ -72,7 +75,7 @@ def superuser_client(use_dev):
     bf = Blackfynn(
         api_token=SUPERADMIN_TOKEN,
         api_secret=SUPERADMIN_SECRET
-   )
+    )
     assert bf.profile.is_super_admin
     return bf
 
