@@ -136,9 +136,8 @@ class BaseNode(object):
     _api = None
     _object_key = 'content'
 
-    def __init__(self, id=None):
+    def __init__(self, id=None, *args, **kargs):
         self.id = id
-
 
     @classmethod
     def from_dict(cls, data, api=None, object_key=None):
