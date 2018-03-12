@@ -108,7 +108,7 @@ def create_profile(settings, name=[]):
             print("Default profile: {}".format(name))
 
         else:
-            set_default = raw_input("Would you like to set '{}' as default (Y/n)? ".format(name,settings.config['global']['default_profile'])).lower() in ['y','yes']
+            set_default = raw_input("Would you like to set '{}' as default (Y/n)? ".format(name, settings.config['global']['default_profile'])).lower() in ['y','yes']
             if set_default:
                 settings.config['global']['default_profile'] = name
                 print("Default profile: {}".format(name))
@@ -117,7 +117,7 @@ def delete_profile(settings, name,f):
     if len(name) != 1: invalid_usage()
     else: name = name[0]
 
-    if valid_name(name):
+    if valid_name(settings, name):
         if not f:
             f = raw_input("Delete profile '{}' (Y/n)? ".format(name)).lower() in ['y','yes']
 
@@ -143,11 +143,11 @@ def list_profiles(settings, contents):
             else:
                 print('  {}'.format(section))
             if contents:
-                print_profile(section,4)
+                print_profile(settings, section,4)
     if contents:
         if len(settings.config['global'].items()) > 1:
             print('Global Settings:')
-            print_profile('global',2)
+            print_profile(settings, 'global',2)
 
 
 def set_default(settings, name):
@@ -157,7 +157,7 @@ def set_default(settings, name):
     if name == 'none':
         print("Default profile unset. Using global settings and environment variables")
         settings.config['global']['default_profile'] = 'none'
-    elif valid_name(name):
+    elif valid_name(settings, name):
         print("Default profile: {}".format(name))
         settings.config['global']['default_profile'] = name
 
@@ -165,9 +165,9 @@ def show_profile(settings, name):
     if len(name) != 1: invalid_usage()
     else: name = name[0]
 
-    if name == 'global' or valid_name(name):
+    if name == 'global' or valid_name(settings, name):
         print('{} contents:'.format(name))
-        print_profile(name,2,True)
+        print_profile(settings, name,2,True)
 
 #Advanced commands
 #=======================================================
@@ -224,13 +224,13 @@ def invalid_usage():
     print('Invalid usage. See bf profile help for available commands')
     exit()
 
-def valid_name(name):
+def valid_name(settings, name):
     if name not in settings.config or name=='global':
         print("Profile '{}' does not exist".format(name))
         return False
     return True
 
-def print_profile(name,indent=0,show_all=False):
+def print_profile(settings, name,indent=0,show_all=False):
     if show_all:
         key_len = 0
         for key in settings.profiles[name].keys(): key_len = max(key_len, len(key))
