@@ -13,6 +13,8 @@ TESTUSER_TOKEN = os.environ['TESTUSER_TOKEN']
 # remoe these conflicting environment variables which will override the above
 del os.environ['BLACKFYNN_API_TOKEN']
 del os.environ['BLACKFYNN_API_SECRET']
+os.environ['AWS_ACCESS_KEY_ID'] = "xxxxxxxxxxxxxxxx"
+os.environ['AWS_SECRET_ACCESS_KEY'] = "xxxxxxxxxxxxxxxx"
 
 def pytest_addoption(parser):
     parser.addoption("--devserver", default=[], help=("Test against dev server (not local)"))

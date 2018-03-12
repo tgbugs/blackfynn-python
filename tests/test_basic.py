@@ -11,7 +11,6 @@ from blackfynn.base import UnauthorizedException
 
 def test_get_all_datasets(client, superuser_client):
     n_ds_to = len(client.datasets())
-
     ds1 = client.create_dataset("DS 1")
     ds2 = client.create_dataset("DS 2")
 
@@ -202,7 +201,7 @@ def test_properties(client, dataset):
 def test_package_objects(client, superuser_client, dataset):
     """
     Only super-users are allowed to create/modify package sources/files.
-    """ 
+    """
     pkg = DataPackage('Some Video', package_type='Video')
     assert not pkg.exists
 
@@ -225,7 +224,7 @@ def test_package_objects(client, superuser_client, dataset):
     pkg.set_sources(source)
 
     # get as normal user
-    pkg2 = client.get(pkg) 
+    pkg2 = client.get(pkg)
     print "sources =", pkg2.sources
     assert len(pkg2.sources) > 0
     assert pkg2.sources[0].name == 'My Source File'
