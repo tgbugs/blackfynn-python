@@ -27,7 +27,12 @@ def main(bf):
         print('  \033[4m{:{key_len}}    {:{value_len}}    {}'.format('Key','Value','Environment Variable\033[0m',key_len=key_len,value_len=value_len))
         for value,evar in sorted(bf.settings.env.items()):
            valstr = '{}'.format(value)
-           print('  {:{key_len}}    {:{value_len}}    {}'.format(valstr,evar,valstr,key_len=key_len,value_len=value_len))
+           # get internal variable
+           ivar=''
+           for k,v in bf.settings.__dict__.iteritems():
+                if str(v) == str(evar):
+                    ivar = k
+           print('  {:{key_len}}    {:{value_len}}    {}'.format(ivar,evar,valstr,key_len=key_len,value_len=value_len))
         print
 
     working_dataset_status = 'Not set.'
