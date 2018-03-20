@@ -213,8 +213,9 @@ def unset_key(settings, args,force):
         settings.config[name].pop(key)
 
 def list_keys(settings):
+    default = settings.default_profile
     print('Keys and default values:')
-    for key, value in sorted(settings.defaults.items()):
+    for key, value in sorted(settings.profiles[default].iteritems()):
         print('  {} : {}'.format(key, value))
 
 
