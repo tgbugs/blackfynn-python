@@ -11,7 +11,6 @@ from itertools import islice, count
 from concurrent.futures import ThreadPoolExecutor
 from websocket import enableTrace, create_connection
 
-
 # blackfynn
 from blackfynn.api.base import APIBase
 from blackfynn.streaming import TimeSeriesStream
@@ -23,6 +22,7 @@ from blackfynn.models import (
     get_package_class, TimeSeriesAnnotation, TimeSeriesAnnotationLayer
 )
 from blackfynn.cache import get_cache
+from timeseries_pb2 import AgentTimeSeriesResponse
 
 cache = None
 
