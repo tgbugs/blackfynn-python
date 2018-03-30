@@ -46,6 +46,10 @@ DEFAULTS = {
     'cache_inspect_interval'      : 1000,
     'ts_page_size'                : 3600,
     'use_cache'                   : True,
+
+    # agent properties
+    'agent_host'                  : 'localhost',
+    'agent_port'                  : 9500,
 }
 
 ENVIRONMENT_VARIABLES = {
@@ -62,6 +66,9 @@ ENVIRONMENT_VARIABLES = {
     'ts_page_size'           : ('BLACKFYNN_TS_PAGE_SIZE', int),
     'use_cache'              : ('BLACKFYNN_USE_CACHE', lambda x: bool(int(x))),
     'default_profile'        : ('BLACKFYNN_PROFILE', str),
+
+    'agent_host'             : ('BLACKFYNN_AGENT_HOST', str),
+    'agent_port'             : ('BLACKFYNN_AGENT_PORT', int),
 
     # advanced
     's3_host'                : ('S3_HOST', str),

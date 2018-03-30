@@ -5,7 +5,7 @@ import pandas as pd
 import pdb
 from blackfynn.api.base import APIBase
 from blackfynn.models import (
-    File, 
+    File,
     Collection,
     Dataset,
     Organization,
@@ -37,10 +37,10 @@ class DatasetsAPI(APIBase):
 
     def get_by_name_or_id(self, name_or_id):
         """
-        Get Dataset by name or ID. 
+        Get Dataset by name or ID.
 
         When using name, this ignores case, spaces, hyphens, and underscores
-        such that these are equivelent: 
+        such that these are equivelent:
 
           - "My Dataset"
           - "My-dataset"
@@ -71,7 +71,7 @@ class DatasetsAPI(APIBase):
         try:
             if self.get_by_name_or_id(ds.name) is not None:
                 raise Exception("Dataset with name {} already exists".format(ds.name))
-                
+
             resp = self._post('', json=ds.as_dict())
             return Dataset.from_dict(resp, api=self.session)
         except Exception, e:
@@ -249,12 +249,12 @@ class PackagesAPI(APIBase):
         path = self._uri('/{id}/sources', id=pkg_id)
         # Note: PUT returns list of IDs
         resp = self._put(path, json=data, params=kwargs)
-        
+
         return [File.from_dict(r, api=self.session) for r in resp if not isinstance(r, basestring)]
 
     def get_files(self, pkg):
         """
-        Returns the files of a DataPackage. Files are the possibly modified 
+        Returns the files of a DataPackage. Files are the possibly modified
         source files (e.g. converted to a different format), but they could also
         be the source files themselves.
         """
@@ -267,14 +267,14 @@ class PackagesAPI(APIBase):
 
     def set_files(self, pkg, *files, **kwargs):
         """
-        Sets the files of a DataPackage. Files are typically modified 
+        Sets the files of a DataPackage. Files are typically modified
         source files (e.g. converted to a different format).
         """
         pkg_id = self._get_id(pkg)
         data = [x.as_dict() for x in files]
         path = self._uri('/{id}/files', id=pkg_id)
         resp = self._put(path, json=data, params=kwargs)
-        
+
         return [File.from_dict(r, api=self.session) for r in resp if not isinstance(r, basestring)]
 
     def get_view(self, pkg):
@@ -296,9 +296,9 @@ class PackagesAPI(APIBase):
         """
         pkg_id = self._get_id(pkg)
         data = [x.as_dict() for x in files]
-        path = self._uri('/{id}/view', id=pkg_id) 
+        path = self._uri('/{id}/view', id=pkg_id)
         resp = self._put(path, json=data, params=kwargs)
-        
+
         return [File.from_dict(r, api=self.session) for r in resp if not isinstance(r, basestring)]
 
     def get_presigned_url_for_file(self, pkg, file):
@@ -400,7 +400,7 @@ class FilesAPI(APIBase):
     """
     base_uri = "/files"
     name = 'files'
-    
+
     def create(self, file, destination=None):
         """
         Creates a file under the given destination or its current parent

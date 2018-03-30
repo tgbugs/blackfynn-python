@@ -5,9 +5,12 @@ import math
 import datetime
 import numpy as np
 import pandas as pd
+import json
 from types import NoneType
 from itertools import islice, count
 from concurrent.futures import ThreadPoolExecutor
+from websocket import enableTrace, create_connection
+
 
 # blackfynn
 from blackfynn.api.base import APIBase
@@ -56,184 +59,54 @@ def parse_timedelta(time):
 
 vec_usecs_to_datetime = np.vectorize(usecs_to_datetime)
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# TimeSeries Request
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class ChannelPage(object):
-    def __init__(self, channel, page, settings, use_cache=True):
-        self.channel   = channel
-        self.page      = long(page)
-        self.use_cache = use_cache
-
-        page_size = settings.ts_page_size
-        global cache
-        if self.use_cache and cache is None:
-            cache = get_cache(settings, start_compaction=True)
-            page_size = cache.page_size
-
-        # fixed page -- determined from epoch(0)
-        pg_delta = channel._page_delta(page_size)
-        self.start = long(self.page  * pg_delta)
-        self.stop  = long(self.start + pg_delta)
-        self.cache_exists = False
-
-        # current future/response
-        self.future = None
-        self.data   = None
-
-    def request(self, api):
-        # check if page is cached
-        if self.use_cache and cache.check_page(self.channel, self.page):
-            # we (should) have cache, skip API request
-            self.cache_exists = True
-            return
-
-        # make request: not using cache
-        args = dict(
-            # Note: uses streaming server
-            host     = api._streaming_host,
-            endpoint = '/ts/retrieve/continuous',
-            base     = '',
-            async    = True,
-            params   = dict(
-                channel = self.channel.id,
-                limit   = '', # required by API
-                session = api.headers.get('X-SESSION-ID'),
-                start   = self.start,
-                end     = self.stop)
+class AgentTimeSeriesSocket(object):
+    def __init__(
+        self,
+        api,
+        package,
+        channels,
+        start,
+        end,
+        chunk_size,
+        use_cache=True
+    ):
+        self.new_command = {
+            "command":          "new",
+            "session":          api.session.token,
+            "packageId":        package,
+            "channels":         [{"id": c.id, rate: c.rate} for c in channels],
+            "startTime":        start,
+            "endTime":          end,
+            "chunkSize":        chunk_size,
+            "useCache":         use_cache,
+        }
+        self.ws = create_connection(
+            "ws://{}:{}/ts/query?session={}&package={}".format(
+                api.settings.agent_host,
+                api.settings.agent_port,
+                session,
+                package
+            ),
+            skip_utf8_validation=True,
         )
-        self.future = api._get(**args)
 
-    def get(self, api, update_cache_if_exists=False):
-        if self.future is not None:
-            # we're handling an API request/response
-            self.data = self._get_response(api)
-
-            # set cache!
-            if self.use_cache and (not self.cache_exists or update_cache_if_exists):
-                cache.set_page_data(self.channel, self.page, self.data, update=update_cache_if_exists)
-
-        elif self.data is not None:
-            # we've already got the result
-            pass
-
-        elif self.use_cache and self.cache_exists:
-            # use existing cache entry
-            self.data = cache.get_page_data(self.channel, self.page)
-
-            if self.data is None:
-                # cache may have disappeared, let's make API call
-                self.use_cache = False
-                self.cache_exists = False
-                self.request(api)
-                self.data = self.get(api, update_cache_if_exists=True)
-
-        return self.data
-
-    def _get_response(self, api, datetime_index=True):
-        # handle API response, return data series
-        resp  = api._get_response(self.future)
-        self.future = None
-
-        # handle data response
-        times = np.array( [t[0] for t in resp] )
-        data  = np.array( [d[1] for d in resp] )
-        # fix -- sometimes API responds out-of-order
-        order = np.argsort(times)
-        times = times[order]
-        data  = data[order]
-
-        if datetime_index and len(times)>0:
-            times = vec_usecs_to_datetime(times)
-
-        # return pandas series
-        return pd.Series( data=data, index=times, name=self.channel)
-
-
-class ChannelIterator(object):
-    """
-    We make requests to API/cache using some fixed page-size, but the
-    user typically wants data results in some specified "chunk size".
-    This accumulates the data pages in order to serve the data back
-    in the specified chunk size.
-    """
-    def __init__(self, channel, start, stop, chunk_time, api, use_cache=True):
-        self.channel    = channel
-        self.start      = start
-        self.stop       = stop
-        self.use_cache  = use_cache
-        self.api        = api
-
-        # page delta (usecs) for channel
-        self.page_delta = channel._page_delta(api.settings.ts_page_size)
-
-        # page iteration
-        self.page_start = long(math.floor(self.start/(1.0*self.page_delta)))
-        self.page_end   = long(math.ceil(self.stop /(1.0*self.page_delta)))
-
-        # chunk iteration
-        self.chunk_per_page = chunk_time is None
-        # chunk over specfied time
-        if not self.chunk_per_page:
-            self.chunk_time = long(chunk_time) # in usecs
-            self.chunk_size = long(channel.rate * self.chunk_time/1.0e6)
-        self.chunk      = None
-
-    def get_chunks(self):
-        # page size may be more/less than requested data
-
-        self.chunk = pd.Series()
-        pages = iter(np.arange(self.page_start, self.page_end))
-        page = None
-        while True:
-            if self.chunk_per_page or \
-               (page is None and len(self.chunk) < self.chunk_size):
-                # get next page
-                try: p = next(pages)
-                except: break
-                page = ChannelPage(
-                        settings = self.api.settings,
-                        channel   = self.channel,
-                        page      = p,
-                        use_cache = self.use_cache)
-                page.request(self.api)
-                data = page.get(self.api)
-                # no more data
-                if data is None: break
-                # grow data series
-                i_start = None
-                i_stop  = None
-                if page.start < self.start:
-                    i_start = usecs_to_datetime(self.start)
-                if page.stop > self.stop:
-                    i_stop = usecs_to_datetime(self.stop-1)
-                else:
-                    # more pages needed - reset
-                    page = None
-                data_slice = data.ix[i_start:i_stop]
-                if self.chunk_per_page:
-                    yield data_slice
-                else:
-                    self.chunk = self.chunk.append(data_slice)
+    def __iter__(self):
+        status = "READY"
+        self.ws.send(json.dumps(self.new_command))
+        while status == "READY":
+            result = ws.recv()
+            response = AgentTimeSeriesResponse.FromString(result)
+            response_type = response.WhichOneof("response_oneof")
+            if response_type == "state":
+                status = response.state.status
+            elif response_type == "chunk":
+                yield response.chunk
             else:
-                # return full chunk
-                if not self.chunk_per_page:
-                    yield self._get_chunk()
-
-        # return remaining chunk
-        if not self.chunk_per_page:
-            yield self._get_chunk()
-
-    def _get_chunk(self):
-        d = self.chunk.ix[:self.chunk_size]
-        # leave remainder
-        self.chunk = self.chunk.ix[self.chunk_size:]
-        return d if len(d) else None
-
-    def __repr__(self):
-        return "<ChannelIterator channel='{}' range=({},{})>".format(
-                    self.channel.id, self.start, self.stop)
+                raise Exception("Received unknown data from agent")
+            if status == "READY":
+                ws.send(json.dumps({"command": "next"}))
+        ws.send(json.dumps({"command": "close"}))
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -412,20 +285,20 @@ class TimeSeriesAPI(APIBase):
         the_start = long(the_start)
         the_end = long(the_end)
 
-        channel_chunks = [
-            ChannelIterator(ch, the_start, the_end, chunk_size,
-                            api=self.session, use_cache=use_cache).get_chunks()
-            for ch in channels
-        ]
+        frames = AgentTimeSeriesSocket(
+            self.session,
+            ts.id,
+            channels,
+            start,
+            end,
+            chunk_size,
+            use_cache,
+        )
 
-        while True:
-            # get chunk for all channels
-            values = [next(i, None) for i in channel_chunks]
-            # no more results?
-            if not [1 for v in values if v is not None]:
-                break
-            # make dataframe
-            data_map = {c.name: v for c,v in zip(channels,values) if v is not None}
+        for frame in frames:
+            data_map = { c.id: c.data for c in frame.channels }
+            # TODO: translate id to channel name
+            # TODO: figure out exact format of this pandas dataframe and values: look at old code
             yield pd.DataFrame.from_dict(data_map)
 
     def get_ts_data(self, ts, start, end, length, channels, use_cache):
