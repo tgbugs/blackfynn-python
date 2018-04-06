@@ -22,7 +22,7 @@ from blackfynn.models import (
     get_package_class, TimeSeriesAnnotation, TimeSeriesAnnotationLayer
 )
 from blackfynn.cache import get_cache
-from timeseries_pb2 import AgentTimeSeriesResponse
+from blackfynn.api.timeseries_pb2 import AgentTimeSeriesResponse
 
 cache = None
 
