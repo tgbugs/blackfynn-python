@@ -8,14 +8,13 @@ global options:
   --profile=<name>          Use specified profile (instead of default)
 '''
 
-from docopt import docopt
-from cli_utils import recursively_upload, get_client, settings
 import os
+from docopt import docopt
+from cli_utils import recursively_upload
+from working_dataset import require_working_dataset
 
-def main():
+def main(bf):
     args = docopt(__doc__)
-
-    bf = get_client()
 
     files = args['<file>']
 
@@ -24,11 +23,5 @@ def main():
         recursively_upload(bf, collection, files)
 
     else:
-        ds = settings.working_dataset
-        if not ds:
-          exit("ERROR: Must specify destination when uploading. Options:\n" \
-               "\n   1. Set destination explicitly using --to command line argument" \
-               "\n   2. Set default dataset using 'bf use <dataset>' before running upload command" \
-               "\n")
-        dataset = bf.get_dataset(ds)
+        dataset = require_working_dataset(bf)
         recursively_upload(bf, dataset, files)

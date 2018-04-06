@@ -10,16 +10,15 @@ global options:
 from docopt import docopt
 import sys
 
-from cli_utils import get_client, print_datasets, settings
+from cli_utils import print_datasets
+from working_dataset import set_working_dataset
 
-def main():
+def main(bf):
     args = docopt(__doc__)
-
-    bf = get_client()
 
     name = args['<name>']
     dataset = bf.create_dataset(name)
 
-    settings.set_working_dataset(dataset)
+    set_working_dataset(dataset)
 
     print_datasets(bf)

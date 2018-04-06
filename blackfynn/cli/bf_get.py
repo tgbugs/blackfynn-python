@@ -14,7 +14,9 @@ global options:
 
 from docopt import docopt
 
-from cli_utils import get_client, get_working_dataset, get_item
+from cli_utils import get_item
+
+from working_dataset import require_working_dataset
 
 def display(item, print_tree):
     if print_tree:
@@ -33,10 +35,12 @@ def display(item, print_tree):
             for ch in item.channels:
                 print "     {} (id: {})".format(ch.name, ch.id)
 
-def main():
+def main(bf):
     args = docopt(__doc__)
 
-    bf = get_client()
-    item = get_item(args['<item>'], bf) if args['<item>'] else get_working_dataset(bf)
+    if args['<item>']:
+        item = get_item(args['<item>'], bf)
+    else:
+        item = require_working_dataset(bf)
 
     display(item, args['--tree'])

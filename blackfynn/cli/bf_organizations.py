@@ -10,12 +10,8 @@ global options:
 from docopt import docopt
 import sys
 
-from cli_utils import get_client
-
-def main():
+def main(bf):
     args = docopt(__doc__)
-
-    bf = get_client()
 
     for o in bf.organizations():
         print "  {} (id: {})".format(o.name, o.id)
