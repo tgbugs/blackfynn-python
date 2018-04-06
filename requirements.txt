@@ -8,3 +8,4 @@ protobuf==3.5.1
 configparser==3.5.0
 docopt==0.6.2
 psutil==5.4.1
+websocket-client==0.47.0

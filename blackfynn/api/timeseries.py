@@ -59,7 +59,6 @@ def parse_timedelta(time):
 
 vec_usecs_to_datetime = np.vectorize(usecs_to_datetime)
 
-
 class AgentTimeSeriesSocket(object):
     def __init__(
         self,
@@ -73,9 +72,9 @@ class AgentTimeSeriesSocket(object):
     ):
         self.new_command = {
             "command":          "new",
-            "session":          api.session.token,
+            "session":          api.token,
             "packageId":        package,
-            "channels":         [{"id": c.id, rate: c.rate} for c in channels],
+            "channels":         [{"id": c.id, "rate": c.rate} for c in channels],
             "startTime":        start,
             "endTime":          end,
             "chunkSize":        chunk_size,
@@ -85,29 +84,34 @@ class AgentTimeSeriesSocket(object):
             "ws://{}:{}/ts/query?session={}&package={}".format(
                 api.settings.agent_host,
                 api.settings.agent_port,
-                session,
+                api.token,
                 package
             ),
             skip_utf8_validation=True,
         )
+        self.channels = { c.id: c for c in channels }
 
     def __iter__(self):
         status = "READY"
         self.ws.send(json.dumps(self.new_command))
         while status == "READY":
-            result = ws.recv()
+            result = self.ws.recv()
             response = AgentTimeSeriesResponse.FromString(result)
             response_type = response.WhichOneof("response_oneof")
             if response_type == "state":
                 status = response.state.status
             elif response_type == "chunk":
-                yield response.chunk
+                yield self.parse_chunk(response.chunk)
             else:
                 raise Exception("Received unknown data from agent")
             if status == "READY":
-                ws.send(json.dumps({"command": "next"}))
-        ws.send(json.dumps({"command": "close"}))
+                self.ws.send(json.dumps({"command": "next"}))
+        self.ws.send(json.dumps({"command": "close"}))
 
+    def parse_chunk(self, chunk):
+        return { self.channels[channel.id].name: {
+            usecs_to_datetime(datum.time): datum.value for datum in channel.data
+        } for channel in chunk.channels }
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Time Series API
@@ -221,7 +225,7 @@ class TimeSeriesAPI(APIBase):
     # ~~~~~~~~~~~~~~~~~~~
 
     def get_ts_data_iter(self, ts, start, end, channels, chunk_size,
-                         use_cache,length=None):
+                         use_cache, length=None):
         """
         Iterator will be constructed based over timespan (start,end) or (start, start+seconds)
 
@@ -261,6 +265,8 @@ class TimeSeriesAPI(APIBase):
         the_start = ts.start if start is None else infer_epoch(start)
 
         # chunk
+        if chunk_size is None:
+            chunk_size = 100
         if chunk_size is not None and isinstance(chunk_size, basestring):
             chunk_size = parse_timedelta(chunk_size)
 
@@ -289,24 +295,24 @@ class TimeSeriesAPI(APIBase):
             self.session,
             ts.id,
             channels,
-            start,
-            end,
+            the_start,
+            the_end,
             chunk_size,
             use_cache,
         )
 
-        for frame in frames:
-            data_map = { c.id: c.data for c in frame.channels }
-            # TODO: translate id to channel name
-            # TODO: figure out exact format of this pandas dataframe and values: look at old code
-            yield pd.DataFrame.from_dict(data_map)
+        channel_name_map = { c.id: c.name for c in channels }
 
-    def get_ts_data(self, ts, start, end, length, channels, use_cache):
+        for frame in frames:
+            # TODO: figure out exact format of this pandas dataframe and values: look at old code
+            yield pd.DataFrame.from_dict(frame)
+
+    def get_ts_data(self, ts, start, end, length, channels, use_cache, chunk_size=100):
         """
         Retrieve data. Must specify end-time or length.
         """
         ts_iter = self.get_ts_data_iter(ts=ts, start=start, end=end, channels=channels,
-                                         chunk_size=None, use_cache=use_cache, length=length)
+                                         chunk_size=chunk_size, use_cache=use_cache, length=length)
         df = pd.DataFrame()
         for tmp_df in ts_iter:
             df = df.append(tmp_df)
