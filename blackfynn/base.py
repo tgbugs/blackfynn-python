@@ -6,6 +6,7 @@ import requests
 from concurrent.futures import TimeoutError
 from requests_futures.sessions import FuturesSession
 from websocket import create_connection
+import socket
 
 # blackfynn
 from blackfynn.utils import log
@@ -14,6 +15,8 @@ from blackfynn.models import User
 class UnauthorizedException(Exception):
     pass
 
+class AgentUnreachableException(Exception):
+    pass
 
 class BlackfynnRequest(object):
     def __init__(self, func, uri, *args, **kwargs):
@@ -206,11 +209,15 @@ class ClientSession(object):
         return self.session.headers
 
     def create_agent_socket(self, path):
-        return create_connection(
-            "ws://{}:{}/{}".format(
-                self.settings.agent_host,
-                self.settings.agent_port,
-                path,
-            ),
-            skip_utf8_validation=True,
-        )
+        try:
+            return create_connection(
+                "ws://{}:{}/{}".format(
+                    self.settings.agent_host,
+                    self.settings.agent_port,
+                    path,
+                ),
+                skip_utf8_validation=True,
+            )
+        except socket.error:
+            # TODO: add URL for more information about installation of Agent
+            raise AgentUnreachableException("could not connect to Agent: please see: XXX for more information")
