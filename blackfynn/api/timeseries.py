@@ -162,6 +162,8 @@ class ChannelIterator(object):
         self.channel    = channel
         self.start      = start
         self.stop       = stop
+        self.start_dt   = usecs_to_datetime(self.start)
+        self.stop_dt    = usecs_to_datetime(self.stop)
         self.use_cache  = use_cache
         self.api        = api
 
@@ -178,7 +180,8 @@ class ChannelIterator(object):
         if not self.chunk_per_page:
             self.chunk_time = long(chunk_time) # in usecs
             self.chunk_size = long(channel.rate * self.chunk_time/1.0e6)
-        self.chunk      = None
+        self.chunk  = None
+        self.offset = usecs_to_datetime(self.start)
 
     def get_chunks(self):
         # page size may be more/less than requested data
@@ -205,9 +208,9 @@ class ChannelIterator(object):
                 i_start = None
                 i_stop  = None
                 if page.start < self.start:
-                    i_start = usecs_to_datetime(self.start)
-                if page.stop > self.stop:
-                    i_stop = usecs_to_datetime(self.stop-1)
+                    i_start = self.start_dt
+                if page.stop >= self.stop:
+                    i_stop = self.stop_dt
                 else:
                     # more pages needed - reset
                     page = None
@@ -226,10 +229,22 @@ class ChannelIterator(object):
             yield self._get_chunk()
 
     def _get_chunk(self):
-        d = self.chunk.ix[:self.chunk_size]
+        # get chunk data based on time
+        chunk_delta = self.channel._page_delta(self.chunk_size)-1
+        end = self.offset + datetime.timedelta(microseconds=chunk_delta)
+        chunk_data = self.chunk.loc[:end]
         # leave remainder
-        self.chunk = self.chunk.ix[self.chunk_size:]
-        return d if len(d) else None
+        self.chunk = self.chunk.loc[end:]
+        self.offset = end
+        if len(chunk_data):
+            return chunk_data
+        # chunk is empty
+        if end >= self.stop_dt:
+            # terminate sequence
+            return None
+        else:
+            # empty chunk
+            return pd.Series([])
 
     def __repr__(self):
         return "<ChannelIterator channel='{}' range=({},{})>".format(
