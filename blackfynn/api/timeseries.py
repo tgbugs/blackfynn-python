@@ -58,6 +58,9 @@ def parse_timedelta(time):
 
 vec_usecs_to_datetime = np.vectorize(usecs_to_datetime)
 
+class AgentException(Exception):
+    pass
+
 class AgentTimeSeriesSocket(object):
     def __init__(
         self,
@@ -96,10 +99,12 @@ class AgentTimeSeriesSocket(object):
             response_type = response.WhichOneof("response_oneof")
             if response_type == "state":
                 status = response.state.status
+                if status == "ERROR":
+                    raise AgentException(response.state.description)
             elif response_type == "chunk":
                 yield self.parse_chunk(response.chunk)
             else:
-                raise Exception("Received unknown data from agent")
+                raise AgentException("Received unknown data from agent")
             if status == "READY":
                 self.ws.send(json.dumps({"command": "next"}))
         self.ws.send(json.dumps({"command": "close"}))

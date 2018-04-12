@@ -5,6 +5,7 @@ import base64
 import requests
 from concurrent.futures import TimeoutError
 from requests_futures.sessions import FuturesSession
+import requests
 from websocket import create_connection
 import socket
 
@@ -56,6 +57,14 @@ class ClientSession(object):
         self._streaming_host = settings.streaming_api_host
         self._api_token = settings.api_token
         self._api_secret = settings.api_secret
+        self._agent_url = "http://{}:{}".format(
+            settings.agent_host,
+            settings.agent_port
+            )
+        self._agent_streaming_url = "http://{}:{}".format(
+            settings.agent_host,
+            settings.agent_streaming_port
+            )
 
         self._session = None
         self._token = None
@@ -64,6 +73,16 @@ class ClientSession(object):
         self._organization = None
         self.profile = None
         self.settings = settings
+
+        self.header = {}
+
+        self.use_agent = self.check_agent()
+        if self.use_agent:
+            self._host = self._agent_url
+            self.header = {
+                'BLACKFYNN_API_LOC': settings.api_host,
+                'BLACKFYNN_STREAMING_API_LOC': settings.streaming_api_host,
+                }
 
     def authenticate(self, organization = None):
         """
@@ -82,6 +101,15 @@ class ClientSession(object):
             organization = session_response.get('organization')
 
         self._set_org_context(organization)
+
+    def check_agent(self):
+        if not self.settings.use_agent:
+            return False
+        try:
+            requests.get("{}/health".format(self._agent_url))
+        except requests.ConnectionError:
+            return False
+        return True
 
     @property
     def token(self):
@@ -143,6 +171,11 @@ class ClientSession(object):
             host = self._host
 
         # call endpoint
+        headers = kwargs.get("headers", dict())
+        headers.update(self.header)
+        kwargs["headers"] = headers
+        if self.use_agent:
+            host = self._agent_url
         uri = self._uri(endpoint, base=base, host=host)
         req = self._make_call(func, uri, *args, **kwargs)
 
@@ -213,9 +246,10 @@ class ClientSession(object):
             return create_connection(
                 "ws://{}:{}/{}".format(
                     self.settings.agent_host,
-                    self.settings.agent_port,
+                    self.settings.agent_streaming_port,
                     path,
                 ),
+            #    header=self.header,
                 skip_utf8_validation=True,
             )
         except socket.error:

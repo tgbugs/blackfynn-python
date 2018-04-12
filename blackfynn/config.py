@@ -48,8 +48,10 @@ DEFAULTS = {
     'use_cache'                   : True,
 
     # agent properties
+    'use_agent'                   : True,
     'agent_host'                  : 'localhost',
-    'agent_port'                  : 9500,
+    'agent_port'                  : 8080,
+    'agent_streaming_port'        : 9500,
 }
 
 ENVIRONMENT_VARIABLES = {
@@ -67,8 +69,10 @@ ENVIRONMENT_VARIABLES = {
     'use_cache'              : ('BLACKFYNN_USE_CACHE', lambda x: bool(int(x))),
     'default_profile'        : ('BLACKFYNN_PROFILE', str),
 
+    'use_agent'              : ('BLACKFYNN_USE_AGENT', lambda x: bool(int(x))),
     'agent_host'             : ('BLACKFYNN_AGENT_HOST', str),
     'agent_port'             : ('BLACKFYNN_AGENT_PORT', int),
+    'agent_streaming_port'   : ('BLACKFYNN_AGENT_STREAMING_PORT', int),
 
     # advanced
     's3_host'                : ('S3_HOST', str),
