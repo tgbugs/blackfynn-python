@@ -237,12 +237,12 @@ class ChannelIterator(object):
         start = end + datetime.timedelta(microseconds=1)
         self.chunk = self.chunk.loc[start:]
         self.offset = start
-        if len(chunk_data):
-            return chunk_data
-        # chunk is empty
-        if start >= self.stop_dt:
+        if end >= self.stop_dt:
             # terminate sequence
             return None
+        elif len(chunk_data):
+            # valid data
+            return chunk_data
         else:
             # empty chunk
             return pd.Series([])
