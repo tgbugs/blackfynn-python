@@ -103,6 +103,7 @@ class ClientSession(object):
         self._set_org_context(organization)
 
     def check_agent(self):
+        """Checks to see if the agent is running"""
         if not self.settings.use_agent:
             return False
         try:
