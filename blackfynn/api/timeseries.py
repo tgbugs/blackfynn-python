@@ -214,7 +214,7 @@ class ChannelIterator(object):
                 else:
                     # more pages needed - reset
                     page = None
-                data_slice = data.ix[i_start:i_stop]
+                data_slice = data.loc[i_start:i_stop]
                 if self.chunk_per_page:
                     yield data_slice
                 else:
@@ -230,16 +230,17 @@ class ChannelIterator(object):
 
     def _get_chunk(self):
         # get chunk data based on time
-        chunk_delta = self.channel._page_delta(self.chunk_size)-1
-        end = self.offset + datetime.timedelta(microseconds=chunk_delta)
+        chunk_delta = self.channel._page_delta(self.chunk_size)
+        end = self.offset + datetime.timedelta(microseconds=chunk_delta-1)
         chunk_data = self.chunk.loc[:end]
         # leave remainder
-        self.chunk = self.chunk.loc[end:]
-        self.offset = end
+        start = end + datetime.timedelta(microseconds=1)
+        self.chunk = self.chunk.loc[start:]
+        self.offset = start
         if len(chunk_data):
             return chunk_data
         # chunk is empty
-        if end >= self.stop_dt:
+        if start >= self.stop_dt:
             # terminate sequence
             return None
         else:
