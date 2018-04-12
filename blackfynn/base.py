@@ -5,6 +5,7 @@ import base64
 import requests
 from concurrent.futures import TimeoutError
 from requests_futures.sessions import FuturesSession
+from websocket import create_connection
 
 # blackfynn
 from blackfynn.utils import log
@@ -203,3 +204,13 @@ class ClientSession(object):
     @property
     def headers(self):
         return self.session.headers
+
+    def create_agent_socket(self, path):
+        return create_connection(
+            "ws://{}:{}/{}".format(
+                self.settings.agent_host,
+                self.settings.agent_port,
+                path,
+            ),
+            skip_utf8_validation=True,
+        )

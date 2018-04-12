@@ -9,7 +9,6 @@ import json
 from types import NoneType
 from itertools import islice, count
 from concurrent.futures import ThreadPoolExecutor
-from websocket import enableTrace, create_connection
 
 # blackfynn
 from blackfynn.api.base import APIBase
@@ -80,14 +79,11 @@ class AgentTimeSeriesSocket(object):
             "chunkSize":        chunk_size,
             "useCache":         use_cache,
         }
-        self.ws = create_connection(
-            "ws://{}:{}/ts/query?session={}&package={}".format(
-                api.settings.agent_host,
-                api.settings.agent_port,
+        self.ws = api.create_agent_socket(
+            "ts/query?session={}&package={}".format(
                 api.token,
                 package
-            ),
-            skip_utf8_validation=True,
+            )
         )
         self.channels = { c.id: c for c in channels }
 
@@ -304,7 +300,6 @@ class TimeSeriesAPI(APIBase):
         channel_name_map = { c.id: c.name for c in channels }
 
         for frame in frames:
-            # TODO: figure out exact format of this pandas dataframe and values: look at old code
             yield pd.DataFrame.from_dict(frame)
 
     def get_ts_data(self, ts, start, end, length, channels, use_cache, chunk_size=100):
