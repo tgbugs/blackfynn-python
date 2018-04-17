@@ -172,4 +172,8 @@ class Settings(object):
     def streaming_host(self):
         return self.streaming_api_host
 
+    @property
+    def concepts_host(self):
+        return self.concepts_api_host
+
 settings = Settings()

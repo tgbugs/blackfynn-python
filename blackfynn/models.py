@@ -1818,6 +1818,90 @@ class Dataset(BaseCollection):
         self._check_exists()
         return self._api.datasets.remove_collaborators(self, *collaborator_ids)
 
+    def concepts(self):
+        """
+        Returns:
+            List of concepts defined in Dataset
+        """
+        return self._api.concepts.get_all(self.id)
+
+    def relationships(self):
+        """
+        Returns:
+            List of relationships defined in Dataset
+        """
+        return self._api.concepts.relationships.get_all(self.id)
+
+    def get_concept(self, name_or_id):
+        """
+        Retrieve a ``Concept`` by name or id
+
+        Args:
+            name_or_id (str or int): name or id of the concept
+
+        Returns:
+            The requested ``Concept`` in Dataset
+
+        Example::
+
+            mouse = ds.get_concept('mouse')
+        """
+        return self._api.concepts.get(self.id, name_or_id)
+
+    def get_relationship(self, name_or_id):
+        """
+        Retrieve a ``Relationship`` by name or id
+
+        Args:
+            name_or_id (str or int): name or id of the relationship
+
+        Returns:
+            The requested ``Relationship``
+
+        Example::
+
+            belongsTo = ds.get_relationship('belongs-to')
+        """
+        return self._api.concepts.relationships.get(self.id, name_or_id)
+
+    def create_concept(self, name, description, schema=None, **kwargs):
+        """
+        Defines a ``Concept`` on the platform.
+
+        Args:
+            name (str): name of the concept
+            description (str): description of the concept
+            schema (dict, optional): definitation of the concept's schema
+
+        Returns:
+            The newly created ``Concept``
+
+        Example::
+
+            ds.create_concept('mouse', 'epileptic mice', schema={'id': str, 'weight': float})
+        """
+        c = Concept(dataset_id=self.id, name=name, description=description, schema=schema, **kwargs)
+        return self._api.concepts.create(self.id, c)
+
+    def create_relationship(self, name, description, schema=None, **kwargs):
+        """
+        Defines a ``Relationship`` on the platform.
+
+        Args:
+            name (str): name of the relationship
+            description (str): description of the relationship
+            schema (dict, optional): definitation of the relationship's schema
+
+        Returns:
+            The newly created ``Relationship``
+
+        Example::
+
+            ds.create_relationship('belongs-to', 'this belongs to that')
+        """
+        r = Relationship(dataset_id=self.id, name=name, description=description, schema=schema, **kwargs)
+        return self._api.concepts.relationships.create(self.id, r)
+
     @property
     def _get_method(self):
         return self._api.datasets.get
@@ -1970,11 +2054,11 @@ class BaseConceptProperty(object):
 
         self.name = name
         self.type = parse_concept_datatype(data_type)
-    self.metadata = metadata
+        self.metadata = metadata
 
     @classmethod
     def from_tuple(cls, data):
-    try:
+        try:
             metadata = data[2]
         except:
             metadata = dict()
@@ -2037,10 +2121,11 @@ class BaseConceptNode(BaseNode):
     _object_key = ''
     _property_cls = BaseConceptProperty
 
-    def __init__(self, name, description = None, *args, **kwargs):
+    def __init__(self, dataset_id, name, description = None, *args, **kwargs):
         assert " " not in name, "type cannot contain spaces, alternative types include {} and {}".format(name.replace(" ", "_"), name.replace(" ", "-"))
 
         self.type        = name
+        self.dataset_id  = dataset_id
         self.description = description or ''
         self.created_at  = kwargs.pop('createdAt', None)
         self.updated_at  = kwargs.pop('updatedAt', None)
@@ -2154,8 +2239,9 @@ class BaseConceptInstance(BaseNode):
     _object_key = ''
     _value_cls = BaseConceptValue
 
-    def __init__(self, type, *args, **kwargs):
+    def __init__(self, dataset_id, type, *args, **kwargs):
         self.type       = type
+        self.dataset_id  = dataset_id
         self.created_at = kwargs.pop('createdAt', None)
         self.updated_at = kwargs.pop('updatedAt', None)
         values          = kwargs.pop('values', None)
@@ -2253,11 +2339,11 @@ class Concept(BaseConceptNode):
     _object_key = ''
     _property_cls = ConceptProperty
 
-    def __init__(self, name, description = None, *args, **kwargs):
+    def __init__(self, dataset_id, name, description = None, *args, **kwargs):
         self.count = kwargs.pop('count', None)
         self.state = kwargs.pop('state', None)
 
-        super(Concept, self).__init__(name, description, *args, **kwargs)
+        super(Concept, self).__init__(dataset_id, name, description, *args, **kwargs)
 
     def update(self):
         """
@@ -2272,11 +2358,11 @@ class Concept(BaseConceptNode):
         """
         self._check_exists()
 
-        update_self(self, self._api.concepts.update(self))
+        update_self(self, self._api.concepts.update(self.dataset_id, self))
 
     def delete(self):
         raise Exception("Deleting concepts is not available at this time.")
-        #TODO: self._api.concepts.delete(self)
+        #TODO: self._api.concepts.delete(self.dataset_id, self)
 
     def get_all(self):
         """
@@ -2289,7 +2375,7 @@ class Concept(BaseConceptNode):
 
           mice = mouse.get_all()
         """
-        return self._api.concepts.instances.get_all(self)
+        return self._api.concepts.instances.get_all(self.dataset_id, self)
 
     def get(self, id):
         """
@@ -2305,7 +2391,7 @@ class Concept(BaseConceptNode):
 
           mouse_001 = mouse.get(123456789)
         """
-        return self._api.concepts.instances.get(id, self)
+        return self._api.concepts.instances.get(self.dataset_id, id, self)
 
     def create(self, values=dict()):
         """
@@ -2330,8 +2416,8 @@ class Concept(BaseConceptNode):
         self._validate_values_against_schema(values)
 
         values = [dict(name=k, value=v, dataType=self.schema.get(k).type) for k,v in values.items()]
-        ci = ConceptInstance(type=self.type, values=values)
-        ci = self._api.concepts.instances.create(ci)
+        ci = ConceptInstance(dataset_id=self.dataset_id, type=self.type, values=values)
+        ci = self._api.concepts.instances.create(self.dataset_id, ci)
         return ci
 
     def delete_items(self, *instances):
@@ -2350,7 +2436,7 @@ class Concept(BaseConceptNode):
 
           mouse.delete(mouse_002, 123456789, mouse_003.id)
         """
-        result = self._api.concepts.delete_instances(self, *instances)
+        result = self._api.concepts.delete_instances(self.dataset_id, self, *instances)
 
         for error in result['errors']:
             print "Failed to delete instance {} with error: {}".format(error[0], error[1])
@@ -2368,17 +2454,17 @@ class ConceptInstance(BaseConceptInstance):
     _object_key = ''
     _value_cls = ConceptValue
 
-    def __init__(self, type, *args, **kwargs):
-        super(ConceptInstance, self).__init__(type, *args, **kwargs)
+    def __init__(self, dataset_id, type, *args, **kwargs):
+        super(ConceptInstance, self).__init__(dataset_id, type, *args, **kwargs)
 
     def _get_relationship_type(self, relationship):
         return relationship.type if isinstance(relationship, Relationship) else relationship
 
     def _get_relationships(self):
-        return self._api.concepts.instances.relationships(self)
+        return self._api.concepts.instances.relationships(self.dataset_id, self)
 
     def _get_neighbors(self):
-        return self._api.concepts.instances.neighbors(self)
+        return self._api.concepts.instances.neighbors(self.dataset_id, self)
 
     def relationships(self, relationship=None):
         """
@@ -2497,7 +2583,7 @@ class ConceptInstance(BaseConceptInstance):
         """
         self._check_exists()
         assert isinstance(destination, (ConceptInstance, DataPackage)), "destination must be object of type ConceptInstance or DataPackage"
-        return self._api.concepts.relationships.instances.link(relationship, self, destination, values)
+        return self._api.concepts.relationships.instances.link(self.dataset_id, relationship, self, destination, values)
 
     def concept(self):
         """
@@ -2506,7 +2592,7 @@ class ConceptInstance(BaseConceptInstance):
         Returns:
            A single ``Concept``.
         """
-        return self._api.concepts.get(self.type)
+        return self._api.concepts.get(self.dataset_id, self.type)
 
     def update(self):
         """
@@ -2518,7 +2604,7 @@ class ConceptInstance(BaseConceptInstance):
         """
         self._check_exists()
 
-        update_self(self, self._api.concepts.instances.update(self))
+        update_self(self, self._api.concepts.instances.update(self.dataset_id, self))
 
     def delete(self):
         """
@@ -2528,7 +2614,7 @@ class ConceptInstance(BaseConceptInstance):
 
           mouse_001.delete()
         """
-        return self._api.concepts.instances.delete(self)
+        return self._api.concepts.instances.delete(self.dataset_id, self)
 
     def __repr__(self):
         return u"<ConceptInstance type='{}' id='{}'>".format(self.type, self.id)
@@ -2554,14 +2640,14 @@ class Relationship(BaseConceptNode):
     _object_key = ''
     _property_cls = RelationshipProperty
 
-    def __init__(self, name, description=None, *args, **kwargs):
+    def __init__(self, dataset_id, name, description=None, *args, **kwargs):
 
         kwargs.pop('type', None)
-        super(Relationship, self).__init__(name, description, *args, **kwargs)
+        super(Relationship, self).__init__(dataset_id, name, description, *args, **kwargs)
 
     def update(self):
         raise Exception("Updating Relationships is not available at this time.")
-        #TODO: update_self(self, self._api.concepts.relationships.update(self))
+        #TODO: update_self(self, self._api.concepts.relationships.update(self.dataset_id, self))
 
     # TODO: delete when update is supported, handled in super-class
     def add_property(self, name, data_type=basestring, metadata=dict()):
@@ -2573,7 +2659,7 @@ class Relationship(BaseConceptNode):
 
     def delete(self):
         raise Exception("Deleting Relationships is not available at this time.")
-        #TODO: self._api.concepts.relationships.delete(self)
+        #TODO: self._api.concepts.relationships.delete(self.dataset_id, self)
 
     def get_all(self):
         """
@@ -2586,7 +2672,7 @@ class Relationship(BaseConceptNode):
 
           belongs_to_relationships = belongs_to.get_all()
         """
-        return self._api.concepts.relationships.instances.get_all(self)
+        return self._api.concepts.relationships.instances.get_all(self.dataset_id, self)
 
     def get(self, id):
         """
@@ -2602,7 +2688,7 @@ class Relationship(BaseConceptNode):
 
           mouse_001 = mouse.get(123456789)
         """
-        return self._api.concepts.relationships.instances.get(id, self)
+        return self._api.concepts.relationships.instances.get(self.dataset_id, id, self)
 
     def link(self, source, destination, values=dict()):
         """
@@ -2627,7 +2713,7 @@ class Relationship(BaseConceptNode):
         """
         self._check_exists()
         self._validate_values_against_schema(values)
-        return self._api.concepts.relationships.instances.link(self, source, destination, values)
+        return self._api.concepts.relationships.instances.link(self.dataset_id, self, source, destination, values)
 
     def as_dict(self):
         d = super(Relationship, self).as_dict()
@@ -2645,7 +2731,7 @@ class RelationshipInstance(BaseConceptInstance):
     """
     _object_key = ''
 
-    def __init__(self, type, source, destination, *args, **kwargs):
+    def __init__(self, dataset_id, type, source, destination, *args, **kwargs):
         assert isinstance(source,  (ConceptInstance, int, long)), "source must be Concept or ID"
         assert isinstance(destination, (ConceptInstance, int, long)), "destination must be Concept or ID"
 
@@ -2658,7 +2744,7 @@ class RelationshipInstance(BaseConceptInstance):
         self.destination = destination
 
         kwargs.pop('schemaRelationshipId', None)
-        super(RelationshipInstance, self).__init__(type, *args, **kwargs)
+        super(RelationshipInstance, self).__init__(dataset_id, type, *args, **kwargs)
 
     def relationship(self):
         """
@@ -2667,7 +2753,7 @@ class RelationshipInstance(BaseConceptInstance):
         Returns:
            A single ``Relationship``.
         """
-        return self._api.concepts.relationships.get(self.type)
+        return self._api.concepts.relationships.get(self.dataset_id, self.type)
 
     # TODO: delete when update is supported, handled in super-class
     def set(self, name, value):
@@ -2675,7 +2761,7 @@ class RelationshipInstance(BaseConceptInstance):
 
     def update(self):
         raise Exception("Updating a RelationshipInstance is not available at this time.")
-        #TODO: update_self(self, self._api.concepts.relationships.instances.update(self))
+        #TODO: update_self(self, self._api.concepts.relationships.instances.update(self.dataset_id, self))
 
     def delete(self):
         """
@@ -2685,7 +2771,7 @@ class RelationshipInstance(BaseConceptInstance):
 
           mouse_001_eeg_link.delete()
         """
-        return self._api.concepts.relationships.instances.delete(self)
+        return self._api.concepts.relationships.instances.delete(self.dataset_id, self)
 
     @classmethod
     def from_dict(cls, data, *args, **kwargs):
@@ -2714,8 +2800,8 @@ class RelationshipInstance(BaseConceptInstance):
 class ProxyInstance(BaseConceptInstance):
     _object_key = ''
 
-    def __init__(self, type, *args, **kwargs):
-        super(ProxyInstance, self).__init__(type, *args, **kwargs)
+    def __init__(self, dataset_id, type, *args, **kwargs):
+        super(ProxyInstance, self).__init__(dataset_id, type, *args, **kwargs)
 
     def item(self):
         if self.type == 'proxy:package':

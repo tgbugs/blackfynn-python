@@ -1,12 +1,10 @@
-import pytest
-
 import time
 import pytest
 import datetime
 
 from blackfynn.models import Concept, ConceptInstance, DataPackage, Relationship, RelationshipInstance
 
-def test_concepts(client, dataset):
+def test_concepts(dataset):
     current_ts = lambda: int(round(time.time() * 1000))
     schema = {'an_integer': int, 'a_long': long, 'a_bool': bool, 'a_string': str, 'a_datetime': datetime.datetime}
     metadata = {'displayName': True}
@@ -17,20 +15,20 @@ def test_concepts(client, dataset):
     ## Concepts
     ################################
 
-    concepts = client.concepts()
+    concepts = dataset.concepts()
 
-    new_concept = client.create_concept('New_Concept_{}'.format(current_ts()), 'a new concept', schema)
+    new_concept = dataset.create_concept('New_Concept_{}'.format(current_ts()), 'a new concept', schema)
 
-    assert len(client.concepts()) == len(concepts) + 1
+    assert len(dataset.concepts()) == len(concepts) + 1
 
-    assert client.get_concept(new_concept.id) == new_concept
-    assert client.get_concept(new_concept.type) == new_concept
+    assert dataset.get_concept(new_concept.id) == new_concept
+    assert dataset.get_concept(new_concept.type) == new_concept
 
     new_concept.add_property('a_new_property', str, metadata)
     new_concept.description = description
     new_concept.update()
 
-    new_concept = client.get_concept(new_concept.id)
+    new_concept = dataset.get_concept(new_concept.id)
 
     assert new_concept.description == description
     assert new_concept.get_property('a_new_property').metadata == metadata
@@ -87,14 +85,14 @@ def test_concepts(client, dataset):
     ## Relationships
     ################################
 
-    relationships = client.relationships()
+    relationships = dataset.relationships()
 
-    new_relationship = client.create_relationship('New_Relationship_{}'.format(current_ts()), 'a new relationship', schema)
+    new_relationship = dataset.create_relationship('New_Relationship_{}'.format(current_ts()), 'a new relationship', schema)
 
-    assert len(client.relationships()) == len(relationships) + 1
+    assert len(dataset.relationships()) == len(relationships) + 1
 
-    assert client.get_relationship(new_relationship.id) == new_relationship
-    assert client.get_relationship(new_relationship.type) == new_relationship
+    assert dataset.get_relationship(new_relationship.id) == new_relationship
+    assert dataset.get_relationship(new_relationship.type) == new_relationship
 
     assert new_relationship.get_property('a_datetime').type == datetime.datetime
 
