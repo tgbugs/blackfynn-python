@@ -229,6 +229,9 @@ class ChannelIterator(object):
             yield self._get_chunk()
 
     def _get_chunk(self):
+        if self.offset >= self.stop_dt:
+            # terminate sequence
+            return None
         # get chunk data based on time
         chunk_delta = self.channel._page_delta(self.chunk_size)
         end = self.offset + datetime.timedelta(microseconds=chunk_delta-1)
@@ -237,10 +240,7 @@ class ChannelIterator(object):
         start = end + datetime.timedelta(microseconds=1)
         self.chunk = self.chunk.loc[start:]
         self.offset = start
-        if end >= self.stop_dt:
-            # terminate sequence
-            return None
-        elif len(chunk_data):
+        if len(chunk_data):
             # valid data
             return chunk_data
         else:
