@@ -7,6 +7,10 @@ from blackfynn.models import (
     BaseDataNode,
     Organization,
     User,
+    Concept,
+    ConceptInstance,
+    Relationship,
+    RelationshipInstance,
     get_package_class
 )
 
@@ -40,6 +44,14 @@ class CoreAPI(APIBase):
             item = self.session.packages.create(thing)
         elif isinstance(thing, Dataset):
             item = self.session.datasets.create(thing)
+        elif isinstance(thing, Concept):
+            item = self.session.concepts.create(thing)
+        elif isinstance(thing, ConceptInstance):
+            item = self.session.concepts.instances.create(thing)
+        elif isinstance(thing, Relationship):
+            item = self.session.concepts.relations.create_type(thing)
+        elif isinstance(thing, RelationshipInstance):
+            item = self.session.concepts.relations.create(thing)
         else:
             raise Exception('Unable to create object.')
 
@@ -57,6 +69,10 @@ class CoreAPI(APIBase):
             item = self.session.packages.update(thing, **kwargs)
         elif isinstance(thing, Dataset):
             item = self.session.datasets.update(thing)
+        elif isinstance(thing, Concept):
+            item = self.session.concepts.update(thing)
+        elif isinstance(thing, ConceptInstance):
+            item = self.session.concepts.instances.update(thing)
         else:
             raise Exception('Unable to update object.')
 

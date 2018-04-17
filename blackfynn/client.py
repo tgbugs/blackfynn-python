@@ -7,6 +7,9 @@ from blackfynn.api.transfers import IOAPI
 from blackfynn.api.compute import ComputeAPI
 from blackfynn.api.ledger import LedgerAPI
 from blackfynn.api.user import UserAPI
+from blackfynn.api.concepts import (
+    ConceptsAPI, ConceptInstancesAPI, ConceptRelationshipsAPI, ConceptRelationshipInstancesAPI
+)
 from blackfynn.api.timeseries import TimeSeriesAPI
 from blackfynn.base import ClientSession
 from blackfynn.api.core import (
@@ -14,6 +17,9 @@ from blackfynn.api.core import (
 )
 from blackfynn.api.data import (
     DatasetsAPI, PackagesAPI, FilesAPI, DataAPI, TabularAPI
+)
+from blackfynn.models import (
+    Concept, Relationship
 )
 
 class Blackfynn(object):
@@ -103,7 +109,11 @@ class Blackfynn(object):
             SearchAPI,
             IOAPI,
             LedgerAPI,
-            UserAPI
+            UserAPI,
+            ConceptsAPI,
+            ConceptInstancesAPI,
+            ConceptRelationshipsAPI,
+            ConceptRelationshipInstancesAPI
         )
 
         self._api._context = self._api.organizations.get(self._api._organization)
@@ -278,6 +288,90 @@ class Blackfynn(object):
 
         """
         return self._api.search.query(query, max_results=max_results)
+
+    def concepts(self):
+        """
+        Returns:
+            List of defined concepts
+        """
+        return self._api.concepts.get_all()
+
+    def relationships(self):
+        """
+        Returns:
+            List of defined relationships
+        """
+        return self._api.concepts.relationships.get_all()
+
+    def get_concept(self, name_or_id):
+        """
+        Retrieve a ``Concept`` by name or id.
+
+        Args:
+            name_or_id (str or int): name or id of the concept
+
+        Returns:
+            The requested ``Concept``
+
+        Example::
+
+            mouse = bf.get_relationship('mouse')
+        """
+        return self._api.concepts.get(name_or_id)
+
+    def get_relationship(self, name_or_id):
+        """
+        Retrieve a ``Relationship`` by name or id.
+
+        Args:
+            name_or_id (str or int): name or id of the relationship
+
+        Returns:
+            The requested ``Relationship``
+
+        Example::
+
+            belongsTo = bf.get_relationship('belongs-to')
+        """
+        return self._api.concepts.relationships.get(name_or_id)
+
+    def create_concept(self, name, description, schema=None, **kwargs):
+        """
+        Defines a ``Concept`` on the platform.
+
+        Args:
+            name (str): name of the concept
+            description (str): description of the concept
+            schema (dict, optional): definitation of the concept's schema
+
+        Returns:
+            The newly created ``Concept``
+
+        Example::
+
+            bf.create_concept('mouse', 'epileptic mice', schema={'id': str, 'weight': float})
+        """
+        c = Concept(name=name, description=description, schema=schema, **kwargs)
+        return self._api.concepts.create(c)
+
+    def create_relationship(self, name, description, schema=None, **kwargs):
+        """
+        Defines a ``Relationship`` on the platform.
+
+        Args:
+            name (str): name of the relationship
+            description (str): description of the relationship
+            schema (dict, optional): definitation of the relationship's schema
+
+        Returns:
+            The newly created ``Relationship``
+
+        Example::
+
+            bf.create_relationship('belongs-to', 'this belongs to that')
+        """
+        r = Relationship(name=name, description=description, schema=schema, **kwargs)
+        return self._api.concepts.relationships.create(r)
 
     def _check_context(self):
         if self.context is None:

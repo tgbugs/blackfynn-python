@@ -12,6 +12,7 @@ DEFAULTS = {
     # blackfynn api locations
     'api_host'                    : 'https://api.blackfynn.io',
     'streaming_api_host'          : 'https://streaming.blackfynn.io',
+    'concepts_api_host'           : 'https://concepts.blackfynn.io',
 
     # blackfynn API token/secret
     'api_token'                   : None,
@@ -51,6 +52,7 @@ DEFAULTS = {
 ENVIRONMENT_VARIABLES = {
     'api_host'               : ('BLACKFYNN_API_LOC', str),
     'streaming_api_host'     : ('BLACKFYNN_STREAMING_API_LOC', str),
+    'concepts_api_host'      : ('BLACKFYNN_CONCEPTS_API_LOC', str),
     'api_token'              : ('BLACKFYNN_API_TOKEN', str),
     'api_secret'             : ('BLACKFYNN_API_SECRET', str),
     'stream_name'            : ('BLACKFYNN_STREAM_NAME', str),
