@@ -2,16 +2,17 @@
 
 import os
 import re
-from uuid import uuid4
-from blackfynn.utils import (
-    infer_epoch, get_data_type, value_as_type, usecs_to_datetime
-)
-from dateutil import parser
+import pytz
+import dateutil
 import datetime
 import requests
 import numpy as np
 import pandas as pd
-import dateutil.parser
+
+from uuid import uuid4
+from blackfynn.utils import (
+    infer_epoch, get_data_type, value_as_type, usecs_to_datetime
+)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Helpers
@@ -2026,9 +2027,12 @@ def cast_value(value, data_type=None):
 
     if data_type in (datetime.date, datetime.datetime):
         if isinstance(value, (datetime.date, datetime.datetime)):
-            v = value
+            if value.tzinfo is None or value.tzinfo.utcoffset(value) is None:
+                v =  pytz.utc.localize(value)
+            else:
+                v = value
         else:
-            v = parser.parse(value)
+            v = dateutil.parser.parse(value)
     else:
         v = data_type(value)
 
@@ -2041,7 +2045,7 @@ def uncast_value(value):
     assert type(value) in concept_type_map, "value's type must be one of {}".format(concept_type_map.keys())
 
     if type(value) in (datetime.date, datetime.datetime):
-        v = value.strftime('%Y-%m-%dT%H:%M:%SZ')
+        v = value.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + value.strftime('%z')
     else:
         v = value
 
@@ -2358,7 +2362,7 @@ class Concept(BaseConceptNode):
         """
         self._check_exists()
 
-        update_self(self, self._api.concepts.update(self.dataset_id, self))
+        _update_self(self, self._api.concepts.update(self.dataset_id, self))
 
     def delete(self):
         raise Exception("Deleting concepts is not available at this time.")
@@ -2604,7 +2608,7 @@ class ConceptInstance(BaseConceptInstance):
         """
         self._check_exists()
 
-        update_self(self, self._api.concepts.instances.update(self.dataset_id, self))
+        _update_self(self, self._api.concepts.instances.update(self.dataset_id, self))
 
     def delete(self):
         """
@@ -2647,7 +2651,7 @@ class Relationship(BaseConceptNode):
 
     def update(self):
         raise Exception("Updating Relationships is not available at this time.")
-        #TODO: update_self(self, self._api.concepts.relationships.update(self.dataset_id, self))
+        #TODO: _update_self(self, self._api.concepts.relationships.update(self.dataset_id, self))
 
     # TODO: delete when update is supported, handled in super-class
     def add_property(self, name, data_type=basestring, metadata=dict()):
@@ -2761,7 +2765,7 @@ class RelationshipInstance(BaseConceptInstance):
 
     def update(self):
         raise Exception("Updating a RelationshipInstance is not available at this time.")
-        #TODO: update_self(self, self._api.concepts.relationships.instances.update(self.dataset_id, self))
+        #TODO: _update_self(self, self._api.concepts.relationships.instances.update(self.dataset_id, self))
 
     def delete(self):
         """
