@@ -2464,44 +2464,78 @@ class ConceptInstance(BaseConceptInstance):
     def _get_relationship_type(self, relationship):
         return relationship.type if isinstance(relationship, Relationship) else relationship
 
-    def _get_links(self):
-        return self._api.concepts.instances.relations(self.dataset_id, self)
+    def _get_links(self, concept):
+        return self._api.concepts.instances.relations(self.dataset_id, self, concept)
 
-    def relationships(self, relationship=None):
+    def links(self, concept, relationship=None):
         """
-        All relationships the instance is a member of (as source or destination)
+        Returns all neighboring instances of the given concept type and their relationships to this instance.
+        Optionally, filtered by a type of relationship.
+
+        Args:
+            concept (str, Concept): type of neighboring concepts desired
+            relationship (str, Relationship, optional): relationship type to filter results by
 
         Returns:
-            List of ``RelationshipInstance``
+            List of tuples of (``RelationshipInstance``, ``ConceptInstance``)
+
+        Example::
+            links = mouse_001.links('disease', 'has')
         """
-        links = self.links(relationship)
+        links = self._get_links(concept)
+
+        if relationship is None:
+            return links
+        else:
+            relationship_type = self._get_relationship_type(relationship)
+            filtered = filter(lambda l: l[0].type == relationship_type, links)
+            return filtered
+
+    def relationships(self, concept, relationship=None):
+        """
+        All relationships to concept instances of the given type, that this
+        instance is a member of (as source or destination).
+
+        Args:
+            concept (str, Concept): type of neighboring concepts to find relationships to
+            relationship (str, Relationship, optional): single relationship type to filter results by
+        Returns:
+            List of ``RelationshipInstance``
+
+        Example::
+            relationships = mouse_001.neighbors('disease', 'has')
+        """
+        links = self.links(concept, relationship)
         if not links:
             return list()
         else:
             relationships, _ = zip(*links)
             return list(relationships)
 
-    def neighbors(self, relationship=None):
+    def neighbors(self, concept, relationship=None):
         """
-        All instances this instance is linked to.
+        All instances of the given concept type that this instance is linked to.
         Optionally, filtered by a type of relationship.
 
         Args:
-            relationship (str, Relationship, optional): relationship to filter results by
+            concept (str, Concept): type of neighboring concepts desired
+            relationship (str, Relationship, optional): relationship type to filter results by
 
         Returns:
             List of ``ConceptInstance``
 
         Example::
-            things = mouse_001.neighbors('has')
+            diseases = mouse_001.neighbors('disease', 'has')
         """
-        links = self.links(relationship)
+        links = self.links(concept, relationship)
         if not links:
             return list()
         else:
             _, neighbors = zip(*links)
             return list(neighbors)
 
+    # TODO: Concepts API is not returing proxy instances from /relations endpoint
+    #       When these are provided by the API, rewrite
     def data(self, relationship=None):
         """
         All data that this instance is related to.
@@ -2520,29 +2554,6 @@ class ConceptInstance(BaseConceptInstance):
         proxies = filter(lambda n: isinstance(n, ProxyInstance), neighbors)
 
         return [p.item() for p in proxies]
-
-    def links(self, relationship=None):
-        """
-        All relationships this instance belongs to, along with the instance it's connected to.
-        Optionally, filtered by a type of relationship.
-
-        Args:
-            relationship (str, Relationship, optional): relationship to filter results by
-
-        Returns:
-            List of tuples of (``RelationshipInstance``, ``ConceptInstance``)
-
-        Example::
-            links = mouse_001.links('has')
-        """
-        links = self._get_links()
-
-        if relationship is None:
-            return links
-        else:
-            relationship_type = self._get_relationship_type(relationship)
-            filtered = filter(lambda l: l[0].type == relationship_type, links)
-            return filtered
 
     def link(self, relationship, destination, values=dict()):
         """

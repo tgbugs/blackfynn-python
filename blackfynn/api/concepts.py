@@ -102,7 +102,9 @@ class ConceptInstancesAPI(ConceptsAPIBase):
         r['dataset_id'] = r.get('dataset_id', dataset_id)
         return ConceptInstance.from_dict(r, api=self.session)
 
-    def relations(self, dataset, instance, concept=None):
+    # Note: concept here is not similar to the other functions
+    #       here, concept refers to the type of concept of the desired relations
+    def relations(self, dataset, instance, concept):
         dataset_id = self._get_id(dataset)
         instance_id = self._get_id(instance)
         concept_type = self._get_concept_type(concept, instance)

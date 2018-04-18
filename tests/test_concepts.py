@@ -122,12 +122,12 @@ def test_concepts(dataset):
     nr_six = nc_four.link(new_relationship, nc_three)
 
     nc_four.update()
-    assert len(nc_four.relationships()) == 4
-    assert len(nc_four.neighbors()) == 4
-    assert len(nc_four.links()) == 4
-    assert len(nc_four.relationships(new_relationship.type)) == 4
-    assert len(nc_four.neighbors(new_relationship.type)) == 4
-    assert len(nc_four.links(new_relationship.type)) == 4
+    assert len(nc_four.relationships(new_concept)) == 4
+    assert len(nc_four.neighbors(new_concept)) == 4
+    assert len(nc_four.links(new_concept)) == 4
+    assert len(nc_four.relationships(new_concept.type, new_relationship.type)) == 4
+    assert len(nc_four.neighbors(new_concept.type, new_relationship.type)) == 4
+    assert len(nc_four.links(new_concept.type, new_relationship.type)) == 4
 
     try:
         new_relationship.link(nc_one, nc_two, {'bad_property': False})
@@ -172,9 +172,9 @@ def test_concepts(dataset):
     new_relationship.link(nc_four, p)
 
     nc_four.update()
-    assert len(nc_four.relationships()) == 5
-    assert len(nc_four.neighbors()) == 5
-    assert len(nc_four.links()) == 5
-    assert len(nc_four.relationships(new_relationship.type)) == 5
-    assert len(nc_four.neighbors(new_relationship.type)) == 5
-    assert len(nc_four.links(new_relationship.type)) == 5
+    assert len(nc_four.relationships(new_concept)) == 5
+    assert len(nc_four.neighbors(new_concept)) == 5
+    assert len(nc_four.links(new_concept)) == 5
+    assert len(nc_four.relationships(new_concept.type, new_relationship.type)) == 5
+    assert len(nc_four.neighbors(new_concept.type, new_relationship.type)) == 5
+    assert len(nc_four.links(new_concept.type, new_relationship.type)) == 5
