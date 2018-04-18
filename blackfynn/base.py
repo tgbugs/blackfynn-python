@@ -75,14 +75,13 @@ class ClientSession(object):
         self.settings = settings
 
         self.header = {}
+        self.streaming_header = {}
 
         self.use_agent = self.check_agent()
         if self.use_agent:
             self._host = self._agent_url
-            self.header = {
-                'BLACKFYNN_API_LOC': settings.api_host,
-                'BLACKFYNN_STREAMING_API_LOC': settings.streaming_api_host,
-                }
+            self.header = { 'X-BF-API-LOCATION': settings.api_host }
+            self.streaming_header = { 'X-BF-API-LOCATION': settings.streaming_api_host }
 
     def authenticate(self, organization = None):
         """
@@ -250,7 +249,7 @@ class ClientSession(object):
                     self.settings.agent_streaming_port,
                     path,
                 ),
-            #    header=self.header,
+                header=self.streaming_header,
                 skip_utf8_validation=True,
             )
         except socket.error:
