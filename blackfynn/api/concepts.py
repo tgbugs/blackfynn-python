@@ -102,31 +102,27 @@ class ConceptInstancesAPI(ConceptsAPIBase):
         r['dataset_id'] = r.get('dataset_id', dataset_id)
         return ConceptInstance.from_dict(r, api=self.session)
 
-    def neighbors(self, dataset, instance, concept=None):
+    def relations(self, dataset, instance, concept=None):
         dataset_id = self._get_id(dataset)
         instance_id = self._get_id(instance)
         concept_type = self._get_concept_type(concept, instance)
 
-        r = self._get(self._uri('/{dataset_id}/concepts/{c_type}/instances/{id}', dataset_id=dataset_id, c_type=concept_type, id=instance_id))
-        r['dataset_id'] = r.get('dataset_id', dataset_id)
-        concepts = r.get('concepts', list())
-        proxies = r.get('proxyConcepts', list())
+        res = self._get(self._uri('/{dataset_id}/concepts/{c_type}/relations/{id}', dataset_id=dataset_id, c_type=concept_type, id=instance_id))
 
-        neighbors = [ConceptInstance.from_dict(c, api=self.session) for c in concepts]
-        neighbors += [ProxyInstance.from_dict(p, api=self.session) for p in proxies]
+        relations = []
+        for r in res:
+            relationship = r[0]
+            concept = r[1]
 
-        return neighbors
+            relationship['dataset_id'] = relationship.get('dataset_id', dataset_id)
+            concept['dataset_id'] = concept.get('dataset_id', dataset_id)
 
-    def relationships(self, dataset, instance, concept=None):
-        dataset_id = self._get_id(dataset)
-        instance_id = self._get_id(instance)
-        concept_type = self._get_concept_type(concept, instance)
+            relationship = RelationshipInstance.from_dict(relationship, api=self.session)
+            concept = ConceptInstance.from_dict(concept, api=self.session)
 
-        r = self._get(self._uri('/{dataset_id}/concepts/{c_type}/instances/{id}', dataset_id=dataset_id, c_type=concept_type, id=instance_id))
-        r['dataset_id'] = r.get('dataset_id', dataset_id)
-        relationships = r.get('edges', list())
+            relations.append((relationship, concept))
 
-        return [RelationshipInstance.from_dict(r, api=self.session) for r in relationships]
+        return relations
 
     def get_all(self, dataset, concept):
         dataset_id = self._get_id(dataset)
@@ -267,13 +263,13 @@ class ConceptProxiesAPI(ConceptsAPIBase):
 
     def get_all(self, dataset, proxy_type):
         dataset_id = self._get_id(dataset)
-        r = self._get(self._uri('/{dataset_id}/proxy/{p_type}', p_type=proxy_type))
+        r = self._get(self._uri('/{dataset_id}/proxy/{p_type}/instances', dataset_id=dataset_id, p_type=proxy_type))
         r['dataset_id'] = r.get('dataset_id', dataset_id)
         return r
 
     def get(self, dataset, proxy_type, proxy_id):
         dataset_id = self._get_id(dataset)
-        r = self._get(self._uri('/{dataset_id}/proxy/{p_type}/{p_id}', p_type=proxy_type, p_id=proxy_id))
+        r = self._get(self._uri('/{dataset_id}/proxy/{p_type}/instances/{p_id}', dataset_id=dataset_id, p_type=proxy_type, p_id=proxy_id))
         r['dataset_id'] = r.get('dataset_id', dataset_id)
         return r
 
@@ -295,6 +291,6 @@ class ConceptProxiesAPI(ConceptsAPIBase):
         request['relationshipType'] = relationship_type
         request['relationshipData'] = relationshipData
 
-        r = self._post(self._uri('/{dataset_id}/proxy/{p_type}', p_type=proxy_type), json=request)
+        r = self._post(self._uri('/{dataset_id}/proxy/{p_type}/instances', dataset_id=dataset_id, p_type=proxy_type), json=request)
         r['dataset_id'] = r.get('dataset_id', dataset_id)
         return RelationshipInstance.from_dict(r['relationshipInstance'], api=self.session)

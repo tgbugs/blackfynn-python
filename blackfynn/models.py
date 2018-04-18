@@ -809,7 +809,7 @@ class DataPackage(BaseDataNode):
         """
         self._check_exists()
         assert isinstance(source, ConceptInstance), "source must be object of type ConceptInstance"
-        return self._api.concepts.relationships.instances.link(relationship, source, self, values)
+        return self._api.concepts.relationships.instances.link(self.dataset, relationship, source, self, values)
 
     def as_dict(self):
         d = super(DataPackage, self).as_dict()
@@ -2464,11 +2464,8 @@ class ConceptInstance(BaseConceptInstance):
     def _get_relationship_type(self, relationship):
         return relationship.type if isinstance(relationship, Relationship) else relationship
 
-    def _get_relationships(self):
-        return self._api.concepts.instances.relationships(self.dataset_id, self)
-
-    def _get_neighbors(self):
-        return self._api.concepts.instances.neighbors(self.dataset_id, self)
+    def _get_links(self):
+        return self._api.concepts.instances.relations(self.dataset_id, self)
 
     def relationships(self, relationship=None):
         """
@@ -2477,13 +2474,12 @@ class ConceptInstance(BaseConceptInstance):
         Returns:
             List of ``RelationshipInstance``
         """
-        rs = self._get_relationships()
-        if relationship is None:
-            return rs
+        links = self.links(relationship)
+        if not links:
+            return list()
         else:
-            relationship_type = self._get_relationship_type(relationship)
-            filtered = filter(lambda r: r.type == relationship_type, rs)
-            return filtered
+            relationships, _ = zip(*links)
+            return list(relationships)
 
     def neighbors(self, relationship=None):
         """
@@ -2499,15 +2495,12 @@ class ConceptInstance(BaseConceptInstance):
         Example::
             things = mouse_001.neighbors('has')
         """
-        if relationship is None:
-            return self._get_neighbors()
+        links = self.links(relationship)
+        if not links:
+            return list()
         else:
-            links = self.links(relationship)
-            if not links:
-                return list()
-            else:
-                _, neighbors = zip(*links)
-                return list(neighbors)
+            _, neighbors = zip(*links)
+            return list(neighbors)
 
     def data(self, relationship=None):
         """
@@ -2542,16 +2535,7 @@ class ConceptInstance(BaseConceptInstance):
         Example::
             links = mouse_001.links('has')
         """
-        relationships = self.relationships()
-        neighbors = self._get_neighbors()
-
-        links = []
-        for r in relationships:
-            try:
-                c = next(n for n in neighbors if n.id == r.source or n.id == r.destination)
-                links.append((r, c))
-            except:
-                pass
+        links = self._get_links()
 
         if relationship is None:
             return links
