@@ -100,7 +100,7 @@ class ConceptInstancesAPI(ConceptsAPIBase):
 
         r = self._get(self._uri('/{dataset_id}/concepts/{c_type}/instances/{id}', dataset_id=dataset_id, c_type=concept_type, id=instance_id))
         r['dataset_id'] = r.get('dataset_id', dataset_id)
-        return ConceptInstance.from_dict(r['node'], api=self.session)
+        return ConceptInstance.from_dict(r, api=self.session)
 
     def neighbors(self, dataset, instance, concept=None):
         dataset_id = self._get_id(dataset)
@@ -241,7 +241,7 @@ class ConceptRelationshipInstancesAPI(ConceptsAPIBase):
             relationship_type = self._get_relationship_type(relationship)
             values = [dict(name=k, value=v) for k,v in values.items()]
             instance = RelationshipInstance(dataset_id=dataset_id, type=relationship_type, source=source, destination=destination, values=values)
-            return self.create(instance)
+            return self.create(dataset, instance)
 
     def create(self, dataset, instance):
         assert isinstance(instance, RelationshipInstance), "instance must be of type RelationshipInstance"

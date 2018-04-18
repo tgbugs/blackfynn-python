@@ -2027,10 +2027,7 @@ def cast_value(value, data_type=None):
 
     if data_type in (datetime.date, datetime.datetime):
         if isinstance(value, (datetime.date, datetime.datetime)):
-            if value.tzinfo is None or value.tzinfo.utcoffset(value) is None:
-                v =  pytz.utc.localize(value)
-            else:
-                v = value
+            v = value
         else:
             v = dateutil.parser.parse(value)
     else:
@@ -2045,6 +2042,9 @@ def uncast_value(value):
     assert type(value) in concept_type_map, "value's type must be one of {}".format(concept_type_map.keys())
 
     if type(value) in (datetime.date, datetime.datetime):
+        if value.tzinfo is None or value.tzinfo.utcoffset(value) is None:
+            value = pytz.utc.localize(value)
+
         v = value.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + value.strftime('%z')
     else:
         v = value
