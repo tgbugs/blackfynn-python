@@ -15,7 +15,6 @@ Available commands:
   props             Add/remove/modify a package or collection's properties
   move              Move a package or collection
   where             Show path to package or collection
-  append            Append data to a package
   rename            Rename a package or collection
   delete            Delete a package or collection
   create            Create a collection
@@ -108,9 +107,6 @@ def blackfynn_cli():
     elif args['<command>'] == 'where':
         import bf_where
         bf_where.main()
-    elif args['<command>'] == 'append':
-        import bf_append
-        bf_append.main()
     elif args['<command>'] == 'search':
         import bf_search
         bf_search.main()
