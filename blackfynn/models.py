@@ -2736,8 +2736,8 @@ class RelationshipInstance(BaseConceptInstance):
     _object_key = ''
 
     def __init__(self, dataset_id, type, source, destination, *args, **kwargs):
-        assert isinstance(source,  (ConceptInstance, int, long)), "source must be Concept or ID"
-        assert isinstance(destination, (ConceptInstance, int, long)), "destination must be Concept or ID"
+        assert isinstance(source,  (ConceptInstance, basestring)), "source must be Concept or UUID"
+        assert isinstance(destination, (ConceptInstance, basestring)), "destination must be Concept or UUID"
 
         if isinstance(source, ConceptInstance):
             source = source.id
