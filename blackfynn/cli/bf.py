@@ -21,8 +21,6 @@ Available commands:
   create            Create a collection
   get               Get the contents of a package, collection, or dataset
 
-  upload            Upload file(s) or directory
-
   status            Display connection status
   cache             Perform cache operations
   profile           Profile management
@@ -110,9 +108,6 @@ def blackfynn_cli():
     elif args['<command>'] == 'where':
         import bf_where
         bf_where.main()
-    elif args['<command>'] == 'upload':
-        import bf_upload
-        bf_upload.main()
     elif args['<command>'] == 'append':
         import bf_append
         bf_append.main()
