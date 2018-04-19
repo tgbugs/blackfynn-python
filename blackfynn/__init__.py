@@ -1,6 +1,6 @@
 
 __title__ = 'blackfynn'
-__version__ = '2.2.0'
+__version__ = '2.2.1'
 
 from .config import Settings, DEFAULTS as DEFAULT_SETTINGS
 
