@@ -15,10 +15,10 @@ with open('blackfynn/__init__.py', 'r') as fd:
 if not version:
     raise RuntimeError('Cannot find version information')
 
-with open('requirements.txt', 'r') as f:
-    reqs = [line.strip() for line in f if not line.startswith('#')]
-
 here = path.abspath(path.dirname(__file__))
+
+with open(path.join(here, 'requirements.txt'), mode='r', encoding='utf-8') as f:
+    reqs = [line.strip() for line in f if not line.startswith('#')]
 
 # Get the long description from the README file
 with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
