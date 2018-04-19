@@ -10,13 +10,10 @@ global options:
 
 from docopt import docopt
 
-from cli_utils import get_client
 from blackfynn.models import DataPackage
 
-def main():
+def main(bf):
     args = docopt(__doc__)
-
-    bf = get_client()
 
     files = args['<file>']
     destination  = args['<destination>']

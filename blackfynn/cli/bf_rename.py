@@ -9,13 +9,12 @@ global options:
 '''
 
 from docopt import docopt
-from cli_utils import get_client, get_item
+from cli_utils import get_item
 
 from blackfynn.models import BaseDataNode
 
-def main():
+def main(bf):
     args = docopt(__doc__)
-    bf = get_client()
 
     item = get_item(args['<item>'], bf)
     item.name = args['<new_name>']

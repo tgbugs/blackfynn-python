@@ -16,7 +16,7 @@ global options:
 
 from docopt import docopt
 from blackfynn.models import Property
-from cli_utils import get_client, get_item
+from cli_utils import get_item
 
 def get_prop(item, key, cat):
     prop = item.get_property(key, category=cat)
@@ -25,10 +25,8 @@ def get_prop(item, key, cat):
         return
     return prop
 
-def main():
+def main(bf):
     args = docopt(__doc__)
-
-    bf = get_client()
 
     item = get_item(args['<item>'], bf)
     key  = args['<key>']

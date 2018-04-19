@@ -4,7 +4,6 @@ import datetime
 
 # blackfynn
 from blackfynn import Blackfynn, TimeSeries, TimeSeriesChannel
-from blackfynn.streaming import TimeSeriesStream
 from blackfynn.utils import generate_dataframe
 
 

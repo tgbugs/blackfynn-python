@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
- 
+
 import json
 import base64
-import logging
-from blackfynn import settings
 import requests
 from concurrent.futures import TimeoutError
 from requests_futures.sessions import FuturesSession
@@ -11,7 +9,6 @@ from requests_futures.sessions import FuturesSession
 # blackfynn
 from blackfynn.utils import log
 from blackfynn.models import User
-
 
 class UnauthorizedException(Exception):
     pass
@@ -50,11 +47,11 @@ class BlackfynnRequest(object):
 
 
 class ClientSession(object):
-    def __init__(self, api_token=None, api_secret=None, host=None, streaming_host=None):
-        self._host = host
-        self._streaming_host = streaming_host
-        self._api_token = api_token
-        self._api_secret = api_secret
+    def __init__(self, settings):
+        self._host = settings.api_host
+        self._streaming_host = settings.streaming_api_host
+        self._api_token = settings.api_token
+        self._api_secret = settings.api_secret
 
         self._session = None
         self._token = None
@@ -62,6 +59,7 @@ class ClientSession(object):
         self._context = None
         self._organization = None
         self.profile = None
+        self.settings = settings
 
     def authenticate(self, organization = None):
         """
@@ -168,9 +166,9 @@ class ClientSession(object):
 
     def _get_result(self, req, count=0):
         try:
-            resp = req.result(timeout=settings.max_request_time)
+            resp = req.result(timeout=self.settings.max_request_time)
         except TimeoutError as e:
-            if count < settings.max_request_timeout_retries:
+            if count < self.settings.max_request_timeout_retries:
                 # timeout! trying again...
                 resp = self._get_result(req.call(), count=count+1)
         except UnauthorizedException as e:
@@ -189,10 +187,10 @@ class ClientSession(object):
 
     def register(self, *components):
         """
-        Register API component with session. Components should all be of 
-        APIBase type and have a name and base_uri property. 
+        Register API component with session. Components should all be of
+        APIBase type and have a name and base_uri property.
 
-        The registered component will have reference to base session to 
+        The registered component will have reference to base session to
         make higher-level calls outside of its own scope, if needed.
         """
         # initialize

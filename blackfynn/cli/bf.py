@@ -38,92 +38,95 @@ from docopt import docopt
 import os
 
 import blackfynn
-from blackfynn import Blackfynn
-from cli_utils import settings
+from blackfynn import Blackfynn, Settings
+
+from working_dataset import set_working_dataset
 
 def blackfynn_cli():
     args = docopt(__doc__,
                   version='bf version {}'.format(blackfynn.__version__),
                   options_first=True)
 
-    #Display warning message if config.ini is not found
-    if args['<command>'] != 'profile':
-        if not os.path.exists(settings.config_file):
-            print("\033[31m* Warning: No config file found, run 'bf profile' to start the setup assistant\033[0m")
+    # Test for these two commands first as they
+    # do not require a Blackfynn client
+    if args['<command>'] in ['help',None]:
+        print(__doc__.strip('\n'))
+        return
 
-    #Try to use profile specified by --profile, exit if invalid
+    if args['<command>'] == 'profile':
+        import bf_profile
+        bf_profile.main()
+        return
+
+    # Display warning message if config.ini is not found
+    settings = Settings() # create a dummy settings object to load environment variables and defaults only
+    if not os.path.exists(settings.config_file):
+        print("\033[31m* Warning: No config file found, run 'bf profile' to start the setup assistant\033[0m")
+
+    # Try to use profile specified by --profile, exit if invalid
     try:
-        if args['--profile'] is not None:
-            settings.use_profile(args['--profile'])
+        bf = Blackfynn(args['--profile'])
     except Exception, e:
         exit(e)
 
     #Try to use dataset specified by --dataset, exit if invalid
     try:
         if args['--dataset'] is not None:
-            from cli_utils import get_client
-            bf = get_client()
             dataset = bf.get_dataset(args['--dataset'])
-            settings.set_working_dataset(dataset.id)
+            set_working_dataset(dataset.id)
     except Exception, e:
         exit(e)
 
     if args['<command>'] == 'status':
         import bf_status
-        bf_status.main()
+        bf_status.main(bf)
     elif args['<command>'] == 'use':
         import bf_use
-        bf_use.main()
+        bf_use.main(bf)
     elif args['<command>'] == 'init':
         import bf_init
-        bf_init.main()
+        bf_init.main(bf)
     elif args['<command>'] in ['datasets', 'ds']:
         import bf_datasets
-        bf_datasets.main()
+        bf_datasets.main(bf)
     elif args['<command>'] in ['organizations', 'orgs']:
         import bf_organizations
-        bf_organizations.main()
+        bf_organizations.main(bf)
     elif args['<command>'] in ['share', 'unshare', 'collaborators']:
         import bf_share
-        bf_share.main()
+        bf_share.main(bf)
     elif args['<command>'] == 'cache':
         import bf_cache
-        bf_cache.main()
+        bf_cache.main(bf)
     elif args['<command>'] == 'create':
         import bf_create
-        bf_create.main()
+        bf_create.main(bf)
     elif args['<command>'] == 'delete':
         import bf_delete
-        bf_delete.main()
+        bf_delete.main(bf)
     elif args['<command>'] == 'move':
         import bf_move
-        bf_move.main()
+        bf_move.main(bf)
     elif args['<command>'] == 'rename':
         import bf_rename
-        bf_rename.main()
+        bf_rename.main(bf)
     elif args['<command>'] == 'props':
         import bf_props
-        bf_props.main()
+        bf_props.main(bf)
     elif args['<command>'] == 'get':
         import bf_get
-        bf_get.main()
+        bf_get.main(bf)
     elif args['<command>'] == 'where':
         import bf_where
-        bf_where.main()
+        bf_where.main(bf)
     elif args['<command>'] == 'upload':
         import bf_upload
-        bf_upload.main()
+        bf_upload.main(bf)
     elif args['<command>'] == 'append':
         import bf_append
-        bf_append.main()
+        bf_append.main(bf)
     elif args['<command>'] == 'search':
         import bf_search
-        bf_search.main()
-    elif args['<command>'] == 'profile':
-        import bf_profile
-        bf_profile.main()
-    elif args['<command>'] in ['help',None]:
-        print(__doc__.strip('\n'))
-        return
+        bf_search.main(bf)
     else:
         exit("Invalid command: '{}'\nSee 'bf help' for available commands".format(args['<command>']))

@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import requests
-
 # blackfynn-specific
-from blackfynn import settings
+from blackfynn import Settings
 from blackfynn.models import Dataset
 from blackfynn.api.transfers import IOAPI
 from blackfynn.api.compute import ComputeAPI
@@ -24,9 +22,13 @@ class Blackfynn(object):
     ability to retrieve, add, and manipulate data.
 
     Args:
-        api_token (str, optional): User's API token
-        host (str, optional): API address
-        streaming_host (str, optional): Streaming API address
+        profile (str, optional): Preferred profile to use
+        api_token (str, optional): Preferred api token to use
+        api_secret (str, optional): Preferred api secret to use
+        host (str, optional): Preferred host to use
+        streaming_host (str, optional): Preferred streaming host to use
+        env_override (bool, optional): Should environment variables override settings
+        **overrides (dict, optional): Settings to override
 
     Examples:
         Load the client library and initialize::
@@ -65,26 +67,21 @@ class Blackfynn(object):
         are properly set.
 
     """
-    def __init__(self, profile=None, api_token=None, api_secret=None, host=None, streaming_host=None):
-        global settings
+    def __init__(self, profile=None, api_token=None, api_secret=None, host=None, streaming_host=None, env_override=True, **overrides):
 
-        #Set profile, if present
-        settings = settings.use_profile(profile)
+        overrides.update({ k: v for k, v in {
+            'api_token': api_token,
+            'api_secret': api_secret,
+            'api_host': host,
+            'api_streaming_host': streaming_host,
+            }.items() if v != None })
+        self.settings = Settings(profile, overrides, env_override)
 
-        #Set variables from named arguments, or settings
-        api_token      = api_token      if api_token      is not None else settings.api_token
-        api_secret     = api_secret     if api_secret     is not None else settings.api_secret
-        host           = host           if host           is not None else settings.api_host
-        streaming_host = streaming_host if streaming_host is not None else settings.streaming_api_host
-
-        if api_token  is None: raise Exception('Error: No API token found. Cannot connect to Blackfynn.')
-        if api_secret is None: raise Exception('Error: No API secret found. Cannot connect to Blackfynn.')
-        
-        self.host = host
-        self.streaming_host = streaming_host
+        if self.settings.api_token  is None: raise Exception('Error: No API token found. Cannot connect to Blackfynn.')
+        if self.settings.api_secret is None: raise Exception('Error: No API secret found. Cannot connect to Blackfynn.')
 
         # direct interface to REST API.
-        self._api = ClientSession(api_token=api_token, api_secret=api_secret, host=host, streaming_host=streaming_host)
+        self._api = ClientSession(self.settings)
 
         # account
         try:
@@ -141,7 +138,7 @@ class Blackfynn(object):
 
     def get(self, id, update=True):
         """
-        Get any DataPackage or Collection object by ID. 
+        Get any DataPackage or Collection object by ID.
 
         Args:
             id (str): The ID of the Blackfynn object.
@@ -180,14 +177,14 @@ class Blackfynn(object):
 
     def get_dataset(self, name_or_id):
         """
-        Get Dataset by name or ID. 
+        Get Dataset by name or ID.
 
         Args:
             name_or_id (str): the name or the ID of the dataset
 
         Note:
-            When using name, this method gnores case, spaces, hyphens, 
-            and underscores such that these are equivelent: 
+            When using name, this method gnores case, spaces, hyphens,
+            and underscores such that these are equivelent:
 
               - "My Dataset"
               - "My-dataset"
@@ -225,7 +222,7 @@ class Blackfynn(object):
                 my_eeg.name = "New EEG Name"
                 my_eeg.update()
 
-        """ 
+        """
         return self._api.core.update(thing)
 
     def delete(self, *things):
@@ -267,7 +264,7 @@ class Blackfynn(object):
 
     def search(self, query, max_results=10):
         """
-        Find an object on the platform. 
+        Find an object on the platform.
 
         Args:
             query (str): query string to perform search.
@@ -284,7 +281,7 @@ class Blackfynn(object):
 
     def _check_context(self):
         if self.context is None:
-            raise Exception('Must set context before executing method.') 
+            raise Exception('Must set context before executing method.')
 
     def __repr__(self):
         return "<Blackfynn user='{}' organization='{}'>".format(self.profile.email, self.context.name)
