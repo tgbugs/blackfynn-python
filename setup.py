@@ -1,7 +1,5 @@
 import os
 import re
-from pip.download import PipSession
-from pip.req import parse_requirements
 from setuptools import setup, find_packages
 # To use a consistent encoding
 from codecs import open
@@ -17,11 +15,10 @@ with open('blackfynn/__init__.py', 'r') as fd:
 if not version:
     raise RuntimeError('Cannot find version information')
 
-install_reqs = parse_requirements('requirements.txt', session=PipSession())
-reqs = [str(ir.req) for ir in install_reqs]
-
-
 here = path.abspath(path.dirname(__file__))
+
+with open(path.join(here, 'requirements.txt'), mode='r', encoding='utf-8') as f:
+    reqs = [line.strip() for line in f if not line.startswith('#')]
 
 # Get the long description from the README file
 with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
