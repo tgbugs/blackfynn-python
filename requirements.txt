@@ -1,6 +1,6 @@
 pytz==2018.4
 boto3==1.4.4
-requests==2.13.0
+requests==2.18.3
 requests-futures==0.9.7
 numpy==1.13.1
 pandas==0.20.3
