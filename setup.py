@@ -1,7 +1,5 @@
 import os
 import re
-from pip.download import PipSession
-from pip.req import parse_requirements
 from setuptools import setup, find_packages
 # To use a consistent encoding
 from codecs import open
@@ -17,9 +15,8 @@ with open('blackfynn/__init__.py', 'r') as fd:
 if not version:
     raise RuntimeError('Cannot find version information')
 
-install_reqs = parse_requirements('requirements.txt', session=PipSession())
-reqs = [str(ir.req) for ir in install_reqs]
-
+with open('requirements.txt', 'r') as f:
+    reqs = [line.strip() for line in f if not line.startswith('#')]
 
 here = path.abspath(path.dirname(__file__))
 
