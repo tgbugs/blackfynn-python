@@ -12,12 +12,11 @@ from docopt import docopt
 from blackfynn import Dataset
 from blackfynn.models import Collection
 
-from cli_utils import get_client, get_item, get_working_dataset
+from cli_utils import get_item
 
-def main():
+def main(bf):
     args = docopt(__doc__)
 
-    bf = get_client()
     item = get_item(args['<item>'], bf)
 
     if args['<destination>']:

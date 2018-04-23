@@ -12,7 +12,6 @@ from boto3.s3.transfer import S3Transfer
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # blackfynn
-from blackfynn import settings
 from blackfynn.api.base import APIBase
 from blackfynn.models import TimeSeries, Collection, Dataset
 from blackfynn.utils import log
@@ -121,6 +120,8 @@ class UploadManager(object):
 
 def upload_file(
         file,
+        s3_host,
+        s3_port,
         s3_bucket,
         s3_keybase,
         region,
@@ -128,7 +129,8 @@ def upload_file(
         secret_access_key,
         session_token,
         encryption_key_id,
-        upload_session_id=None):
+        upload_session_id=None,
+        ):
 
     # progress callback
     progress = ProgressPercentage(file, upload_session_id)
@@ -138,8 +140,8 @@ def upload_file(
         # account for dev connections
         resource_args = {}
         config_args = dict(signature_version='s3v4')
-        if 'amazon' not in settings.s3_host.lower() and len(settings.s3_host)!=0:
-            resource_args = dict(endpoint_url="http://{}:{}".format(settings.s3_host, settings.s3_port))
+        if 'amazon' not in s3_host.lower() and len(s3_host)!=0:
+            resource_args = dict(endpoint_url="http://{}:{}".format(s3_host, s3_port))
             config_args = dict(s3=dict(addressing_style='path'))
 
         # connect to s3
@@ -248,11 +250,13 @@ class IOAPI(APIBase):
 
         # parallel upload to s3
         results = {}
-        with ThreadPoolExecutor(max_workers=min(len(files),settings.max_upload_workers)) as e:
+        with ThreadPoolExecutor(max_workers=min(len(files),self.session.settings.max_upload_workers)) as e:
             futures = {
                 e.submit(
                     fn = upload_file,
                     file = file,
+                    s3_host=self.session.settings.s3_host,
+                    s3_port=self.session.settings.s3_port,
                     s3_bucket = s3_bucket,
                     s3_keybase = '{}/{}'.format(resp['s3Key'], import_id_map[file]),
                     region = region,
@@ -260,7 +264,7 @@ class IOAPI(APIBase):
                     secret_access_key = secret_access_key,
                     session_token = session_token,
                     encryption_key_id = encryption_key_id,
-                    upload_session_id = upload_session.init_file(file)
+                    upload_session_id = upload_session.init_file(file),
                 ): file
                 for file in files
             }

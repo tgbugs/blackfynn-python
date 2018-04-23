@@ -3,7 +3,6 @@
 import os
 import re
 from uuid import uuid4
-from blackfynn import settings
 from blackfynn.utils import (
     infer_epoch, get_data_type, value_as_type, usecs_to_datetime
 )
@@ -54,7 +53,7 @@ def _update_self(self, updated):
 
 class Property(object):
     """
-    Property of a blackfynn object. 
+    Property of a blackfynn object.
 
     Args:
         key (str): the key of the property
@@ -200,14 +199,14 @@ class BaseNode(object):
 
     @property
     def exists(self):
-        """ 
+        """
         Whether or not the instance of this object exists on the platform.
         """
         return self.id is not None
 
     def _check_exists(self):
         if not self.exists:
-            raise Exception('Object must be created on the platform before method is called.') 
+            raise Exception('Object must be created on the platform before method is called.')
 
     def __str__(self):
         return self.__repr__()
@@ -258,7 +257,7 @@ class BaseDataNode(BaseNode):
             self._properties[entry.category].update({entry.key:entry})
 
     def add_properties(self, *entries):
-        """ 
+        """
         Add properties to object.
 
         Args:
@@ -430,7 +429,7 @@ class BaseDataNode(BaseNode):
             kval = self.__dict__.get(k, None)
             if hasattr(self, k) and kval is not None:
                 d[k] = kval
-                
+
         if self.provenance_id is not None:
             d["provenanceId"] = self.provenance_id
 
@@ -451,7 +450,7 @@ class BaseDataNode(BaseNode):
             if isinstance(parent, basestring):
                 item.parent = parent
             else:
-                pkg_cls = get_package_class(parent) 
+                pkg_cls = get_package_class(parent)
                 p = pkg_cls.from_dict(parent, *args, **kwargs)
                 item.parent = p.id
 
@@ -486,7 +485,7 @@ class BaseCollection(BaseDataNode):
         self.storage = kwargs.pop('storage', None)
         super(BaseCollection, self).__init__(name, package_type, **kwargs)
 
-        # items is None until an API response provides the item objects 
+        # items is None until an API response provides the item objects
         # to be parsed, which then updates this instance.
         self._items = None
 
@@ -498,7 +497,7 @@ class BaseCollection(BaseDataNode):
         for item in items:
             # initialize if need be
             if self._items is None:
-                self._items = [] 
+                self._items = []
             if isinstance(self, Dataset):
                 item.parent = None
                 item.dataset = self.id
@@ -529,7 +528,7 @@ class BaseCollection(BaseDataNode):
     @property
     def items(self):
         """
-        Get all items inside Dataset/Collection (i.e. non-nested items). 
+        Get all items inside Dataset/Collection (i.e. non-nested items).
 
         Note:
             You can also iterate over items inside a Dataset/Colleciton without using ``.items``::
@@ -602,7 +601,7 @@ class BaseCollection(BaseDataNode):
 
     def create_collection(self, name):
         """
-        Create a new collection within the current object. Collections can be created within 
+        Create a new collection within the current object. Collections can be created within
         datasets and within other collections.
 
         Args:
@@ -614,16 +613,16 @@ class BaseCollection(BaseDataNode):
         Example::
 
               from blackfynn import Blackfynn()
-              
+
               bf = Blackfynn()
               ds = bf.get_dataset('my_dataset')
-              
+
               # create collection in dataset
               col1 = ds.create_collection('my_collection')
 
               # create collection in collection
               col2 = col1.create_collection('another_collection')
-        
+
         """
         c = Collection(name)
         self.add(c)
@@ -723,7 +722,7 @@ class DataPackage(BaseDataNode):
 
     def set_files(self, *files):
         """
-        Sets the files of a DataPackage. Files are typically modified 
+        Sets the files of a DataPackage. Files are typically modified
         source files (e.g. converted to a different format).
         """
         self._check_exists()
@@ -769,7 +768,7 @@ class DataPackage(BaseDataNode):
     @property
     def files(self):
         """
-        Returns the files of a DataPackage. Files are the possibly modified 
+        Returns the files of a DataPackage. Files are the possibly modified
         source files (e.g. converted to a different format), but they could also
         be the source files themselves.
         """
@@ -875,7 +874,7 @@ class File(BaseDataNode):
         Download the file.
 
         Args:
-            destination (str): path for downloading; can be absolute file path, 
+            destination (str): path for downloading; can be absolute file path,
                                prefix or destination directory.
 
         """
@@ -919,7 +918,7 @@ class TimeSeries(DataPackage):
 
     Args:
         name:  The name of the timeseries package
-        
+
     """
     def __init__(self, name, **kwargs):
         kwargs.pop('package_type', None)
@@ -968,7 +967,7 @@ class TimeSeries(DataPackage):
                 channels = ts.channels
                 for ch in channels:
                     print ch
-            
+
             This will be much slower, as the API request is being made each time.::
 
                 for ch in ts.channels:
@@ -1016,11 +1015,11 @@ class TimeSeries(DataPackage):
             channel._pkg = None
 
     # ~~~~~~~~~~~~~~~~~~
-    # Data 
+    # Data
     # ~~~~~~~~~~~~~~~~~~
-    def get_data(self, start=None, end=None, length=None, channels=None, use_cache=settings.use_cache):
+    def get_data(self, start=None, end=None, length=None, channels=None, use_cache=True):
         """
-        Get timeseries data between ``start`` and ``end`` or ``start`` and ``start + length`` 
+        Get timeseries data between ``start`` and ``end`` or ``start`` and ``start + length``
         on specified channels (default all channels).
 
         Args:
@@ -1032,7 +1031,7 @@ class TimeSeries(DataPackage):
         Note:
             Data requests will be automatically chunked and combined into a single Pandas
             DataFrame. However, you must be sure you request only a span of data that
-            will properly fit in memory. 
+            will properly fit in memory.
 
             See ``get_data_iter`` for an iterator approach to timeseries data retrieval.
 
@@ -1054,7 +1053,7 @@ class TimeSeries(DataPackage):
         self._check_exists()
         return self._api.timeseries.get_ts_data(self,start=start, end=end, length=length, channels=channels, use_cache=use_cache)
 
-    def get_data_iter(self, channels=None, start=None, end=None, length=None, chunk_size=None, use_cache=settings.use_cache):
+    def get_data_iter(self, channels=None, start=None, end=None, length=None, chunk_size=None, use_cache=True):
         """
         Returns iterator over the data. Must specify **either ``end`` OR ``length``**, not both.
 
@@ -1133,7 +1132,7 @@ class TimeSeries(DataPackage):
             raise Exception("No layers match criteria.")
         if len(matches) > 1:
             raise Exception("More than one layer matched criteria")
-            
+
         return matches[0]
 
     def add_layer(self,layer,description=None):
@@ -1171,7 +1170,7 @@ class TimeSeries(DataPackage):
             start (optional): start of annotation
             end (optional): end of annotation
             channels_ids (optional): list of channel IDs to apply annotation
-            annotation_description (optional): description of annotation 
+            annotation_description (optional): description of annotation
 
         Example:
             To add annotation on layer "my-events" across all channels::
@@ -1309,9 +1308,9 @@ class TimeSeriesChannel(BaseDataNode):
     def update_properties(self):
         self._api.timeseries.update_channel_properties(self)
 
-    def get_data(self, start=None, end=None, length=None, use_cache=settings.use_cache):
+    def get_data(self, start=None, end=None, length=None, use_cache=True):
         """
-        Get channel data between ``start`` and ``end`` or ``start`` and ``start + length`` 
+        Get channel data between ``start`` and ``end`` or ``start`` and ``start + length``
 
         Args:
             start     (optional): start time of data (usecs or datetime object)
@@ -1325,7 +1324,7 @@ class TimeSeriesChannel(BaseDataNode):
         Note:
             Data requests will be automatically chunked and combined into a single Pandas
             Series. However, you must be sure you request only a span of data that
-            will properly fit in memory. 
+            will properly fit in memory.
 
             See ``get_data_iter`` for an iterator approach to timeseries data retrieval.
 
@@ -1348,7 +1347,7 @@ class TimeSeriesChannel(BaseDataNode):
                 channels   = [self],
                 use_cache  = use_cache)
 
-    def get_data_iter(self, start=None, end=None, length=None, chunk_size=None, use_cache=settings.use_cache):
+    def get_data_iter(self, start=None, end=None, length=None, chunk_size=None, use_cache=True):
         """
         Returns iterator over the data. Must specify **either ``end`` OR ``length``**, not both.
 
@@ -1394,7 +1393,7 @@ class TimeSeriesAnnotationLayer(BaseNode):
     """
     Annotation layer containing one or more annotations. Layers are used
     to separate annotations into logically distinct groups when applied
-    to the same data package. 
+    to the same data package.
 
     Args:
         name:           Name of the layer
@@ -1417,7 +1416,7 @@ class TimeSeriesAnnotationLayer(BaseNode):
         Args:
             window_size (float): Number of seconds in window
             channels:            List of channel objects or IDs
-        
+
         Yields:
             List of annotations found in current window.
         """
@@ -1439,7 +1438,7 @@ class TimeSeriesAnnotationLayer(BaseNode):
 
     def insert_annotation(self,annotation,start=None,end=None,channel_ids=None,description=None):
         """
-        Add annotations; proxy for ``add_annotations``. 
+        Add annotations; proxy for ``add_annotations``.
 
         Args:
             annotation (str): Annotation string
@@ -1471,7 +1470,7 @@ class TimeSeriesAnnotationLayer(BaseNode):
 
     def annotation_counts(self, start, end, channels=None):
         """
-        The number of annotations between ``start`` and ``end`` over selected 
+        The number of annotations between ``start`` and ``end`` over selected
         channels (all by default).
 
         Args:
@@ -1519,7 +1518,7 @@ class TimeSeriesAnnotation(BaseNode):
     _object_key = None
 
 
-    def __init__(self, label, channel_ids, start, end, name='',layer_id= None, 
+    def __init__(self, label, channel_ids, start, end, name='',layer_id= None,
                  time_series_id = None, description=None, **kwargs):
         self.user_id = kwargs.pop('userId', None)
         super(TimeSeriesAnnotation,self).__init__(**kwargs)
@@ -1542,12 +1541,12 @@ class TimeSeriesAnnotation(BaseNode):
             channel_ids = [channel_ids]
         return {
             "name" : self.name,
-            "label" : self.label, 
+            "label" : self.label,
             "channelIds": channel_ids,
-            "start" : self.start, 
-            "end" : self.end, 
-            "description" : self.description, 
-            "layer_id" : self.layer_id, 
+            "start" : self.start,
+            "end" : self.end,
+            "description" : self.description,
+            "layer_id" : self.layer_id,
             "time_series_id" : self.time_series_id,
         }
 
@@ -1662,7 +1661,7 @@ class TabularSchemaColumn():
             display_name = data['displayName'],
             datatype = data['datatype'],
             primary_key = data['primaryKey'],
-            internal = data['internal']          
+            internal = data['internal']
         )
 
     def __repr__(self):
@@ -1718,7 +1717,7 @@ class Organization(BaseNode):
 
     def __init__(self,
             name,
-            encryption_key_id="", 
+            encryption_key_id="",
             slug=None,
             terms=None,
             features=None,

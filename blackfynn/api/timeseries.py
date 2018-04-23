@@ -16,14 +16,12 @@ from blackfynn.utils import (
     usecs_to_datetime, usecs_since_epoch, infer_epoch, log
 )
 from blackfynn.models import (
-    File, TimeSeries,TimeSeriesChannel, TimeSeriesAnnotation, 
+    File, TimeSeries,TimeSeriesChannel, TimeSeriesAnnotation,
     get_package_class, TimeSeriesAnnotation, TimeSeriesAnnotationLayer
 )
-from blackfynn import settings
 from blackfynn.cache import get_cache
 
 cache = None
-page_size = settings.ts_page_size
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Helpers
@@ -63,16 +61,17 @@ vec_usecs_to_datetime = np.vectorize(usecs_to_datetime)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class ChannelPage(object):
-    def __init__(self, channel, page, use_cache=True):
+    def __init__(self, channel, page, settings, use_cache=True):
         self.channel   = channel
         self.page      = long(page)
         self.use_cache = use_cache
-        
-        global cache, page_size
+
+        page_size = settings.ts_page_size
+        global cache
         if self.use_cache and cache is None:
-            cache = get_cache(start_compaction=True)
+            cache = get_cache(settings, start_compaction=True)
             page_size = cache.page_size
-        
+
         # fixed page -- determined from epoch(0)
         pg_delta = channel._page_delta(page_size)
         self.start = long(self.page  * pg_delta)
@@ -139,7 +138,7 @@ class ChannelPage(object):
 
         # handle data response
         times = np.array( [t[0] for t in resp] )
-        data  = np.array( [d[1] for d in resp] ) 
+        data  = np.array( [d[1] for d in resp] )
         # fix -- sometimes API responds out-of-order
         order = np.argsort(times)
         times = times[order]
@@ -154,7 +153,7 @@ class ChannelPage(object):
 
 class ChannelIterator(object):
     """
-    We make requests to API/cache using some fixed page-size, but the 
+    We make requests to API/cache using some fixed page-size, but the
     user typically wants data results in some specified "chunk size".
     This accumulates the data pages in order to serve the data back
     in the specified chunk size.
@@ -163,11 +162,13 @@ class ChannelIterator(object):
         self.channel    = channel
         self.start      = start
         self.stop       = stop
+        self.start_dt   = usecs_to_datetime(self.start)
+        self.stop_dt    = usecs_to_datetime(self.stop)
         self.use_cache  = use_cache
         self.api        = api
 
         # page delta (usecs) for channel
-        self.page_delta = channel._page_delta(page_size)
+        self.page_delta = channel._page_delta(api.settings.ts_page_size)
 
         # page iteration
         self.page_start = long(math.floor(self.start/(1.0*self.page_delta)))
@@ -179,7 +180,8 @@ class ChannelIterator(object):
         if not self.chunk_per_page:
             self.chunk_time = long(chunk_time) # in usecs
             self.chunk_size = long(channel.rate * self.chunk_time/1.0e6)
-        self.chunk      = None
+        self.chunk  = None
+        self.offset = usecs_to_datetime(self.start)
 
     def get_chunks(self):
         # page size may be more/less than requested data
@@ -194,6 +196,7 @@ class ChannelIterator(object):
                 try: p = next(pages)
                 except: break
                 page = ChannelPage(
+                        settings = self.api.settings,
                         channel   = self.channel,
                         page      = p,
                         use_cache = self.use_cache)
@@ -205,13 +208,13 @@ class ChannelIterator(object):
                 i_start = None
                 i_stop  = None
                 if page.start < self.start:
-                    i_start = usecs_to_datetime(self.start)
-                if page.stop > self.stop:
-                    i_stop = usecs_to_datetime(self.stop-1)
+                    i_start = self.start_dt
+                if page.stop >= self.stop:
+                    i_stop = self.stop_dt
                 else:
                     # more pages needed - reset
                     page = None
-                data_slice = data.ix[i_start:i_stop]
+                data_slice = data.loc[i_start:i_stop]
                 if self.chunk_per_page:
                     yield data_slice
                 else:
@@ -226,10 +229,23 @@ class ChannelIterator(object):
             yield self._get_chunk()
 
     def _get_chunk(self):
-        d = self.chunk.ix[:self.chunk_size]
+        if self.offset >= self.stop_dt:
+            # terminate sequence
+            return None
+        # get chunk data based on time
+        chunk_delta = self.channel._page_delta(self.chunk_size)
+        end = self.offset + datetime.timedelta(microseconds=chunk_delta-1)
+        chunk_data = self.chunk.loc[:end]
         # leave remainder
-        self.chunk = self.chunk.ix[self.chunk_size:]
-        return d if len(d) else None
+        start = end + datetime.timedelta(microseconds=1)
+        self.chunk = self.chunk.loc[start:]
+        self.offset = start
+        if len(chunk_data):
+            # valid data
+            return chunk_data
+        else:
+            # empty chunk
+            return pd.Series([])
 
     def __repr__(self):
         return "<ChannelIterator channel='{}' range=({},{})>".format(
@@ -279,7 +295,7 @@ class TimeSeriesAPI(APIBase):
         """
         pkg_id = self._get_id(pkg)
         channel_id = self._get_id(channel)
-        
+
         path = self._uri('/{pkg_id}/channels/{id}', pkg_id=pkg_id, id=channel_id)
         resp = self._get(path)
 
@@ -323,7 +339,7 @@ class TimeSeriesAPI(APIBase):
         """
         Deletes a timeseries channel on the platform.
         """
-        
+
         ch_id = self._get_id(channel)
         pkg_id = self._get_id(channel._pkg)
         path = self._uri('/{pkg_id}/channels/{id}', pkg_id=pkg_id, id=ch_id)
@@ -347,7 +363,7 @@ class TimeSeriesAPI(APIBase):
     # Data
     # ~~~~~~~~~~~~~~~~~~~
 
-    def get_ts_data_iter(self, ts, start, end, channels, chunk_size, 
+    def get_ts_data_iter(self, ts, start, end, channels, chunk_size,
                          use_cache,length=None):
         """
         Iterator will be constructed based over timespan (start,end) or (start, start+seconds)
@@ -387,7 +403,7 @@ class TimeSeriesAPI(APIBase):
         # determine start (usecs)
         the_start = ts.start if start is None else infer_epoch(start)
 
-        # chunk 
+        # chunk
         if chunk_size is not None and isinstance(chunk_size, basestring):
             chunk_size = parse_timedelta(chunk_size)
 
@@ -424,9 +440,9 @@ class TimeSeriesAPI(APIBase):
             # no more results?
             if not [1 for v in values if v is not None]:
                 break
-            # make dataframe 
+            # make dataframe
             data_map = {c.name: v for c,v in zip(channels,values) if v is not None}
-            yield pd.DataFrame.from_dict(data_map) 
+            yield pd.DataFrame.from_dict(data_map)
 
     def get_ts_data(self, ts, start, end, length, channels, use_cache):
         """
@@ -443,7 +459,12 @@ class TimeSeriesAPI(APIBase):
         """
         Stream timeseries data
         """
-        stream = TimeSeriesStream(ts)
+        stream = TimeSeriesStream(
+            ts,
+            self.session.settings.stream_name,
+            self.session.settings.stream_max_segment_size,
+            self.session.settings.stream_aws_region,
+        )
         return stream.send_data(dataframe)
 
     def stream_channel_data(self, channel, series):
@@ -451,10 +472,10 @@ class TimeSeriesAPI(APIBase):
         Stream channel data
         """
         raise NotImplementedError
-        
+
 
     # ~~~~~~~~~~~~~~~~~~~
-    # Annotation Layers 
+    # Annotation Layers
     # ~~~~~~~~~~~~~~~~~~~
 
     def create_annotation_layer(self, ts, layer, description):
@@ -482,8 +503,8 @@ class TimeSeriesAPI(APIBase):
                 layer.__dict__.update(tmp_layer.__dict__)
             return tmp_layer
 
-    def get_annotation_layer(self, ts, layer): 
-        ts_id = self._get_id(ts) 
+    def get_annotation_layer(self, ts, layer):
+        ts_id = self._get_id(ts)
         layer_id = self._get_id(layer)
         path = self._uri('/{id}/layers/{layer_id}',id=ts_id,layer_id=str(layer_id))
         resp = self._get(path)
@@ -538,7 +559,7 @@ class TimeSeriesAPI(APIBase):
             annotations = [annotations]
 
         for annot in annotations:
-            tmp = self.create_annotation(layer=layer,annotation=annot)                
+            tmp = self.create_annotation(layer=layer,annotation=annot)
             all_annotations.append(tmp)
 
         #if adding single annotation, return annotation object, else return list
@@ -827,9 +848,9 @@ class TimeSeriesAPI(APIBase):
         return params
 
     def _channel_list(self, ts, channels):
-        """ 
+        """
         Get list of channel objects provided flexible input values
-        """ 
+        """
         ts_id = self._get_id(ts)
 
         if channels is None:
@@ -850,7 +871,7 @@ class TimeSeriesAPI(APIBase):
                 # Assume channel ID, get object
                 ch = self.session.get(ch)
             else:
-                raise Exception('Expecting TimeSeries instance or ID') 
+                raise Exception('Expecting TimeSeries instance or ID')
 
         return channels
 

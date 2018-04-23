@@ -11,9 +11,9 @@ global options:
 from docopt import docopt
 import sys
 
-from cli_utils import get_client, print_datasets
+from cli_utils import print_datasets
 
-def main():
+def main(bf):
     args = docopt(__doc__)
 
-    print_datasets(get_client())
+    print_datasets(bf)

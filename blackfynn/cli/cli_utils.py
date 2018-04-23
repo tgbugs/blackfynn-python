@@ -1,6 +1,6 @@
+import os
 
-from blackfynn import settings
-settings.using_cli = True
+from working_dataset import working_dataset_id
 
 def get_item_path(bf, item):
     if item.parent is not None:
@@ -45,41 +45,10 @@ def print_path_tree(bf, results):
     trees = [make_tree(path) for path in paths]
     print_tree(reduce(merge, trees), path_objects)
 
-def print_collaborator_edit_resp(resp):
-    for key, value in resp['changes'].iteritems():
-        if value['success']:
-            print " - {}: Success".format(key)
-        else:
-            print " - {}: Error - {}".format(key, value['message'])
-
-def get_client():
-    from blackfynn import Blackfynn
-
-    try:
-        bf = Blackfynn()
-        return bf
-    except:
-        exit("Unable to authenticate against Blackfynn using the specified API token.")
-
-def get_working_dataset(bf):
-    ds = settings.working_dataset
-    if ds:
-        try:
-            working_dataset = bf.get_dataset(ds)
-            return working_dataset
-        except Exception, e:
-            exit(e)
-    else:
-        exit("Dataset required. You can set your working dataset with:" \
-             "\n\n\tbf use <dataset>" \
-             "\n\nor by specifying it in your command:" \
-             "\n\n\t bf --dataset=<dataset> <command> ..." \
-             "\n")
-
 def print_datasets(bf):
-    working_dataset = settings.working_dataset
+    wd = working_dataset_id()
     for dataset in bf.datasets():
-        if dataset.id == working_dataset:
+        if dataset.id == wd:
             print "\033[32m* {} (id: {})\033[0m".format(dataset.name, dataset.id)
         else:
             print "  {} (id: {})".format(dataset.name, dataset.id)
@@ -89,3 +58,4 @@ def get_item(identifier, bf):
         return bf.get(identifier)
     except:
         exit("{} does not exist.".format(identifier))
+
