@@ -182,7 +182,6 @@ class IOAPI(APIBase):
     name = 'io'
 
     def upload_files(self, destination, files, dataset=None, append=False, display_progress=False):
-        group_id = str(uuid.uuid4())
         if isinstance(destination, Dataset):
             # uploading into dataset
             destination_id = None
@@ -231,12 +230,13 @@ class IOAPI(APIBase):
                 if not isinstance(destination, Collection):
                     raise Exception("Upload destination must be Collection or Dataset.")
 
+        # get preview
+        import_id_map = self.get_preview(files, append)
 
         # get upload credentials
         resp = self.session.security.get_upload_credentials(dataset_id)
         creds = resp['tempCredentials']
         s3_bucket = resp['s3Bucket']
-        s3_keybase = '{}/{}'.format(resp['s3Key'], group_id)
         region = creds['region']
         access_key_id = creds['accessKey']
         secret_access_key = creds['secretKey']
@@ -254,7 +254,7 @@ class IOAPI(APIBase):
                     fn = upload_file,
                     file = file,
                     s3_bucket = s3_bucket,
-                    s3_keybase = s3_keybase,
+                    s3_keybase = '{}/{}'.format(resp['s3Key'], import_id_map[file]),
                     region = region,
                     access_key_id = access_key_id,
                     secret_access_key = secret_access_key,
@@ -275,17 +275,47 @@ class IOAPI(APIBase):
                     raise future.exception()
 
         # trigger ETL import
-        return self.set_upload_complete(group_id, dataset_id, destination_id, append)
+        return [self.set_upload_complete(import_id, dataset_id, destination_id, append) for import_id in set(import_id_map.values())]
 
-    def set_upload_complete(self, group_id, dataset_id, destination_id, append=False):
+    def get_preview(self, files, append):
+        params = dict(
+            append = append,
+        )
+
+        payload = { "files": [
+            {
+                "fileName": os.path.basename(f),
+                "size": os.path.getsize(f),
+                "uploadId": i,
+            } for i, f in enumerate(files)
+        ]}
+
+        response = self._post(
+            endpoint = self._uri('/files/upload/preview'),
+            params = params,
+            json=payload,
+            )
+
+        import_id_map = dict()
+        for p in response.get("packages", list()):
+            import_id = p.get("importId")
+            # TODO: display warnings here somehow
+            warnings = p.get("warnings", list())
+            for f in p.get("files", list()):
+                index = f.get("uploadId")
+                import_id_map[files[index]] = import_id
+        return import_id_map
+
+    def set_upload_complete(self, import_id, dataset_id, destination_id, append=False):
         params = dict(
             append = append,
             datasetId = dataset_id,
-            groupId = group_id,
+            importId = import_id,
         )
         if destination_id is not None:
             params['destinationId'] = destination_id
 
         return self._post(
-            endpoint = self._uri('/files/upload/complete/{group_id}', group_id=group_id),
-            params = params)
+            endpoint = self._uri('/files/upload/complete/{import_id}', import_id=import_id),
+            params = params,
+            )
