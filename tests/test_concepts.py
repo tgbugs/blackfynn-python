@@ -7,7 +7,7 @@ from blackfynn.models import Concept, ConceptInstance, DataPackage, Relationship
 def test_concepts(dataset):
     current_ts = lambda: int(round(time.time() * 1000))
     schema = {'an_integer': int, 'a_long': long, 'a_bool': bool, 'a_string': str, 'a_datetime': datetime.datetime}
-    metadata = {'displayName': True}
+    display_name = 'A New Property'
     description = 'a new description'
     values = {'an_integer': 100, 'a_long': 100000L, 'a_bool': True, 'a_string': 'fnsdlkn#$#42nlfds$3nlds$#@$23fdsnfkls', 'a_datetime': datetime.datetime.now()}
 
@@ -24,14 +24,14 @@ def test_concepts(dataset):
     assert dataset.get_concept(new_concept.id) == new_concept
     assert dataset.get_concept(new_concept.type) == new_concept
 
-    new_concept.add_property('a_new_property', str, metadata)
+    new_concept.add_property('a_new_property', str, display_name)
     new_concept.description = description
     new_concept.update()
 
     new_concept = dataset.get_concept(new_concept.id)
 
     assert new_concept.description == description
-    assert new_concept.get_property('a_new_property').metadata == metadata
+    assert new_concept.get_property('a_new_property').display_name == display_name
 
     new_concept.add_properties([('a_new_float', float), {'name': 'a_new_int', 'data_type': int}, 'a_new_string'])
     new_concept.get_property('a_new_float').type == float
@@ -103,7 +103,7 @@ def test_concepts(dataset):
         assert True
 
     try:
-        new_relationship.add_property('a_new_property', str, metadata)
+        new_relationship.add_property('a_new_property', str, display_name)
         assert False
     except:
         assert True

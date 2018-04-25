@@ -2053,34 +2053,39 @@ def uncast_value(value):
 
 
 class BaseConceptProperty(object):
-    def __init__(self, name, data_type=basestring, metadata=dict()):
+    def __init__(self, name, display_name=None, data_type=basestring, locked = False):
         assert ' ' not in name, "name cannot contain spaces, alternative names include {} and {}".format(name.replace(" ", "_"), name.replace(" ", "-"))
 
         self.name = name
+        self.display_name = display_name or name
         self.type = parse_concept_datatype(data_type)
-        self.metadata = metadata
+        self.locked = locked
 
     @classmethod
     def from_tuple(cls, data):
-        try:
-            metadata = data[2]
-        except:
-            metadata = dict()
+        name = data[0]
+        data_type = data[1]
 
-        return cls(name=data[0], data_type=data[1], metadata=metadata)
+        try:
+            display_name = data[2]
+        except:
+            display_name = name
+
+        return cls(name=name, display_name=display_name, data_type=data_type)
 
     @classmethod
     def from_dict(cls, data):
-        metadata = data.get('metaData', dict())
+        display_name = data.get('displayName', dict())
         data_type = data.get('data_type', data.get('dataType'))
+        locked = data.get('locked', False)
 
-        return cls(name=data['name'], data_type=data_type, metadata=metadata)
+        return cls(name=data['name'], display_name=display_name, data_type=data_type, locked=locked)
 
     def as_dict(self):
-        return dict(name=self.name, dataType=convert_datatype_to_concept_type(self.type), metaData=self.metadata)
+        return dict(name=self.name, displayName=self.display_name, dataType=convert_datatype_to_concept_type(self.type), locked=self.locked)
 
     def as_tuple(self):
-        return (self.name, self.type, self.metadata)
+        return (self.name, self.type, self.display_name)
 
     def __repr__(self):
         return u"<BaseConceptProperty name='{}' {}>".format(self.name, self.type)
@@ -2090,7 +2095,6 @@ class BaseConceptValue(object):
         assert " " not in name, "name cannot contain spaces, alternative names include {} and {}".format(name.replace(" ", "_"), name.replace(" ", "-"))
 
         self.name = name
-        self.metadata = kwargs.pop('metadata', dict())
 
         data_type = kwargs.pop('data_type', None)
         self.type = parse_concept_datatype(data_type)
@@ -2106,13 +2110,12 @@ class BaseConceptValue(object):
 
     @classmethod
     def from_dict(cls, data):
-        metadata = data.get('metaData', dict())
         data_type = data.get('data_type', data.get('dataType'))
 
-        return cls(name=data['name'], value=data['value'], data_type=data_type, metadata=metadata)
+        return cls(name=data['name'], value=data['value'], data_type=data_type)
 
     def as_dict(self):
-        return dict(name=self.name, value=uncast_value(self.value), dataType=convert_datatype_to_concept_type(self.type), metaData=self.metadata)
+        return dict(name=self.name, value=uncast_value(self.value), dataType=convert_datatype_to_concept_type(self.type))
 
     def as_tuple(self):
         return (self.name, self.value)
@@ -2125,15 +2128,17 @@ class BaseConceptNode(BaseNode):
     _object_key = ''
     _property_cls = BaseConceptProperty
 
-    def __init__(self, dataset_id, name, description = None, *args, **kwargs):
+    def __init__(self, dataset_id, name, display_name = None, description = None, locked = False, *args, **kwargs):
         assert " " not in name, "type cannot contain spaces, alternative types include {} and {}".format(name.replace(" ", "_"), name.replace(" ", "-"))
 
-        self.type        = name
-        self.dataset_id  = dataset_id
-        self.description = description or ''
-        self.created_at  = kwargs.pop('createdAt', None)
-        self.updated_at  = kwargs.pop('updatedAt', None)
-        schema           = kwargs.pop('schema', None)
+        self.type         = name
+        self.dataset_id   = dataset_id
+        self.display_name = display_name or name
+        self.description  = description or ''
+        self.locked       = locked
+        self.created_at   = kwargs.pop('createdAt', None)
+        self.updated_at   = kwargs.pop('updatedAt', None)
+        schema            = kwargs.pop('schema', None)
 
         super(BaseConceptNode, self).__init__(*args, **kwargs)
 
@@ -2143,8 +2148,8 @@ class BaseConceptNode(BaseNode):
 
         self._add_properties(schema)
 
-    def _add_property(self, name, data_type=basestring, metadata=dict()):
-        prop = self._property_cls(name=name, data_type=data_type, metadata=metadata)
+    def _add_property(self, name, display_name=None, data_type=basestring):
+        prop = self._property_cls(name=name, display_name=None, data_type=data_type)
         self.schema[prop.name] = prop
 
     def _add_properties(self, properties):
@@ -2178,14 +2183,14 @@ class BaseConceptNode(BaseNode):
     def update(self):
         pass
 
-    def add_property(self, name, data_type=basestring, metadata=dict()):
+    def add_property(self, name, data_type=basestring, display_name=None):
         """
         Appends a property to the object's schema and updates the object on the platform.
 
         Args:
           name (str): Name of the property
           data_type (type, optional): Python type of the property. Defaults to ``basestring``.
-          metadata (dict, optional): Addiontal meta properties of the property.
+          display_name (str, optional): Display name for the property.
 
         Example:
           Adding a new property with the default data_type::
@@ -2194,12 +2199,12 @@ class BaseConceptNode(BaseNode):
           Adding a new property with the ``float`` data_type::
             mouse.add_property('weight', float)
         """
-        self._add_property(name, data_type, metadata)
+        self._add_property(name, data_type=data_type, display_name=display_name)
 
         try:
             self.update()
         except:
-            raise Exception("local object updated, but failed to update remotely")
+            raise #Exception("local object updated, but failed to update remotely")
 
     def add_properties(self, properties):
         """
@@ -2235,7 +2240,9 @@ class BaseConceptNode(BaseNode):
     def as_dict(self):
         return dict(
             name = self.type,
+            displayName = self.display_name,
             description = self.description,
+            locked = self.locked,
             schema = [p.as_dict() for p in self.schema.values()]
         )
 
@@ -2343,11 +2350,11 @@ class Concept(BaseConceptNode):
     _object_key = ''
     _property_cls = ConceptProperty
 
-    def __init__(self, dataset_id, name, description = None, *args, **kwargs):
+    def __init__(self, dataset_id, name, display_name = None, description = None, locked = False, *args, **kwargs):
         self.count = kwargs.pop('count', None)
         self.state = kwargs.pop('state', None)
 
-        super(Concept, self).__init__(dataset_id, name, description, *args, **kwargs)
+        super(Concept, self).__init__(dataset_id, name, display_name, description, locked, *args, **kwargs)
 
     def update(self):
         """
@@ -2639,17 +2646,17 @@ class Relationship(BaseConceptNode):
     _object_key = ''
     _property_cls = RelationshipProperty
 
-    def __init__(self, dataset_id, name, description=None, *args, **kwargs):
+    def __init__(self, dataset_id, name, display_name, description=None, locked=False, *args, **kwargs):
 
         kwargs.pop('type', None)
-        super(Relationship, self).__init__(dataset_id, name, description, *args, **kwargs)
+        super(Relationship, self).__init__(dataset_id, name, display_name, description, locked, *args, **kwargs)
 
     def update(self):
         raise Exception("Updating Relationships is not available at this time.")
         #TODO: _update_self(self, self._api.concepts.relationships.update(self.dataset_id, self))
 
     # TODO: delete when update is supported, handled in super-class
-    def add_property(self, name, data_type=basestring, metadata=dict()):
+    def add_property(self, name, display_name=None, data_type=basestring):
         raise Exception("Updating Relationships is not available at this time.")
 
     # TODO: delete when update is supported, handled in super-class
