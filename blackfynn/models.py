@@ -2053,9 +2053,10 @@ def uncast_value(value):
 
 
 class BaseConceptProperty(object):
-    def __init__(self, name, display_name=None, data_type=basestring, locked = False):
+    def __init__(self, name, display_name=None, data_type=basestring, id=None, locked = False):
         assert ' ' not in name, "name cannot contain spaces, alternative names include {} and {}".format(name.replace(" ", "_"), name.replace(" ", "-"))
 
+        self.id = id
         self.name = name
         self.display_name = display_name or name
         self.type = parse_concept_datatype(data_type)
@@ -2078,11 +2079,12 @@ class BaseConceptProperty(object):
         display_name = data.get('displayName', dict())
         data_type = data.get('data_type', data.get('dataType'))
         locked = data.get('locked', False)
+        id = data.get('id', None)
 
-        return cls(name=data['name'], display_name=display_name, data_type=data_type, locked=locked)
+        return cls(name=data['name'], display_name=display_name, data_type=data_type, id=id, locked=locked)
 
     def as_dict(self):
-        return dict(name=self.name, displayName=self.display_name, dataType=convert_datatype_to_concept_type(self.type), locked=self.locked)
+        return dict(name=self.name, displayName=self.display_name, dataType=convert_datatype_to_concept_type(self.type), id=self.id, locked=self.locked)
 
     def as_tuple(self):
         return (self.name, self.type, self.display_name)
@@ -2149,7 +2151,7 @@ class BaseConceptNode(BaseNode):
         self._add_properties(schema)
 
     def _add_property(self, name, display_name=None, data_type=basestring):
-        prop = self._property_cls(name=name, display_name=None, data_type=data_type)
+        prop = self._property_cls(name=name, display_name=display_name, data_type=data_type)
         self.schema[prop.name] = prop
 
     def _add_properties(self, properties):
@@ -2646,7 +2648,7 @@ class Relationship(BaseConceptNode):
     _object_key = ''
     _property_cls = RelationshipProperty
 
-    def __init__(self, dataset_id, name, display_name, description=None, locked=False, *args, **kwargs):
+    def __init__(self, dataset_id, name, display_name=None, description=None, locked=False, *args, **kwargs):
 
         kwargs.pop('type', None)
         super(Relationship, self).__init__(dataset_id, name, display_name, description, locked, *args, **kwargs)

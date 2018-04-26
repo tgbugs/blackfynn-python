@@ -87,37 +87,17 @@ def test_concepts(dataset):
 
     relationships = dataset.relationships()
 
-    new_relationship = dataset.create_relationship('New_Relationship_{}'.format(current_ts()), 'a new relationship', schema)
+    new_relationship = dataset.create_relationship('New_Relationship_{}'.format(current_ts()), 'a new relationship')
 
     assert len(dataset.relationships()) == len(relationships) + 1
 
     assert dataset.get_relationship(new_relationship.id) == new_relationship
     assert dataset.get_relationship(new_relationship.type) == new_relationship
 
-    assert new_relationship.get_property('a_datetime').type == datetime.datetime
-
-    try:
-        new_relationship.update()
-        assert False
-    except:
-        assert True
-
-    try:
-        new_relationship.add_property('a_new_property', str, display_name)
-        assert False
-    except:
-        assert True
-
-    try:
-        new_relationship.add_properties([('a_new_float', float), {'name': 'a_new_int', 'data_type': int}, 'a_new_string'])
-        assert False
-    except:
-        assert True
-
-    nr_one = new_relationship.link(nc_one, nc_two, values)
-    nr_two = nc_two.link(new_relationship, nc_three, {'an_integer': 1, 'a_long': 0L, 'a_bool': False, 'a_string': '', 'a_datetime': datetime.datetime.now()})
-    nr_three = nc_three.link(new_relationship.type, nc_four, {'an_integer': 10000, 'a_long': 9349234L, 'a_bool': False, 'a_string': '43132312', 'a_datetime': datetime.datetime.now()})
-    nr_four = new_relationship.link(nc_four, nc_one, {'a_datetime': datetime.datetime.now()})
+    nr_one = new_relationship.link(nc_one, nc_two)
+    nr_two = nc_two.link(new_relationship, nc_three)
+    nr_three = nc_three.link(new_relationship.type, nc_four)
+    nr_four = new_relationship.link(nc_four, nc_one)
     nr_five = new_relationship.link(nc_four, nc_two)
     nr_six = nc_four.link(new_relationship, nc_three)
 
@@ -129,16 +109,9 @@ def test_concepts(dataset):
     assert len(nc_four.neighbors(new_concept.type, new_relationship.type)) == 4
     assert len(nc_four.links(new_concept.type, new_relationship.type)) == 4
 
-    try:
-        new_relationship.link(nc_one, nc_two, {'bad_property': False})
-        assert False
-    except:
-        assert True
-    
     new_relationships = new_relationship.get_all()
 
     assert nr_two.relationship() == new_relationship
-    assert nr_two.get('a_string') == ''
 
     try:
         nr_four.set('an_integer', datetime.datetime.now())
@@ -148,7 +121,7 @@ def test_concepts(dataset):
 
     assert nr_four.get('an_integer') == None
 
-    nr_delete_three = new_relationship.link(nc_one, nc_two, {'a_string': 'delete me'})
+    nr_delete_three = new_relationship.link(nc_one, nc_two)
     assert len(new_relationship.get_all()) == len(new_relationships) + 1
     nr_delete_three.delete()
     assert len(new_relationship.get_all()) == len(new_relationships)
@@ -172,9 +145,9 @@ def test_concepts(dataset):
     new_relationship.link(nc_four, p)
 
     nc_four.update()
-    assert len(nc_four.relationships(new_concept)) == 5
-    assert len(nc_four.neighbors(new_concept)) == 5
-    assert len(nc_four.links(new_concept)) == 5
-    assert len(nc_four.relationships(new_concept.type, new_relationship.type)) == 5
-    assert len(nc_four.neighbors(new_concept.type, new_relationship.type)) == 5
-    assert len(nc_four.links(new_concept.type, new_relationship.type)) == 5
+    assert len(nc_four.relationships(new_concept)) == 4
+    assert len(nc_four.neighbors(new_concept)) == 4
+    assert len(nc_four.links(new_concept)) == 4
+    assert len(nc_four.relationships(new_concept.type, new_relationship.type)) == 4
+    assert len(nc_four.neighbors(new_concept.type, new_relationship.type)) == 4
+    assert len(nc_four.links(new_concept.type, new_relationship.type)) == 4

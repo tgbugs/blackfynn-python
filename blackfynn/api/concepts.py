@@ -122,7 +122,7 @@ class ConceptInstancesAPI(ConceptsAPIBase):
     def relations(self, dataset, instance, related_concept, concept=None):
         dataset_id = self._get_id(dataset)
         instance_id = self._get_id(instance)
-        related_concept_type = self.get_id(related_concept)
+        related_concept_type = self._get_id(related_concept)
         concept_type = self._get_concept_type(concept, instance)
 
         res = self._get(self._uri('/{dataset_id}/concepts/{concept_type}/instances/{id}/relations/{related_concept_type}', dataset_id=dataset_id, concept_type=concept_type, id=instance_id, related_concept_type=related_concept_type))
@@ -310,5 +310,6 @@ class ConceptProxiesAPI(ConceptsAPIBase):
         request['relationshipData'] = relationshipData
 
         r = self._post(self._uri('/{dataset_id}/proxy/{p_type}/instances', dataset_id=dataset_id, p_type=proxy_type), json=request)
-        r['dataset_id'] = r.get('dataset_id', dataset_id)
-        return RelationshipInstance.from_dict(r['relationshipInstance'], api=self.session)
+        instance = r['relationshipInstance']
+        instance['dataset_id'] = instance.get('dataset_id', dataset_id)
+        return RelationshipInstance.from_dict(instance, api=self.session)
