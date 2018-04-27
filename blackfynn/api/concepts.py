@@ -51,6 +51,7 @@ class ConceptsAPI(ConceptsAPIBase):
 
     def update_properties(self, dataset, concept):
         assert isinstance(concept, Concept), "concept must be type Concept"
+        assert concept.schema, "concept schema cannot be empty"
         data = concept.as_dict()['schema']
         dataset_id = self._get_id(dataset)
         resp = self._put(self._uri('/{dataset_id}/concepts/{id}/properties', dataset_id=dataset_id, id=concept.id), json=data)
@@ -71,7 +72,8 @@ class ConceptsAPI(ConceptsAPIBase):
         dataset_id = self._get_id(dataset)
         r = self._put(self._uri('/{dataset_id}/concepts/{id}', dataset_id=dataset_id, id=concept.id), json=data)
         r['dataset_id'] = r.get('dataset_id', dataset_id)
-        r['schema'] = self.update_properties(dataset, concept)
+        if concept.schema:
+            r['schema'] = self.update_properties(dataset, concept)
         return Concept.from_dict(r, api=self.session)
 
     def create(self, dataset, concept):
@@ -80,7 +82,8 @@ class ConceptsAPI(ConceptsAPIBase):
         r = self._post(self._uri('/{dataset_id}/concepts', dataset_id=dataset_id), json=concept.as_dict())
         concept.id = r['id']
         r['dataset_id'] = r.get('dataset_id', dataset_id)
-        r['schema'] = self.update_properties(dataset, concept)
+        if concept.schema:
+            r['schema'] = self.update_properties(dataset, concept)
         return Concept.from_dict(r, api=self.session)
 
     def get_all(self, dataset):

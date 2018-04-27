@@ -1865,13 +1865,13 @@ class Dataset(BaseCollection):
         """
         return self._api.concepts.relationships.get(self.id, name_or_id)
 
-    def create_concept(self, name, description, schema=None, **kwargs):
+    def create_concept(self, name, display_name=None, description=None, schema=None, **kwargs):
         """
         Defines a ``Concept`` on the platform.
 
         Args:
             name (str): name of the concept
-            description (str): description of the concept
+            description (str, optional): description of the concept
             schema (dict, optional): definitation of the concept's schema
 
         Returns:
@@ -1879,9 +1879,9 @@ class Dataset(BaseCollection):
 
         Example::
 
-            ds.create_concept('mouse', 'epileptic mice', schema={'id': str, 'weight': float})
+            ds.create_concept('mouse', 'Mouse', 'epileptic mice', schema={'id': str, 'weight': float})
         """
-        c = Concept(dataset_id=self.id, name=name, description=description, schema=schema, **kwargs)
+        c = Concept(dataset_id=self.id, name=name, display_name=display_name, description=description, schema=schema, **kwargs)
         return self._api.concepts.create(self.id, c)
 
     def create_relationship(self, name, description, schema=None, **kwargs):
@@ -2053,7 +2053,7 @@ def uncast_value(value):
 
 
 class BaseConceptProperty(object):
-    def __init__(self, name, display_name=None, data_type=basestring, id=None, locked = False):
+    def __init__(self, name, display_name=None, data_type=basestring, id=None, locked = False, default = True, title = False):
         assert ' ' not in name, "name cannot contain spaces, alternative names include {} and {}".format(name.replace(" ", "_"), name.replace(" ", "-"))
 
         self.id = id
@@ -2061,6 +2061,8 @@ class BaseConceptProperty(object):
         self.display_name = display_name or name
         self.type = parse_concept_datatype(data_type)
         self.locked = locked
+        self.default = default
+        self.title = title
 
     @classmethod
     def from_tuple(cls, data):
@@ -2079,12 +2081,14 @@ class BaseConceptProperty(object):
         display_name = data.get('displayName', dict())
         data_type = data.get('data_type', data.get('dataType'))
         locked = data.get('locked', False)
+        default = data.get('default', True)
+        title = data.get('title', data.get('conceptTitle'))
         id = data.get('id', None)
 
-        return cls(name=data['name'], display_name=display_name, data_type=data_type, id=id, locked=locked)
+        return cls(name=data['name'], display_name=display_name, data_type=data_type, id=id, locked=locked, default=default, title=title)
 
     def as_dict(self):
-        return dict(name=self.name, displayName=self.display_name, dataType=convert_datatype_to_concept_type(self.type), id=self.id, locked=self.locked)
+        return dict(name=self.name, displayName=self.display_name, dataType=convert_datatype_to_concept_type(self.type), id=self.id, locked=self.locked, default=self.default, conceptTitle=self.title)
 
     def as_tuple(self):
         return (self.name, self.type, self.display_name)
@@ -2130,7 +2134,7 @@ class BaseConceptNode(BaseNode):
     _object_key = ''
     _property_cls = BaseConceptProperty
 
-    def __init__(self, dataset_id, name, display_name = None, description = None, locked = False, *args, **kwargs):
+    def __init__(self, dataset_id, name, display_name = None, description = None, locked = False, default = True, *args, **kwargs):
         assert " " not in name, "type cannot contain spaces, alternative types include {} and {}".format(name.replace(" ", "_"), name.replace(" ", "-"))
 
         self.type         = name

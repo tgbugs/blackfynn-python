@@ -17,7 +17,7 @@ def test_concepts(dataset):
 
     concepts = dataset.concepts()
 
-    new_concept = dataset.create_concept('New_Concept_{}'.format(current_ts()), 'a new concept', schema)
+    new_concept = dataset.create_concept('New_Concept_{}'.format(current_ts()), 'A New Concept', 'a new concept', schema)
 
     assert len(dataset.concepts()) == len(concepts) + 1
 
