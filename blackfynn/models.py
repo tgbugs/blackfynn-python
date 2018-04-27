@@ -2074,7 +2074,12 @@ class BaseConceptProperty(object):
         except:
             display_name = name
 
-        return cls(name=name, display_name=display_name, data_type=data_type)
+        try:
+            title = data[3]
+        except:
+            title = False
+
+        return cls(name=name, display_name=display_name, data_type=data_type, title=title)
 
     @classmethod
     def from_dict(cls, data):
@@ -2082,7 +2087,7 @@ class BaseConceptProperty(object):
         data_type = data.get('data_type', data.get('dataType'))
         locked = data.get('locked', False)
         default = data.get('default', True)
-        title = data.get('title', data.get('conceptTitle'))
+        title = data.get('title', data.get('conceptTitle', False))
         id = data.get('id', None)
 
         return cls(name=data['name'], display_name=display_name, data_type=data_type, id=id, locked=locked, default=default, title=title)
@@ -2091,7 +2096,7 @@ class BaseConceptProperty(object):
         return dict(name=self.name, displayName=self.display_name, dataType=convert_datatype_to_concept_type(self.type), id=self.id, locked=self.locked, default=self.default, conceptTitle=self.title)
 
     def as_tuple(self):
-        return (self.name, self.type, self.display_name)
+        return (self.name, self.type, self.display_name, self.title)
 
     def __repr__(self):
         return u"<BaseConceptProperty name='{}' {}>".format(self.name, self.type)

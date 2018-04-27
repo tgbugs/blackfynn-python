@@ -6,7 +6,7 @@ from blackfynn.models import Concept, ConceptInstance, DataPackage, Relationship
 
 def test_concepts(dataset):
     current_ts = lambda: int(round(time.time() * 1000))
-    schema = {'an_integer': int, 'a_long': long, 'a_bool': bool, 'a_string': str, 'a_datetime': datetime.datetime}
+    schema = [('an_integer', int, 'An Integer', True), ('a_long', long), ('a_bool', bool), ('a_string', str), ('a_datetime', datetime.datetime)]
     display_name = 'A New Property'
     description = 'a new description'
     values = {'an_integer': 100, 'a_long': 100000L, 'a_bool': True, 'a_string': 'fnsdlkn#$#42nlfds$3nlds$#@$23fdsnfkls', 'a_datetime': datetime.datetime.now()}
