@@ -45,6 +45,27 @@ def print_path_tree(bf, results):
     trees = [make_tree(path) for path in paths]
     print_tree(reduce(merge, trees), path_objects)
 
+# destination must be a full Dataset or Collection object
+def recursively_upload(bf, destination, files):
+    import os
+    from blackfynn import Collection
+
+    dirs = [f for f in files if os.path.isdir(f)]
+    files = [f for f in files if os.path.isfile(f)]
+
+    if len(files) > 0:
+        bf._api.io.upload_files(destination, files, display_progress=True)
+
+    for d in dirs:
+        name = os.path.basename(os.path.normpath(d))
+        print 'Uploading to {}'.format(name)
+
+        new_collection = Collection(name)
+        destination.add(new_collection)
+
+        files = [os.path.join(d,f) for f in os.listdir(d) if not f.startswith('.')]
+        recursively_upload(bf, new_collection, files)
+
 def print_datasets(bf):
     wd = working_dataset_id()
     for dataset in bf.datasets():

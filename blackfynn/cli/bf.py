@@ -15,10 +15,13 @@ Available commands:
   props             Add/remove/modify a package or collection's properties
   move              Move a package or collection
   where             Show path to package or collection
+  append            Append data to a package
   rename            Rename a package or collection
   delete            Delete a package or collection
   create            Create a collection
   get               Get the contents of a package, collection, or dataset
+
+  upload            Upload file(s) or directory
 
   status            Display connection status
   cache             Perform cache operations
@@ -116,6 +119,12 @@ def blackfynn_cli():
     elif args['<command>'] == 'where':
         import bf_where
         bf_where.main(bf)
+    elif args['<command>'] == 'upload':
+        import bf_upload
+        bf_upload.main(bf)
+    elif args['<command>'] == 'append':
+        import bf_append
+        bf_append.main(bf)
     elif args['<command>'] == 'search':
         import bf_search
         bf_search.main(bf)
