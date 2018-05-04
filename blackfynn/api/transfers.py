@@ -249,7 +249,8 @@ class IOAPI(APIBase):
         upload_session = UploadManager()
 
         # parallel upload to s3
-        results = {}
+        file_results = {}
+        group_results = []
         with ThreadPoolExecutor(max_workers=min(len(files),self.session.settings.max_upload_workers)) as e:
             futures = {
                 e.submit(
@@ -274,12 +275,16 @@ class IOAPI(APIBase):
             # retrieve results
             for future in as_completed(futures):
                 fname = futures[future]
-                results[fname] = future.result()
+                file_results[fname] = future.result()
                 if future.exception() is not None:
                     raise future.exception()
+                import_id = import_id_map[fname]
+                # check to see if rest of the import group has uploaded
+                if all([ file_results[name] for name, id in import_id_map.items() if id == import_id ]):
+                    # trigger ETL import
+                    group_results.append(self.set_upload_complete(import_id, dataset_id, destination_id, append))
 
-        # trigger ETL import
-        return [self.set_upload_complete(import_id, dataset_id, destination_id, append) for import_id in set(import_id_map.values())]
+        return group_results
 
     def get_preview(self, files, append):
         params = dict(
@@ -303,8 +308,9 @@ class IOAPI(APIBase):
         import_id_map = dict()
         for p in response.get("packages", list()):
             import_id = p.get("importId")
-            # TODO: display warnings here somehow
             warnings = p.get("warnings", list())
+            for warning in warnings:
+                logger.warn("API warning: {}".format(warning))
             for f in p.get("files", list()):
                 index = f.get("uploadId")
                 import_id_map[files[index]] = import_id
