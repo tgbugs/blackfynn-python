@@ -20,10 +20,7 @@ from blackfynn.models import (
     File, TimeSeries,TimeSeriesChannel, TimeSeriesAnnotation,
     get_package_class, TimeSeriesAnnotation, TimeSeriesAnnotationLayer
 )
-from blackfynn.cache import get_cache
 from blackfynn.generated.timeseries_pb2 import AgentTimeSeriesResponse
-
-cache = None
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Helpers

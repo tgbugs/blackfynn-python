@@ -5,7 +5,6 @@ import tempfile
 import configparser
 
 BLACKFYNN_DIR_DEFAULT = os.path.join(os.path.expanduser('~'), '.blackfynn')
-CACHE_DIR_DEFAULT = os.path.join(BLACKFYNN_DIR_DEFAULT, 'cache')
 CACHE_INDEX_DEFAULT = os.path.join(CACHE_DIR_DEFAULT, 'index.db')
 
 DEFAULTS = {
@@ -38,14 +37,6 @@ DEFAULTS = {
 
     # directories
     'blackfynn_dir'               : BLACKFYNN_DIR_DEFAULT,
-    'cache_dir'                   : CACHE_DIR_DEFAULT,
-
-    # cache
-    'cache_index'                 : CACHE_INDEX_DEFAULT,
-    'cache_max_size'              : 2048,
-    'cache_inspect_interval'      : 1000,
-    'ts_page_size'                : 3600,
-    'use_cache'                   : True,
 
     # agent properties
     'use_agent'                   : True,
@@ -62,11 +53,6 @@ ENVIRONMENT_VARIABLES = {
     'stream_name'            : ('BLACKFYNN_STREAM_NAME', str),
 
     'blackfynn_dir'          : ('BLACKFYNN_LOCAL_DIR', str),
-    'cache_dir'              : ('BLACKFYNN_CACHE_LOC', str),
-    'cache_max_size'         : ('BLACKFYNN_CACHE_MAX_SIZE', int),
-    'cache_inspect_interval' : ('BLACKFYNN_CACHE_INSPECT_EVERY', int),
-    'ts_page_size'           : ('BLACKFYNN_TS_PAGE_SIZE', int),
-    'use_cache'              : ('BLACKFYNN_USE_CACHE', lambda x: bool(int(x))),
     'default_profile'        : ('BLACKFYNN_PROFILE', str),
 
     'use_agent'              : ('BLACKFYNN_USE_AGENT', lambda x: bool(int(x))),
@@ -114,10 +100,6 @@ class Settings(object):
         # override with env variables
         if env_override:
             self._update(environs)
-
-        # check and create cache dir
-        if not os.path.exists(self.cache_dir) and self.use_cache:
-            os.makedirs(self.cache_dir)
 
     def _load_env(self):
         override = {}

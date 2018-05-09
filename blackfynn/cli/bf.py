@@ -24,7 +24,6 @@ Available commands:
   upload            Upload file(s) or directory
 
   status            Display connection status
-  cache             Perform cache operations
   profile           Profile management
 
 
@@ -95,9 +94,6 @@ def blackfynn_cli():
     elif args['<command>'] in ['share', 'unshare', 'collaborators']:
         import bf_share
         bf_share.main(bf)
-    elif args['<command>'] == 'cache':
-        import bf_cache
-        bf_cache.main(bf)
     elif args['<command>'] == 'create':
         import bf_create
         bf_create.main(bf)
