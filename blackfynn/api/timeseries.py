@@ -53,6 +53,33 @@ def parse_timedelta(time):
         # assume already in microseconds
         return time
 
+def parse_start_end(ts, start, end, length):
+    # determine start (usecs)
+    the_start = ts.start if start is None else infer_epoch(start)
+
+    # determine end
+    if length is not None:
+        if isinstance(length, basestring):
+            length_usec = parse_timedelta(length)
+        else:
+            length_usec = length
+        the_end = the_start + length_usec
+
+    elif end is not None:
+        the_end = infer_epoch(end)
+    else:
+        the_end = ts.end
+
+    # logical check
+    if the_end < the_start:
+        raise Exception("End time cannot be before start time.")
+
+    # loop through chunks
+    the_start = long(the_start)
+    the_end = long(the_end)
+
+    return the_start, the_end
+
 vec_usecs_to_datetime = np.vectorize(usecs_to_datetime)
 
 class AgentException(Exception):
@@ -259,8 +286,6 @@ class TimeSeriesAPI(APIBase):
                     all_ch.extend([ch for ch in ts_channels if ch==chan])
             channels = all_ch
 
-        # determine start (usecs)
-        the_start = ts.start if start is None else infer_epoch(start)
 
         # chunk
         if chunk_size is None:
@@ -268,26 +293,7 @@ class TimeSeriesAPI(APIBase):
         if chunk_size is not None and isinstance(chunk_size, basestring):
             chunk_size = parse_timedelta(chunk_size)
 
-        # determine end
-        if length is not None:
-            if isinstance(length, basestring):
-                length_usec = parse_timedelta(length)
-            else:
-                length_usec = length
-            the_end = the_start + length_usec
-
-        elif end is not None:
-            the_end = infer_epoch(end)
-        else:
-            the_end = ts.end
-
-        # logical check
-        if the_end < the_start:
-            raise Exception("End time cannot be before start time.")
-
-        # loop through chunks
-        the_start = long(the_start)
-        the_end = long(the_end)
+        the_start, the_end = parse_start_end(ts, start, end, length)
 
         frames = AgentTimeSeriesSocket(
             self.session,
@@ -304,10 +310,14 @@ class TimeSeriesAPI(APIBase):
         for frame in frames:
             yield pd.DataFrame.from_dict(frame)
 
-    def get_ts_data(self, ts, start, end, length, channels, use_cache, chunk_size=100):
+    def get_ts_data(self, ts, start, end, length, channels, use_cache):
         """
         Retrieve data. Must specify end-time or length.
         """
+        the_start, the_end = parse_start_end(ts, start, end, length)
+
+        chunk_size = the_end - the_start
+
         ts_iter = self.get_ts_data_iter(ts=ts, start=start, end=end, channels=channels,
                                          chunk_size=chunk_size, use_cache=use_cache, length=length)
         df = pd.DataFrame()
