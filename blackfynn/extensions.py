@@ -18,7 +18,7 @@ class ExtensionsException(Exception):
 
 def raise_exception():
     # TODO: figure out name for extensions
-    raise AgentException("""This command require optional dependencies. To install, run:
+    raise ExtensionsException("""This command require optional dependencies. To install, run:
 
 pip install blackfynn[XXX]
 
@@ -32,7 +32,7 @@ def check_extension(exception=True):
     if "numpy" not in sys.modules:
         okay = False
 
-    if exception:
+    if not okay:
         raise_exception()
 
     return okay
