@@ -2,8 +2,6 @@
 
 import logging
 import datetime
-import numpy as np
-import pandas as pd
 import os
 
 logging.basicConfig()
@@ -102,42 +100,3 @@ def usecs_since_epoch(the_time):
 def usecs_to_datetime(us):
     # convert usecs since epoch to proper datetime object
     return datetime.datetime.utcfromtimestamp(0) + datetime.timedelta(microseconds=long(us))
-
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Timeseries helpers
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-def generate_data(size, func='walk', scale=5, periods=10):
-    remainder = size%periods
-    pattern_length = int(size/periods)
-    if func=='walk':
-        x = (np.random.rand(size)-0.5).cumsum()
-        # normalize to [-scale,scale]
-        return x/np.max([x.min(), x.max()])*scale
-    elif func=='sin':
-        return np.sin(np.linspace(0, np.pi*periods, size))*scale
-    elif func=='square':
-        pattern = np.concatenate([np.ones(pattern_length/2)*-1, np.ones(pattern_length/2)])
-        return np.concatenate([np.repeat(pattern, periods), pattern[:remainder]])*scale
-    elif func=='sawtooth':
-        pattern = np.linspace(-scale,scale,pattern_length)
-        return np.concatenate([np.repeat(pattern, periods),pattern[:remainder]])
-
-def generate_dataframe(minutes=2, freq=100):
-    start = datetime.datetime(2017, 1, 1, 0, 0)
-    end   = start + datetime.timedelta(minutes=minutes)
-    sample_period = 1e6/freq
-    sample_period_str = '{}u'.format(sample_period)
-
-    # index
-    ind = pd.date_range(start=start, end=end, freq='10000u', closed='left')
-    n = len(ind)
-
-    # dataframe
-    return pd.DataFrame({
-        'random-walk': generate_data(n, func='walk'),
-        'sin': generate_data(n, func='sin'),
-        'sawtooth': generate_data(n, func='sawtooth'),
-        'square': generate_data(n, func='square')
-    }, index=ind)
