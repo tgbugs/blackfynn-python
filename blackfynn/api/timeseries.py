@@ -290,7 +290,8 @@ class TimeSeriesAPI(APIBase):
         # chunk
         if chunk_size is None:
             # default chunk_size scales inversely with sampling rate
-            chunk_size = 1/ts.rate * 1000
+            highest_rate = max([ch.rate for ch in channels])
+            chunk_size = int(1/highest_rate * 1000000)
         if chunk_size is not None and isinstance(chunk_size, basestring):
             chunk_size = parse_timedelta(chunk_size)
 

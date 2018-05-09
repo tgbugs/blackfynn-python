@@ -5,7 +5,6 @@ import tempfile
 import configparser
 
 BLACKFYNN_DIR_DEFAULT = os.path.join(os.path.expanduser('~'), '.blackfynn')
-CACHE_INDEX_DEFAULT = os.path.join(CACHE_DIR_DEFAULT, 'index.db')
 
 DEFAULTS = {
     # blackfynn api locations
