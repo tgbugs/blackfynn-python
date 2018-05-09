@@ -1,11 +1,10 @@
 boto3==1.4.4
 requests==2.18.3
 requests-futures==0.9.7
-numpy==1.13.1
-pandas==0.20.3
-protobuf==3.5.1
 # CLI
 configparser==3.5.0
 docopt==0.6.2
 psutil==5.4.1
+# Agent
+protobuf==3.5.1
 websocket-client==0.47.0

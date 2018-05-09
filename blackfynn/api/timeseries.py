@@ -3,8 +3,7 @@
 import re
 import math
 import datetime
-import numpy as np
-import pandas as pd
+from blackfynn.extensions import check_extension, pandas as pd, numpy as np
 import json
 from types import NoneType
 from itertools import islice, count
@@ -79,8 +78,6 @@ def parse_start_end(ts, start, end, length):
     the_end = long(the_end)
 
     return the_start, the_end
-
-vec_usecs_to_datetime = np.vectorize(usecs_to_datetime)
 
 class AgentException(Exception):
     pass
@@ -260,6 +257,8 @@ class TimeSeriesAPI(APIBase):
           1 hour    = '1h'
         otherwise microseconds assumed.
         """
+        check_extension()
+
         if isinstance(ts, basestring):
             # assumed to be package ID
             ts = self.session.core.get(ts)
@@ -316,6 +315,8 @@ class TimeSeriesAPI(APIBase):
         """
         Retrieve data. Must specify end-time or length.
         """
+        check_extension()
+
         ts_iter = self.get_ts_data_iter(ts=ts, start=start, end=end, channels=channels,
                                          chunk_size=None, use_cache=use_cache, length=length)
         df = pd.DataFrame()
@@ -502,6 +503,8 @@ class TimeSeriesAPI(APIBase):
         return TimeSeriesAnnotation.from_dict(resp["annotation"], api=self.session)
 
     def iter_annotations(self, ts, layer, window_size=10, channels=None):
+        check_extensions()
+
         # window_size is seconds
         if not isinstance(ts, TimeSeries):
             raise Exception("Argument 'ts' must be TimeSeries.")
@@ -607,6 +610,8 @@ class TimeSeriesAPI(APIBase):
         """
         Processes the .bfannot file at file_path and adds to timeseries package
         """
+        check_extension()
+
         if not file_path.lower().endswith(('.bfannot')):
             raise Exception("Annotation file format not currently supported. Supported annotations types: .bfannot")
         try:
@@ -644,6 +649,8 @@ class TimeSeriesAPI(APIBase):
         Writes all layers in ts to .bfannot (v1.0) file
 
         """
+        check_extension()
+
         layers = ts.layers
         if not layers:
             raise Exception('Timeseries has no existing layers')

@@ -49,4 +49,8 @@ setup(
         "Development Status :: 3 - Alpha",
         "Topic :: Utilities",
     ],
+    extras_require={
+        # TODO: rename extension package
+        'XXX':  ["numpy>=1.13.1", "pandas>=0.20.3"],
+    },
 )

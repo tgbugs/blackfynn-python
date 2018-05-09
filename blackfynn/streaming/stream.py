@@ -4,8 +4,7 @@ import base64
 import random
 import hashlib
 import datetime
-import numpy as np
-import pandas as pd
+from blackfynn.extensions import check_extension, pandas as pd, numpy as np
 
 # blackfynn
 from blackfynn.streaming.segment_pb2 import IngestSegment
@@ -137,6 +136,7 @@ class TimeSeriesStream():
            df.values are data points. Columns can be channel names or IDs.
 
         """
+        check_extension()
 
         # sanity checks
         if not isinstance(df, pd.DataFrame):
@@ -154,6 +154,7 @@ class TimeSeriesStream():
             self.send_channel_data(channel=channel, series=df[col])
 
     def send_channel_data(self, channel, series):
+        check_extension()
 
         if not isinstance(series, pd.Series):
             raise Exception("Series must be a Pandas Series object.")
