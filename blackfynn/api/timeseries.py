@@ -289,7 +289,8 @@ class TimeSeriesAPI(APIBase):
 
         # chunk
         if chunk_size is None:
-            chunk_size = 100
+            # default chunk_size scales inversely with sampling rate
+            chunk_size = 1/ts.rate * 1000
         if chunk_size is not None and isinstance(chunk_size, basestring):
             chunk_size = parse_timedelta(chunk_size)
 
@@ -314,12 +315,8 @@ class TimeSeriesAPI(APIBase):
         """
         Retrieve data. Must specify end-time or length.
         """
-        the_start, the_end = parse_start_end(ts, start, end, length)
-
-        chunk_size = the_end - the_start
-
         ts_iter = self.get_ts_data_iter(ts=ts, start=start, end=end, channels=channels,
-                                         chunk_size=chunk_size, use_cache=use_cache, length=length)
+                                         chunk_size=None, use_cache=use_cache, length=length)
         df = pd.DataFrame()
         for tmp_df in ts_iter:
             df = df.append(tmp_df)
