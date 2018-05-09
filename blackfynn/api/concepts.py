@@ -249,10 +249,10 @@ class ConceptRelationshipInstancesAPI(ConceptsAPIBase):
 
         if isinstance(source, DataPackage):
             assert isinstance(destination, ConceptInstance), "DataPackages can only be linked to ConceptInstances"
-            return self.session.concepts.proxies.create(dataset, source.id, relationship, destination, values, "ToConcept", "package")
+            return self.session.concepts.proxies.create(dataset, source.id, relationship, destination, values, "ToTarget", "package")
         elif isinstance(destination, DataPackage):
             assert isinstance(source, ConceptInstance), "DataPackages can only be linked to ConceptInstances"
-            return self.session.concepts.proxies.create(dataset, destination.id, relationship, source, values, "FromConcept", "package")
+            return self.session.concepts.proxies.create(dataset, destination.id, relationship, source, values, "FromTarget", "package")
         else:
             dataset_id = self._get_id(dataset)
             relationship_type = self._get_relationship_type(relationship)
@@ -263,8 +263,17 @@ class ConceptRelationshipInstancesAPI(ConceptsAPIBase):
     def create(self, dataset, instance):
         assert isinstance(instance, RelationshipInstance), "instance must be of type RelationshipInstance"
         dataset_id = self._get_id(dataset)
-        r = self._post( self._uri('/{dataset_id}/relationships/{r_type}/instances', dataset_id=dataset_id, r_type=instance.type), json=instance.as_dict())
+        resp = self._post( self._uri('/{dataset_id}/relationships/{r_type}/instances', dataset_id=dataset_id, r_type=instance.type), json=instance.as_dict())
+        r = resp[0] # responds with list
         r['dataset_id'] = r.get('dataset_id', dataset_id)
+        return RelationshipInstance.from_dict(r, api=self.session)
+
+    def create_many(self, dataset, *instances):
+        assert all([isinstance(i, RelationshipInstance) for i in instances]), "instances must be of type RelationshipInstance"
+        dataset_id = self._get_id(dataset)
+        resp = self._post( self._uri('/{dataset_id}/relationships/{r_type}/instances', dataset_id=dataset_id, r_type=instance.type), json=instance.as_dict())
+        for r in resp:
+            r['dataset_id'] = r.get('dataset_id', dataset_id)
         return RelationshipInstance.from_dict(r, api=self.session)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -276,7 +285,7 @@ class ConceptProxiesAPI(ConceptsAPIBase):
     name = 'concepts.proxies'
 
     proxy_types = ["package"]
-    direction_types = ["FromConcept", "ToConcept"]
+    direction_types = ["FromTarget", "ToTarget"]
 
     def __init__(self, session):
         self.host = session._concepts_host

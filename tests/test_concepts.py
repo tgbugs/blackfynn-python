@@ -34,9 +34,9 @@ def test_concepts(dataset):
     assert new_concept.get_property('a_new_property').display_name == display_name
 
     new_concept.add_properties([('a_new_float', float), {'name': 'a_new_int', 'data_type': int}, 'a_new_string'])
-    new_concept.get_property('a_new_float').type == float
-    new_concept.get_property('a_new_int').type == int
-    new_concept.get_property('a_new_string').type == basestring
+    assert new_concept.get_property('a_new_float').type == float
+    assert new_concept.get_property('a_new_int').type == long
+    assert new_concept.get_property('a_new_string').type == unicode
 
     nc_one = new_concept.create(values)
     nc_two = new_concept.create({'an_integer': 1, 'a_long': 0L, 'a_bool': False, 'a_string': '', 'a_datetime': datetime.datetime.now()})
