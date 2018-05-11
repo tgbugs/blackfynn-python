@@ -65,6 +65,11 @@ class ConceptsAPI(ConceptsAPIBase):
         r['schema'] = self.get_properties(dataset, concept)
         return Concept.from_dict(r, api=self.session)
 
+    def delete(self, dataset, concept):
+        dataset_id = self._get_id(dataset)
+        concept_id = self._get_id(concept)
+        return self._del(self._uri('/{dataset_id}/concepts/{id}', dataset_id=dataset_id, id=concept.id))
+
     def update(self, dataset, concept):
         assert isinstance(concept, Concept), "concept must be type Concept"
         data = concept.as_dict()
@@ -90,7 +95,8 @@ class ConceptsAPI(ConceptsAPIBase):
         dataset_id = self._get_id(dataset)
         resp = self._get(self._uri('/{dataset_id}/concepts', dataset_id=dataset_id), stream=True)
         for r in resp:
-          r['dataset_id'] = r.get('dataset_id', dataset_id)
+            r['dataset_id'] = r.get('dataset_id', dataset_id)
+            r['schema']     = self.get_properties(dataset, r['id'])
         concepts = [Concept.from_dict(r, api=self.session) for r in resp]
         return { c.type: c for c in concepts }
 
@@ -145,11 +151,11 @@ class ConceptInstancesAPI(ConceptsAPIBase):
 
         return relations
 
-    def get_all(self, dataset, concept):
+    def get_all(self, dataset, concept, limit=100):
         dataset_id = self._get_id(dataset)
         concept_type = self._get_concept_type(concept)
 
-        resp = self._get(self._uri('/{dataset_id}/concepts/{concept_type}/instances', dataset_id=dataset_id, concept_type=concept_type), stream=True)
+        resp = self._get(self._uri('/{dataset_id}/concepts/{concept_type}/instances', dataset_id=dataset_id, concept_type=concept_type), params=dict(limit=limit), stream=True)
         for r in resp:
           r['dataset_id'] = r.get('dataset_id', dataset_id)
         instances = [ConceptInstance.from_dict(r, api=self.session) for r in resp]

@@ -2383,10 +2383,12 @@ class Concept(BaseConceptNode):
         _update_self(self, self._api.concepts.update(self.dataset_id, self))
 
     def delete(self):
-        raise Exception("Deleting concepts is not available at this time.")
-        #TODO: self._api.concepts.delete(self.dataset_id, self)
+        """
+        Deletes a concept from the platform. Must not have any instances.
+        """
+        return self._api.concepts.delete(self.dataset_id, self)
 
-    def get_all(self):
+    def get_all(self, limit=100):
         """
         Retrieves all instances of the concept from the platform.
 
@@ -2397,7 +2399,7 @@ class Concept(BaseConceptNode):
 
           mice = mouse.get_all()
         """
-        return self._api.concepts.instances.get_all(self.dataset_id, self)
+        return self._api.concepts.instances.get_all(self.dataset_id, self, limit=limit)
 
     def get(self, id):
         """
