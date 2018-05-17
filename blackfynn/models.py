@@ -2444,6 +2444,44 @@ class Concept(BaseConceptNode):
         ci = self._api.concepts.instances.create(self.dataset_id, ci)
         return ci
 
+    def create_many(self, *values_list):
+        """
+        Create multiple instances of the concept on the platform.
+
+        Args:
+            values_list (list): array of dictionaries corresponding to instance values.
+
+        Returns:
+            Array of newly created ``ConceptInstance``s.
+        """
+        self._check_exists()
+        schema_keys = set(self.schema.keys())
+
+        for values in values_list:
+            data_keys = set(values.keys())
+            assert len(data_keys & schema_keys) > 0, "An instance of {} must include values for at least one of its propertes: {}".format(self.type, schema_keys)
+            self._validate_values_against_schema(values)
+
+        ci_list = [
+            ConceptInstance(
+                dataset_id = self.dataset_id,
+                type       = self.type,
+                values     = [
+                    dict(
+                        name=k,
+                        value=v,
+                        dataType=self.schema.get(k).type
+                    )
+                    for k,v in values.items()
+                ]
+            )
+            for values in values_list
+        ]
+        return self._api.concepts.instances.create_many(self.dataset_id, self, *ci_list)
+
+    def from_dataframe(self, df):
+        return self.create_many(*df.to_dict(orient='records'))
+
     def delete_items(self, *instances):
         """
         Deletes multiple instances of a concept from the platform.

@@ -183,6 +183,20 @@ class ConceptInstancesAPI(ConceptsAPIBase):
         r['dataset_id'] = r.get('dataset_id', dataset_id)
         return ConceptInstance.from_dict(r, api=self.session)
 
+    def create_many(self, dataset, concept, *instances):
+        instance_type = instances[0].type
+        for inst in instances:
+            assert isinstance(inst, ConceptInstance), "instance must be type ConceptInstance"
+            assert inst.type == instance_type, "Expected instance of type {}, found instance of type {}".format(instance_type, inst.type)
+        dataset_id = self._get_id(dataset)
+        values = [inst.as_dict() for inst in instances]
+        resp = self._post(self._uri('/{dataset_id}/concepts/{concept_type}/instances/batch', dataset_id=dataset_id, concept_type=instance_type), json=values)
+        for r in resp:
+            r['dataset_id'] = r.get('dataset_id', dataset_id)
+        instances = [ConceptInstance.from_dict(r, api=self.session) for r in resp]
+        return ConceptInstanceSet(concept, instances)
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Relationships
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
