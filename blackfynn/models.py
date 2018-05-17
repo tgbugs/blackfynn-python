@@ -2642,6 +2642,12 @@ class ConceptInstance(BaseConceptInstance):
         assert isinstance(destination, (ConceptInstance, DataPackage)), "destination must be object of type ConceptInstance or DataPackage"
         return self._api.concepts.relationships.instances.link(self.dataset_id, relationship, self, destination, values)
 
+    def link_many(self, relationship, destinations, values):
+        self._check_exists()
+        for destination, dvalues in zip(destinations, values):
+            assert isinstance(destination, (ConceptInstance, DataPackage)), "destination must be object of type ConceptInstance or DataPackage"
+            yield self._api.concepts.relationships.instances.link(self.dataset_id, relationship, self, destination, dvalues)
+
     def concept(self):
         """
         Retrieves the concept definition of this instance from the platform
