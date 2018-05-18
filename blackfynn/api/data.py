@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import pdb
-from blackfynn.extensions import check_extension, pandas as pd
+from blackfynn.extensions import require_extension, pandas as pd
 from blackfynn.api.base import APIBase
 from blackfynn.models import (
     File,
@@ -328,11 +328,11 @@ class TabularAPI(APIBase):
 
         return self._get(path, params=params)
 
+    @require_extension
     def get_tabular_data_iter(self, package, offset, order_by, order_direction, chunk_size=10000):
         """
         Return iterator that yields chunk_size data each call
         """
-        check_extension()
 
         if chunk_size > 10000:
             raise ValueError('Chunk size must be less than 10000')
@@ -354,11 +354,11 @@ class TabularAPI(APIBase):
             if len(df) < chunk_size:
                 break
 
+    @require_extension
     def get_tabular_data(self, package, limit, offset, order_by, order_direction):
         """
         Get data for tabular package using iterator
         """
-        check_extension()
 
         tab_iter = self.get_tabular_data_iter(package=package, offset=offset, order_by=order_by, order_direction=order_direction)
         df = pd.DataFrame()

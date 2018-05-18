@@ -3,7 +3,7 @@
 import re
 import math
 import datetime
-from blackfynn.extensions import check_extension, pandas as pd, numpy as np
+from blackfynn.extensions import require_extension, pandas as pd, numpy as np
 import json
 from types import NoneType
 from itertools import islice, count
@@ -246,6 +246,7 @@ class TimeSeriesAPI(APIBase):
     # Data
     # ~~~~~~~~~~~~~~~~~~~
 
+    @require_extension
     def get_ts_data_iter(self, ts, start, end, channels, chunk_size,
                          use_cache, length=None):
         """
@@ -257,7 +258,6 @@ class TimeSeriesAPI(APIBase):
           1 hour    = '1h'
         otherwise microseconds assumed.
         """
-        check_extension()
 
         if isinstance(ts, basestring):
             # assumed to be package ID
@@ -311,11 +311,11 @@ class TimeSeriesAPI(APIBase):
         for frame in frames:
             yield pd.DataFrame.from_dict(frame)
 
+    @require_extension
     def get_ts_data(self, ts, start, end, length, channels, use_cache):
         """
         Retrieve data. Must specify end-time or length.
         """
-        check_extension()
 
         ts_iter = self.get_ts_data_iter(ts=ts, start=start, end=end, channels=channels,
                                          chunk_size=None, use_cache=use_cache, length=length)
@@ -604,11 +604,12 @@ class TimeSeriesAPI(APIBase):
         resp = self._get(path, params=params)
         return resp
 
+
+    @require_extension
     def process_annotation_file(self,ts,file_path):
         """
         Processes the .bfannot file at file_path and adds to timeseries package
         """
-        check_extension()
 
         if not file_path.lower().endswith(('.bfannot')):
             raise Exception("Annotation file format not currently supported. Supported annotations types: .bfannot")
@@ -642,12 +643,12 @@ class TimeSeriesAPI(APIBase):
         except Exception, error:
             raise Exception("Error adding annotation file {}, {}".format(file_path, error))
 
+    @require_extension
     def write_annotation_file(self,ts,file_path,layer_names):
         """
         Writes all layers in ts to .bfannot (v1.0) file
 
         """
-        check_extension()
 
         layers = ts.layers
         if not layers:

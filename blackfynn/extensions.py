@@ -42,3 +42,12 @@ def check_extension(exception=True):
         raise_exception()
 
     return okay
+
+def require_extension(f):
+    """
+        Decorator for requiring extensions
+    """
+    def func_wrapper(*args, **kwargs):
+        check_extension()
+        return f(*args, **kwargs)
+    return func_wrapper
