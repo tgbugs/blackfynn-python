@@ -5,12 +5,12 @@ import sys
 try:
     import pandas
 except ImportError:
-    pd = None
+    pandas = None
 
 try:
     import numpy
 except ImportError:
-    np = None
+    numpy = None
 
 
 class ExtensionsException(Exception):
@@ -24,8 +24,14 @@ pip install blackfynn[XXX]
 
 """)
 
+
 def check_extension(exception=True):
-    """Makes sure that appropriate packages are installed"""
+    """
+        Make sure that appropriate packages are installed
+        This function will raise an exception if required modules is not found.
+        Guard a function invocation by calling this function
+        at the start of the function
+    """
     okay = True
     if "pandas" not in sys.modules:
         okay = False

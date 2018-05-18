@@ -503,8 +503,6 @@ class TimeSeriesAPI(APIBase):
         return TimeSeriesAnnotation.from_dict(resp["annotation"], api=self.session)
 
     def iter_annotations(self, ts, layer, window_size=10, channels=None):
-        check_extensions()
-
         # window_size is seconds
         if not isinstance(ts, TimeSeries):
             raise Exception("Argument 'ts' must be TimeSeries.")
@@ -525,7 +523,7 @@ class TimeSeriesAPI(APIBase):
         # paginate annotations
         start_time, end_time = ts.limits()
         num_windows = (end_time-start_time)/(window_size*1e6)
-        for i in range(int(np.ceil(num_windows))):
+        for i in range(int(math.ceil(num_windows))):
             win_start = start_time + i* (window_size*1e6)
             win_end = win_start + window_size*1e6
             if win_end > end_time:
