@@ -50,7 +50,6 @@ setup(
         "Topic :: Utilities",
     ],
     extras_require={
-        # TODO: rename extension package
-        'XXX':  ["numpy>=1.13.1", "pandas>=0.20.3"],
+        'data':  ["numpy>=1.0.0,<2.0.0", "pandas>=0.0.0<1.0.0"],
     },
 )
