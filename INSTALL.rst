@@ -12,6 +12,12 @@ Simply run
 
     pip install -U blackfynn
 
+For access to timeseries and tabular data streams
+
+.. code:: bash
+
+    pip install -U blackfynn[data]
+
 Windows
 --------
 

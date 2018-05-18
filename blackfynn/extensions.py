@@ -20,7 +20,7 @@ def raise_exception():
     # TODO: figure out name for extensions
     raise ExtensionsException("""This command require optional dependencies. To install, run:
 
-pip install blackfynn[XXX]
+pip install blackfynn[data]
 
 """)
 
