@@ -334,14 +334,23 @@ class ConceptProxiesAPI(ConceptsAPIBase):
         relationshipData = [dict(name=k, value=v) for k,v in values.items()]
 
         request = {}
-        request['direction'] = direction
         request['externalId'] = external_id
         request['conceptType'] = concept_type
         request['conceptInstanceId'] = concept_instance_id
-        request['relationshipType'] = relationship_type
-        request['relationshipData'] = relationshipData
+        request['targets'] = [
+            {
+                'direction': direction,
+                'linkTarget': { 
+                    "ConceptInstance": {
+                        'id': concept_instance_id
+                    }
+                },
+                'relationshipType': relationship_type,
+                'relationshipData': relationshipData
+            }
+        ]
 
         r = self._post(self._uri('/{dataset_id}/proxy/{p_type}/instances', dataset_id=dataset_id, p_type=proxy_type), json=request)
-        instance = r['relationshipInstance']
+        instance = r[0]['relationshipInstance']
         instance['dataset_id'] = instance.get('dataset_id', dataset_id)
         return RelationshipInstance.from_dict(instance, api=self.session)
