@@ -191,6 +191,7 @@ class ConceptInstancesAPI(ConceptsAPIBase):
         dataset_id = self._get_id(dataset)
         values = [inst.as_dict() for inst in instances]
         resp = self._post(self._uri('/{dataset_id}/concepts/{concept_type}/instances/batch', dataset_id=dataset_id, concept_type=instance_type), json=values, stream=True)
+        
         for r in resp:
             r['dataset_id'] = r.get('dataset_id', dataset_id)
         instances = [ConceptInstance.from_dict(r, api=self.session) for r in resp]
@@ -288,13 +289,17 @@ class ConceptRelationshipInstancesAPI(ConceptsAPIBase):
         r['dataset_id'] = r.get('dataset_id', dataset_id)
         return RelationshipInstance.from_dict(r, api=self.session)
 
-    def create_many(self, dataset, *instances):
+    def create_many(self, dataset, relationship, *instances):
         assert all([isinstance(i, RelationshipInstance) for i in instances]), "instances must be of type RelationshipInstance"
+        instance_type = instances[0].type
         dataset_id = self._get_id(dataset)
-        resp = self._post( self._uri('/{dataset_id}/relationships/{r_type}/instances', dataset_id=dataset_id, r_type=instance.type), json=instance.as_dict())
+        values = [inst.as_dict() for inst in instances]
+        resp = self._post( self._uri('/{dataset_id}/relationships/{r_type}/instances/batch', dataset_id=dataset_id, r_type=instance_type), json=values)
+
         for r in resp:
-            r['dataset_id'] = r.get('dataset_id', dataset_id)
-        return RelationshipInstance.from_dict(r, api=self.session)
+            r[0]['dataset_id'] = r[0].get('dataset_id', dataset_id)
+        instances =  [RelationshipInstance.from_dict(r[0], api=self.session) for r in resp]
+        return RelationshipInstanceSet(relationship, instances)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Concept Proxies

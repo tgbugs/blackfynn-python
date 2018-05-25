@@ -2780,6 +2780,55 @@ class Relationship(BaseConceptNode):
         self._validate_values_against_schema(values)
         return self._api.concepts.relationships.instances.link(self.dataset_id, self, source, destination, values)
 
+    def create_many(self, *item_list):
+        """
+        Create multiple links between records in the dataset
+
+        Args:
+            value_list (list): array of dictionaries corresponding to record relationships.
+
+        Returns:
+            Array of newly created ``Relationships``
+
+        """
+
+        # self._check_exists()
+        # values = [dict() for _ in values] if values is None else values
+        # assert len(destinations)==len(values), "Length of values must match length of destinations"
+        # for destination, dvalues in zip(destinations, values):
+        #     assert isinstance(destination, (ConceptInstance, DataPackage)), "destination must be object of type ConceptInstance or DataPackage"
+        #     yield self._api.concepts.relationships.instances.link(self.dataset_id, relationship, self, destination, dvalues)
+
+        #instance = RelationshipInstance(dataset_id=dataset_id, type=relationship_type, source=source, destination=destination, values=values)
+
+        self._check_exists()
+
+        # Check sources and destinations
+        for value in item_list:
+            assert isinstance(value['destination'], (ConceptInstance, DataPackage)), 'destination must be object of type ConceptInstance or DataPackage'
+            assert isinstance(value['source'], (ConceptInstance, DataPackage)), 'source must be object of type ConceptInstance or DataPackage'
+            assert value['relationship_type']==self.type, u'Relationship type of items need to match relationship type: "{}"'.format(self.type)
+
+        li_list = [
+            RelationshipInstance(
+                dataset_id  = self.dataset_id,
+                type        = item['relationship_type'],
+                source      = item['source'],
+                destination = item['destination'],
+                values     = [
+                    dict(
+                        name=k,
+                        value=v,
+                        dataType=self.schema.get(k).type
+                    )
+                    for k,v in item['values'].items()
+                ]
+            )
+            for item in item_list
+        ]
+
+        return self._api.concepts.relationships.instances.create_many(self.dataset_id, self, *li_list)
+
     def as_dict(self):
         d = super(Relationship, self).as_dict()
         d['type'] = 'relationship'
@@ -2837,6 +2886,8 @@ class RelationshipInstance(BaseConceptInstance):
           mouse_001_eeg_link.delete()
         """
         return self._api.concepts.relationships.instances.delete(self.dataset_id, self)
+
+    
 
     @classmethod
     def from_dict(cls, data, *args, **kwargs):
