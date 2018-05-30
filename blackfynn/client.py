@@ -7,6 +7,9 @@ from blackfynn.api.transfers import IOAPI
 from blackfynn.api.compute import ComputeAPI
 from blackfynn.api.ledger import LedgerAPI
 from blackfynn.api.user import UserAPI
+from blackfynn.api.concepts import (
+    ConceptsAPI, ConceptInstancesAPI, ConceptRelationshipsAPI, ConceptRelationshipInstancesAPI
+)
 from blackfynn.api.timeseries import TimeSeriesAPI
 from blackfynn.base import ClientSession
 from blackfynn.api.core import (
@@ -27,6 +30,7 @@ class Blackfynn(object):
         api_secret (str, optional): Preferred api secret to use
         host (str, optional): Preferred host to use
         streaming_host (str, optional): Preferred streaming host to use
+        concepts_host (str, optional): Preferred concepts service host to use
         env_override (bool, optional): Should environment variables override settings
         **overrides (dict, optional): Settings to override
 
@@ -67,13 +71,14 @@ class Blackfynn(object):
         are properly set.
 
     """
-    def __init__(self, profile=None, api_token=None, api_secret=None, host=None, streaming_host=None, env_override=True, **overrides):
+    def __init__(self, profile=None, api_token=None, api_secret=None, host=None, streaming_host=None, concepts_host=None, env_override=True, **overrides):
 
         overrides.update({ k: v for k, v in {
             'api_token': api_token,
             'api_secret': api_secret,
             'api_host': host,
             'api_streaming_host': streaming_host,
+            'api_concepts_host': concepts_host,
             }.items() if v != None })
         self.settings = Settings(profile, overrides, env_override)
 
@@ -103,7 +108,11 @@ class Blackfynn(object):
             SearchAPI,
             IOAPI,
             LedgerAPI,
-            UserAPI
+            UserAPI,
+            ConceptsAPI,
+            ConceptInstancesAPI,
+            ConceptRelationshipsAPI,
+            ConceptRelationshipInstancesAPI
         )
 
         self._api._context = self._api.organizations.get(self._api._organization)

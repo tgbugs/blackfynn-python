@@ -50,3 +50,4 @@ def main(bf):
     print "  Dataset            : {}".format(working_dataset_status)
     print "  API Location       : {}".format(bf.settings.api_host)
     print "  Streaming API      : {}".format(bf.settings.streaming_api_host)
+    print "  Concepts API      : {}".format(bf.settings.concepts_api_host)

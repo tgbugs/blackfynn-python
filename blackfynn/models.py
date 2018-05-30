@@ -2,16 +2,17 @@
 
 import os
 import re
-from uuid import uuid4
-from blackfynn.utils import (
-    infer_epoch, get_data_type, value_as_type, usecs_to_datetime
-)
-from dateutil import parser
+import pytz
+import dateutil
 import datetime
 import requests
 import numpy as np
 import pandas as pd
-import dateutil.parser
+
+from uuid import uuid4
+from blackfynn.utils import (
+    infer_epoch, get_data_type, value_as_type, usecs_to_datetime
+)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Helpers
@@ -784,6 +785,31 @@ class DataPackage(BaseDataNode):
         """
         self._check_exists()
         return self._api.packages.get_view(self)
+
+    def link(self, relationship, source, values=dict()):
+        """
+        Links a ``DataPackage`` to a ``ConceptInstance`` given a type of ``Relationship``
+
+        Args:
+            relationship (Relationship or str): type of relationship to create between the data package and concept instance
+            source (ConceptInstance): instance that is related to the data package
+            values (dict, optional): values for properties definied in the relationship's schema
+
+        Returns:
+            ``RelationshipInstance`` that defines the link
+
+        Example:
+            Create a link between a data package and a concept instance::
+
+                eeg.link('from', mouse_001)
+
+            Create a link (with values) between a data package and a concept instance::
+
+                eeg.link('from', mouse_001, {"date": datetime.datetime(1991, 02, 26, 07, 0)})
+        """
+        self._check_exists()
+        assert isinstance(source, ConceptInstance), "source must be object of type ConceptInstance"
+        return self._api.concepts.relationships.instances.link(self.dataset, relationship, source, self, values)
 
     def as_dict(self):
         d = super(DataPackage, self).as_dict()
@@ -1793,6 +1819,90 @@ class Dataset(BaseCollection):
         self._check_exists()
         return self._api.datasets.remove_collaborators(self, *collaborator_ids)
 
+    def concepts(self):
+        """
+        Returns:
+            List of concepts defined in Dataset
+        """
+        return self._api.concepts.get_all(self.id)
+
+    def relationships(self):
+        """
+        Returns:
+            List of relationships defined in Dataset
+        """
+        return self._api.concepts.relationships.get_all(self.id)
+
+    def get_concept(self, name_or_id):
+        """
+        Retrieve a ``Concept`` by name or id
+
+        Args:
+            name_or_id (str or int): name or id of the concept
+
+        Returns:
+            The requested ``Concept`` in Dataset
+
+        Example::
+
+            mouse = ds.get_concept('mouse')
+        """
+        return self._api.concepts.get(self.id, name_or_id)
+
+    def get_relationship(self, name_or_id):
+        """
+        Retrieve a ``Relationship`` by name or id
+
+        Args:
+            name_or_id (str or int): name or id of the relationship
+
+        Returns:
+            The requested ``Relationship``
+
+        Example::
+
+            belongsTo = ds.get_relationship('belongs-to')
+        """
+        return self._api.concepts.relationships.get(self.id, name_or_id)
+
+    def create_concept(self, name, display_name=None, description=None, schema=None, **kwargs):
+        """
+        Defines a ``Concept`` on the platform.
+
+        Args:
+            name (str): name of the concept
+            description (str, optional): description of the concept
+            schema (dict, optional): definitation of the concept's schema
+
+        Returns:
+            The newly created ``Concept``
+
+        Example::
+
+            ds.create_concept('mouse', 'Mouse', 'epileptic mice', schema={'id': str, 'weight': float})
+        """
+        c = Concept(dataset_id=self.id, name=name, display_name=display_name, description=description, schema=schema, **kwargs)
+        return self._api.concepts.create(self.id, c)
+
+    def create_relationship(self, name, description, schema=None, **kwargs):
+        """
+        Defines a ``Relationship`` on the platform.
+
+        Args:
+            name (str): name of the relationship
+            description (str): description of the relationship
+            schema (dict, optional): definitation of the relationship's schema
+
+        Returns:
+            The newly created ``Relationship``
+
+        Example::
+
+            ds.create_relationship('belongs-to', 'this belongs to that')
+        """
+        r = Relationship(dataset_id=self.id, name=name, description=description, schema=schema, **kwargs)
+        return self._api.concepts.relationships.create(self.id, r)
+
     @property
     def _get_method(self):
         return self._api.datasets.get
@@ -1861,4 +1971,1034 @@ class LedgerEntry(BaseNode):
                 "date": self.date.replace(microsecond=0).isoformat() + 'Z'
                 }
 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Concepts & Relationships
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Concept Helpers
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+concept_type_map = {
+    basestring: 'string',
+    unicode: 'string',
+    str: 'string',
+    int: 'long',
+    long: 'long',
+    float: 'double',
+    bool: 'boolean',
+    datetime.date: 'date',
+    datetime.datetime: 'date'
+}
+
+concept_type_reverse_map = {
+    'string': unicode,
+    'long': long,
+    'double': float,
+    'boolean': bool,
+    'date': datetime.datetime
+}
+
+def parse_concept_datatype(data_type=None):
+    if data_type is None or isinstance(data_type, type) and data_type in concept_type_map:
+        t = data_type
+    elif isinstance(data_type, basestring) and data_type.lower() in concept_type_reverse_map:
+        t = concept_type_reverse_map[data_type.lower()]
+    else:
+        raise Exception('data_type {} not supported'.format(data_type))
+
+    return t
+
+def convert_datatype_to_concept_type(data_type):
+    if data_type is None:
+        return
+
+    assert isinstance(data_type, type) and data_type in concept_type_map, "data_type must be one of {}".format(concept_type_map.keys())
+
+    t = concept_type_map[data_type]
+    return t.title()
+
+def cast_value(value, data_type=None):
+    if data_type is None or value is None:
+        return value
+
+    assert isinstance(data_type, type) and data_type in concept_type_map, "data_type must be None or one of {}".format(concept_type_map.keys())
+
+    if data_type in (datetime.date, datetime.datetime):
+        if isinstance(value, (datetime.date, datetime.datetime)):
+            v = value
+        else:
+            v = dateutil.parser.parse(value)
+    else:
+        v = data_type(value)
+
+    return v
+
+def uncast_value(value):
+    if value is None:
+        return
+
+    assert type(value) in concept_type_map, "value's type must be one of {}".format(concept_type_map.keys())
+
+    if type(value) in (datetime.date, datetime.datetime):
+        if value.tzinfo is None or value.tzinfo.utcoffset(value) is None:
+            value = pytz.utc.localize(value)
+
+        v = value.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + value.strftime('%z')
+    else:
+        v = value
+
+    return v
+
+
+class BaseConceptProperty(object):
+    def __init__(self, name, display_name=None, data_type=basestring, id=None, locked = False, default = True, title = False):
+        assert ' ' not in name, "name cannot contain spaces, alternative names include {} and {}".format(name.replace(" ", "_"), name.replace(" ", "-"))
+
+        self.id = id
+        self.name = name
+        self.display_name = display_name or name
+        self.type = parse_concept_datatype(data_type)
+        self.locked = locked
+        self.default = default
+        self.title = title
+
+    @classmethod
+    def from_tuple(cls, data):
+        name = data[0]
+        data_type = data[1]
+
+        try:
+            display_name = data[2]
+        except:
+            display_name = name
+
+        try:
+            title = data[3]
+        except:
+            title = False
+
+        return cls(name=name, display_name=display_name, data_type=data_type, title=title)
+
+    @classmethod
+    def from_dict(cls, data):
+        display_name = data.get('displayName', dict())
+        data_type = data.get('data_type', data.get('dataType'))
+        locked = data.get('locked', False)
+        default = data.get('default', True)
+        title = data.get('title', data.get('conceptTitle', False))
+        id = data.get('id', None)
+
+        return cls(name=data['name'], display_name=display_name, data_type=data_type, id=id, locked=locked, default=default, title=title)
+
+    def as_dict(self):
+        return dict(name=self.name, displayName=self.display_name, dataType=convert_datatype_to_concept_type(self.type), id=self.id, locked=self.locked, default=self.default, conceptTitle=self.title)
+
+    def as_tuple(self):
+        return (self.name, self.type, self.display_name, self.title)
+
+    def __repr__(self):
+        return u"<BaseConceptProperty name='{}' {}>".format(self.name, self.type)
+
+class BaseConceptValue(object):
+    def __init__(self, name, value, *args, **kwargs):
+        assert " " not in name, "name cannot contain spaces, alternative names include {} and {}".format(name.replace(" ", "_"), name.replace(" ", "-"))
+
+        self.name = name
+
+        data_type = kwargs.pop('data_type', None)
+        self.type = parse_concept_datatype(data_type)
+
+        self.set_value(value)
+
+    def set_value(self, value):
+        self.value = cast_value(value, self.type)
+
+    @classmethod
+    def from_tuple(cls, data):
+        return cls(name=data[0], value=value[1])
+
+    @classmethod
+    def from_dict(cls, data):
+        data_type = data.get('data_type', data.get('dataType'))
+
+        return cls(name=data['name'], value=data['value'], data_type=data_type)
+
+    def as_dict(self):
+        return dict(name=self.name, value=uncast_value(self.value), dataType=convert_datatype_to_concept_type(self.type))
+
+    def as_tuple(self):
+        return (self.name, self.value)
+
+    def __repr__(self):
+        return u"<BaseConceptValue name='{}' value='{}' {}>".format(self.name, self.value, self.type)
+
+
+class BaseConceptNode(BaseNode):
+    _object_key = ''
+    _property_cls = BaseConceptProperty
+
+    def __init__(self, dataset_id, name, display_name = None, description = None, locked = False, default = True, *args, **kwargs):
+        assert " " not in name, "type cannot contain spaces, alternative types include {} and {}".format(name.replace(" ", "_"), name.replace(" ", "-"))
+
+        self.type         = name
+        self.dataset_id   = dataset_id
+        self.display_name = display_name or name
+        self.description  = description or ''
+        self.locked       = locked
+        self.created_at   = kwargs.pop('createdAt', None)
+        self.updated_at   = kwargs.pop('updatedAt', None)
+        schema            = kwargs.pop('schema', None)
+
+        super(BaseConceptNode, self).__init__(*args, **kwargs)
+
+        self.schema = dict()
+        if schema is None:
+            return
+
+        self._add_properties(schema)
+
+    def _add_property(self, name, display_name=None, data_type=basestring):
+        prop = self._property_cls(name=name, display_name=display_name, data_type=data_type)
+        self.schema[prop.name] = prop
+
+    def _add_properties(self, properties):
+        if isinstance(properties, list):
+            for p in properties:
+                if isinstance(p, dict):
+                    prop = self._property_cls.from_dict(p)
+                elif isinstance(p, tuple):
+                    prop = self._property_cls.from_tuple(p)
+                elif isinstance(p, basestring):
+                    prop = self._property_cls(name=p)
+                elif isinstance(p, self._property_cls):
+                    prop = p
+                else:
+                    raise Exception("unsupported property value: {}".format(type(p)))
+
+                self.schema[prop.name] = prop
+        elif isinstance(properties, dict):
+            for k,v in properties.items():
+                self._add_property(name=k, data_type=v)
+        else:
+            raise Exception("invalid type {}; properties must either be a dict or list".format(type(properties)))
+
+    def _validate_values_against_schema(self, values):
+        data_keys = set(values.keys())
+        schema_keys = set(self.schema.keys())
+
+        assert data_keys <= schema_keys, "Invalid properties: {}.\n\nAn instance of {} should only include values for properties defined in its schema: {}".format(data_keys - schema_keys, self.type, schema_keys)
+
+    # should be overridden by sub-class
+    def update(self):
+        pass
+
+    def add_property(self, name, data_type=basestring, display_name=None):
+        """
+        Appends a property to the object's schema and updates the object on the platform.
+
+        Args:
+          name (str): Name of the property
+          data_type (type, optional): Python type of the property. Defaults to ``basestring``.
+          display_name (str, optional): Display name for the property.
+
+        Example:
+          Adding a new property with the default data_type::
+            mouse.add_property('name')
+
+          Adding a new property with the ``float`` data_type::
+            mouse.add_property('weight', float)
+        """
+        self._add_property(name, data_type=data_type, display_name=display_name)
+
+        try:
+            self.update()
+        except:
+            raise #Exception("local object updated, but failed to update remotely")
+
+    def add_properties(self, properties):
+        """
+        Appends multiple properties to the object's schema and updates the object
+        on the platform. Individual properties in the list can be specified in
+        multiple ways; as ``tuples``, ``dicts``, or just as the name of the
+        property for any properties that are simply strings.
+
+        Args:
+          properties (list): List of properties to add
+
+        Example::
+
+            mouse.add_properties([('weight', float), {'name': 'id', 'data_type': long}, 'description'])
+        """
+        self._add_properties(properties)
+
+        try:
+            self.update()
+        except:
+            raise Exception("local object updated, but failed to update remotely")
+
+    def get_property(self, name):
+        """
+        Gets the property object by name.
+
+        Example:
+            >>> mouse.get_propery('weight').type
+            float
+        """
+        return self.schema.get(name, None)
+
+    def as_dict(self):
+        return dict(
+            name = self.type,
+            displayName = self.display_name,
+            description = self.description,
+            locked = self.locked,
+            schema = [p.as_dict() for p in self.schema.values()]
+        )
+
+class BaseConceptInstance(BaseNode):
+    _object_key = ''
+    _value_cls = BaseConceptValue
+
+    def __init__(self, dataset_id, type, *args, **kwargs):
+        self.type       = type
+        self.dataset_id  = dataset_id
+        self.created_at = kwargs.pop('createdAt', None)
+        self.updated_at = kwargs.pop('updatedAt', None)
+        values          = kwargs.pop('values', None)
+
+        super(BaseConceptInstance, self).__init__(*args, **kwargs)
+
+        self._values = dict()
+        if values is None:
+            return
+
+        self._set_values(values)
+
+    def _set_value(self, name, value):
+        if name in self._values:
+            v = self._values[name]
+            v.set_value(value)
+        else:
+            v = self._value_cls(name=name, value=value)
+            self._values[v.name] = v
+
+    def _set_values(self, values):
+        if isinstance(values, list):
+            for v in values:
+                if isinstance(v, dict):
+                    value = self._value_cls.from_dict(v)
+                elif isinstance(v, tuple):
+                    value = self._value_cls.from_tuple(v)
+                elif isinstance(v, self._value_cls):
+                    value = v
+                else:
+                    raise Exception("unsupported value: {}".format(type(v)))
+
+                self._values[value.name] = value
+        elif isinstance(values, dict):
+            for k,v in values.items():
+                self._set_value(name=k, value=v)
+        else:
+            raise Exception("invalid type {}; values must either be a dict or list".format(type(properties)))
+
+    @property
+    def values(self):
+        return { v.name: v.value for v in self._values.values() }
+
+    # should be overridden by sub-class
+    def update(self):
+        pass
+
+    def get(self, name):
+        """
+        Returns:
+            The value of the property if it exists. None otherwise.
+        """
+        value = self._values.get(name, None)
+        return value.value if value is not None else None
+
+    def set(self, name, value):
+        """
+        Updates the value of an existing property or creates a new property
+        if one with the given name does not exist.
+
+        Note:
+            Updates the object on the platform.
+        """
+        self._set_value(name, value)
+
+        try:
+            self.update()
+        except:
+            raise Exception("local object updated, but failed to update remotely")
+
+    def as_dict(self):
+        return {'values': [v.as_dict() for v in self._values.values()] }
+
+    def __repr__(self):
+        return u"<BaseConceptInstance type='{}' id='{}'>".format(self.type, self.id)
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Concepts
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+class ConceptProperty(BaseConceptProperty):
+    def __repr__(self):
+        return u"<ConceptProperty name='{}' {}>".format(self.name, self.type)
+
+class ConceptValue(BaseConceptValue):
+    def __repr__(self):
+        return u"<ConceptValue name='{}' value='{}' {}>".format(self.name, self.value, self.type)
+
+
+class Concept(BaseConceptNode):
+    """
+    Model for defining concepts and creating instances of them.
+    """
+
+    _object_key = ''
+    _property_cls = ConceptProperty
+
+    def __init__(self, dataset_id, name, display_name = None, description = None, locked = False, *args, **kwargs):
+        self.count = kwargs.pop('count', None)
+        self.state = kwargs.pop('state', None)
+
+        super(Concept, self).__init__(dataset_id, name, display_name, description, locked, *args, **kwargs)
+
+    def update(self):
+        """
+        Updates the details of the ``Concept`` on the platform.
+
+        Example::
+
+          mouse.update()
+
+        Note:
+            Currently, you can only append new properties to a ``Concept``.
+        """
+        self._check_exists()
+
+        _update_self(self, self._api.concepts.update(self.dataset_id, self))
+
+    def delete(self):
+        """
+        Deletes a concept from the platform. Must not have any instances.
+        """
+        return self._api.concepts.delete(self.dataset_id, self)
+
+    def get_all(self, limit=100):
+        """
+        Retrieves all instances of the concept from the platform.
+
+        Returns:
+            List of ``ConceptInstance``
+
+        Example::
+
+          mice = mouse.get_all()
+        """
+        return self._api.concepts.instances.get_all(self.dataset_id, self, limit=limit)
+
+    def get(self, id):
+        """
+        Retrieves an instance of the concept by id from the platform.
+
+        Args:
+            id (int): the id of the instance
+
+        Returns:
+            A single ``ConceptInstance``
+
+        Example::
+
+          mouse_001 = mouse.get(123456789)
+        """
+        return self._api.concepts.instances.get(self.dataset_id, id, self)
+
+    def create(self, values=dict()):
+        """
+        Creates an instance of the concept on the platform.
+
+        Args:
+            values (dict, optional): values for properties defined in the `Concept` schema
+
+        Returns:
+            The newly created ``ConceptInstance``
+
+        Example::
+
+          mouse_002 = mouse.create({"id": 2, "weight": 2.2})
+        """
+        self._check_exists()
+
+        data_keys = set(values.keys())
+        schema_keys = set(self.schema.keys())
+        assert len(data_keys & schema_keys) > 0, "An instance of {} must include values for at least one of its propertes: {}".format(self.type, schema_keys)
+
+        self._validate_values_against_schema(values)
+
+        values = [dict(name=k, value=v, dataType=self.schema.get(k).type) for k,v in values.items()]
+        ci = ConceptInstance(dataset_id=self.dataset_id, type=self.type, values=values)
+        ci = self._api.concepts.instances.create(self.dataset_id, ci)
+        return ci
+
+    def create_many(self, *values_list):
+        """
+        Create multiple instances of the concept on the platform.
+
+        Args:
+            values_list (list): array of dictionaries corresponding to instance values.
+
+        Returns:
+            Array of newly created ``ConceptInstance``s.
+        """
+        self._check_exists()
+        schema_keys = set(self.schema.keys())
+
+        for values in values_list:
+            data_keys = set(values.keys())
+            assert len(data_keys & schema_keys) > 0, "An instance of {} must include values for at least one of its propertes: {}".format(self.type, schema_keys)
+            self._validate_values_against_schema(values)
+
+        ci_list = [
+            ConceptInstance(
+                dataset_id = self.dataset_id,
+                type       = self.type,
+                values     = [
+                    dict(
+                        name=k,
+                        value=v,
+                        dataType=self.schema.get(k).type
+                    )
+                    for k,v in values.items()
+                ]
+            )
+            for values in values_list
+        ]
+        return self._api.concepts.instances.create_many(self.dataset_id, self, *ci_list)
+
+    def from_dataframe(self, df):
+        return self.create_many(*df.to_dict(orient='records'))
+
+    def delete_items(self, *instances):
+        """
+        Deletes multiple instances of a concept from the platform.
+
+        Args:
+            *instances: instances and/or ids of instances to delete
+
+        Returns:
+            None
+
+            Prints the list of instances that failed to delete.
+
+        Example::
+
+          mouse.delete(mouse_002, 123456789, mouse_003.id)
+        """
+        result = self._api.concepts.delete_instances(self.dataset_id, self, *instances)
+
+        for error in result['errors']:
+            print "Failed to delete instance {} with error: {}".format(error[0], error[1])
+
+    def __repr__(self):
+        return u"<Concept type='{}' id='{}'>".format(self.type, self.id)
+
+
+class ConceptInstance(BaseConceptInstance):
+    """
+    Model that describes a single instance of a ``Concept``.
+
+    Includes its neighbors, relationships, and links.
+    """
+    _object_key = ''
+    _value_cls = ConceptValue
+
+    def __init__(self, dataset_id, type, *args, **kwargs):
+        super(ConceptInstance, self).__init__(dataset_id, type, *args, **kwargs)
+
+    def _get_relationship_type(self, relationship):
+        return relationship.type if isinstance(relationship, Relationship) else relationship
+
+    def _get_links(self, concept):
+        return self._api.concepts.instances.relations(self.dataset_id, self, concept)
+
+    def links(self, concept, relationship=None):
+        """
+        Returns all neighboring instances of the given concept type and their relationships to this instance.
+        Optionally, filtered by a type of relationship.
+
+        Args:
+            concept (str, Concept): type of neighboring concepts desired
+            relationship (str, Relationship, optional): relationship type to filter results by
+
+        Returns:
+            List of tuples of (``RelationshipInstance``, ``ConceptInstance``)
+
+        Example::
+            links = mouse_001.links('disease', 'has')
+        """
+        links = self._get_links(concept)
+
+        if relationship is None:
+            return links
+        else:
+            relationship_type = self._get_relationship_type(relationship)
+            filtered = filter(lambda l: l[0].type == relationship_type, links)
+            return filtered
+
+    def relationships(self, concept, relationship=None):
+        """
+        All relationships to concept instances of the given type, that this
+        instance is a member of (as source or destination).
+
+        Args:
+            concept (str, Concept): type of neighboring concepts to find relationships to
+            relationship (str, Relationship, optional): single relationship type to filter results by
+        Returns:
+            List of ``RelationshipInstance``
+
+        Example::
+            relationships = mouse_001.neighbors('disease', 'has')
+        """
+        links = self.links(concept, relationship)
+        if not links:
+            return list()
+        else:
+            relationships, _ = zip(*links)
+            return list(relationships)
+
+    def neighbors(self, concept, relationship=None):
+        """
+        All instances of the given concept type that this instance is linked to.
+        Optionally, filtered by a type of relationship.
+
+        Args:
+            concept (str, Concept): type of neighboring concepts desired
+            relationship (str, Relationship, optional): relationship type to filter results by
+
+        Returns:
+            List of ``ConceptInstance``
+
+        Example::
+            diseases = mouse_001.neighbors('disease', 'has')
+        """
+        links = self.links(concept, relationship)
+        if not links:
+            return list()
+        else:
+            _, neighbors = zip(*links)
+            return list(neighbors)
+
+    # TODO: Concepts API is not returing proxy instances from /relations endpoint
+    #       When these are provided by the API, rewrite
+    def data(self, relationship=None):
+        """
+        All data that this instance is related to.
+        Optionally, filtered by a type of relationship.
+
+        Args:
+            relationship (str, Relationship, optional): relationship to filter results by
+
+        Returns:
+            List of data objects i.e. ``DataPackage``
+
+        Example::
+            eegs = mouse_001.data('recorded-from')
+        """
+        neighbors = self.neighbors(relationship)
+        proxies = filter(lambda n: isinstance(n, ProxyInstance), neighbors)
+
+        return [p.item() for p in proxies]
+
+    def link(self, relationship, destination, values=dict()):
+        """
+        Creates a link between this instance and another ``ConceptInstance`` or ``DataPackage``
+
+        Args:
+            relationship (Relationship, str): type of Relationship to create
+            destination (ConceptInstance, DataPackage): ``ConceptInstance`` or ``DataPackage`` that is related to the instance
+            values (dict, optional): values for properties definied in the Relationship's schema
+
+        Returns:
+            RelationshipInstance that defines the link
+
+        Example:
+            Create a link between a ``ConceptInstance`` and a ``DataPackage``::
+
+                mouse_001.link('from', eeg)
+
+            Create a link between two ``ConceptInstance``::
+
+                mouse_001.link('located_at', lab_009)
+
+            Create a link (with values) between a ``ConceptInstance`` and a ``DataPackage``::
+
+                mouse_001.link('from', eeg, {"date": datetime.datetime(1991, 02, 26, 07, 0)})
+        """
+        self._check_exists()
+        assert isinstance(destination, (ConceptInstance, DataPackage)), "destination must be object of type ConceptInstance or DataPackage"
+        return self._api.concepts.relationships.instances.link(self.dataset_id, relationship, self, destination, values)
+
+    def link_many(self, relationship, destinations, values=None):
+        self._check_exists()
+        values = [dict() for _ in values] if values is None else values
+        assert len(destinations)==len(values), "Length of values must match length of destinations"
+        for destination, dvalues in zip(destinations, values):
+            assert isinstance(destination, (ConceptInstance, DataPackage)), "destination must be object of type ConceptInstance or DataPackage"
+            yield self._api.concepts.relationships.instances.link(self.dataset_id, relationship, self, destination, dvalues)
+
+    def concept(self):
+        """
+        Retrieves the concept definition of this instance from the platform
+
+        Returns:
+           A single ``Concept``.
+        """
+        return self._api.concepts.get(self.dataset_id, self.type)
+
+    def update(self):
+        """
+        Updates the values of the instance on the platform.
+
+        Example::
+
+          mouse_001.update()
+        """
+        self._check_exists()
+
+        _update_self(self, self._api.concepts.instances.update(self.dataset_id, self))
+
+    def delete(self):
+        """
+        Deletes the instance from the platform.
+
+        Example::
+
+          mouse_001.delete()
+        """
+        return self._api.concepts.instances.delete(self.dataset_id, self)
+
+    def __repr__(self):
+        return u"<ConceptInstance type='{}' id='{}'>".format(self.type, self.id)
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Relationships
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+class RelationshipProperty(BaseConceptProperty):
+    def __repr__(self):
+        return u"<RelationshipProperty name='{}' {}>".format(self.name, self.type)
+
+class RelationshipValue(BaseConceptValue):
+    def __repr__(self):
+        return u"<RelationshipValue name='{}' value='{}' {}>".format(self.name, self.value, self.type)
+
+
+class Relationship(BaseConceptNode):
+    """
+    Model for defining a relationships.
+    """
+    _object_key = ''
+    _property_cls = RelationshipProperty
+
+    def __init__(self, dataset_id, name, display_name=None, description=None, locked=False, *args, **kwargs):
+
+        kwargs.pop('type', None)
+        super(Relationship, self).__init__(dataset_id, name, display_name, description, locked, *args, **kwargs)
+
+    def update(self):
+        raise Exception("Updating Relationships is not available at this time.")
+        #TODO: _update_self(self, self._api.concepts.relationships.update(self.dataset_id, self))
+
+    # TODO: delete when update is supported, handled in super-class
+    def add_property(self, name, display_name=None, data_type=basestring):
+        raise Exception("Updating Relationships is not available at this time.")
+
+    # TODO: delete when update is supported, handled in super-class
+    def add_properties(self, properties):
+        raise Exception("Updating Relationships is not available at this time.")
+
+    def delete(self):
+        raise Exception("Deleting Relationships is not available at this time.")
+        #TODO: self._api.concepts.relationships.delete(self.dataset_id, self)
+
+    def get_all(self):
+        """
+        Retrieves all instances of the relationship from the platform.
+
+        Returns:
+            List of ``RelationshipInstance``
+
+        Example::
+
+          belongs_to_relationships = belongs_to.get_all()
+        """
+        return self._api.concepts.relationships.instances.get_all(self.dataset_id, self)
+
+    def get(self, id):
+        """
+        Retrieves an instance of the relationship by id from the platform.
+
+        Args:
+            id (int): the id of the instance
+
+        Returns:
+            A single ``RelationshipInstance``
+
+        Example::
+
+          mouse_001 = mouse.get(123456789)
+        """
+        return self._api.concepts.relationships.instances.get(self.dataset_id, id, self)
+
+    def link(self, source, destination, values=dict()):
+        """
+        Creates a link between a concept instance and another instance or data package on the platform.
+
+        Args:
+            source (ConceptInstance, DataPackage): instance or data package the relationship orginates from
+            destination (ConceptInstance, DataPackage): instance or data package the relationship points to
+            values (dict, optional): values for properties defined in the relationship's schema
+
+        Returns:
+            The newly created ``RelationshipInstance``
+
+        Example:
+            Create a link between a ``ConceptInstance`` and a ``DataPackage``::
+
+                from_relationship.link(mouse_001, eeg)
+
+            Create a link (with values) between a ``ConceptInstance`` and a ``DataPackage``::
+
+                from_relationship.link(mouse_001, eeg, {"date": datetime.datetime(1991, 02, 26, 07, 0)})
+        """
+        self._check_exists()
+        self._validate_values_against_schema(values)
+        return self._api.concepts.relationships.instances.link(self.dataset_id, self, source, destination, values)
+
+    def create_many(self, *item_list):
+        """
+        Create multiple links between records in the dataset
+
+        Args:
+            value_list (list): array of dictionaries corresponding to record relationships.
+
+        Returns:
+            Array of newly created ``Relationships``
+
+        """
+
+        # self._check_exists()
+        # values = [dict() for _ in values] if values is None else values
+        # assert len(destinations)==len(values), "Length of values must match length of destinations"
+        # for destination, dvalues in zip(destinations, values):
+        #     assert isinstance(destination, (ConceptInstance, DataPackage)), "destination must be object of type ConceptInstance or DataPackage"
+        #     yield self._api.concepts.relationships.instances.link(self.dataset_id, relationship, self, destination, dvalues)
+
+        #instance = RelationshipInstance(dataset_id=dataset_id, type=relationship_type, source=source, destination=destination, values=values)
+
+        self._check_exists()
+
+        # Check sources and destinations
+        for value in item_list:
+            assert isinstance(value['destination'], (ConceptInstance, DataPackage)), 'destination must be object of type ConceptInstance or DataPackage'
+            assert isinstance(value['source'], (ConceptInstance, DataPackage)), 'source must be object of type ConceptInstance or DataPackage'
+            assert value['relationship_type']==self.type, u'Relationship type of items need to match relationship type: "{}"'.format(self.type)
+
+        li_list = [
+            RelationshipInstance(
+                dataset_id  = self.dataset_id,
+                type        = item['relationship_type'],
+                source      = item['source'],
+                destination = item['destination'],
+                values     = [
+                    dict(
+                        name=k,
+                        value=v,
+                        dataType=self.schema.get(k).type
+                    )
+                    for k,v in item['values'].items()
+                ]
+            )
+            for item in item_list
+        ]
+
+        return self._api.concepts.relationships.instances.create_many(self.dataset_id, self, *li_list)
+
+    def as_dict(self):
+        d = super(Relationship, self).as_dict()
+        d['type'] = 'relationship'
+
+        return d
+
+    def __repr__(self):
+        return u"<Relationship type='{}' id='{}'>".format(self.type, self.id)
+
+
+class RelationshipInstance(BaseConceptInstance):
+    """
+    Model that describes a single instance of a ``Relationship``.
+    """
+    _object_key = ''
+
+    def __init__(self, dataset_id, type, source, destination, *args, **kwargs):
+        assert isinstance(source,  (ConceptInstance, basestring)), "source must be Concept or UUID"
+        assert isinstance(destination, (ConceptInstance, basestring)), "destination must be Concept or UUID"
+
+        if isinstance(source, ConceptInstance):
+            source = source.id
+        if isinstance(destination, ConceptInstance):
+            destination = destination.id
+
+        self.source = source
+        self.destination = destination
+
+        kwargs.pop('schemaRelationshipId', None)
+        super(RelationshipInstance, self).__init__(dataset_id, type, *args, **kwargs)
+
+    def relationship(self):
+        """
+        Retrieves the relationship definition of this instance from the platform
+
+        Returns:
+           A single ``Relationship``.
+        """
+        return self._api.concepts.relationships.get(self.dataset_id, self.type)
+
+    # TODO: delete when update is supported, handled in super-class
+    def set(self, name, value):
+        raise Exception("Updating a RelationshipInstance is not available at this time.")
+
+    def update(self):
+        raise Exception("Updating a RelationshipInstance is not available at this time.")
+        #TODO: _update_self(self, self._api.concepts.relationships.instances.update(self.dataset_id, self))
+
+    def delete(self):
+        """
+        Deletes the instance from the platform.
+
+        Example::
+
+          mouse_001_eeg_link.delete()
+        """
+        return self._api.concepts.relationships.instances.delete(self.dataset_id, self)
+
+    
+
+    @classmethod
+    def from_dict(cls, data, *args, **kwargs):
+        d = dict(
+            source  = data.pop('from', None),
+            destination = data.pop('to', None),
+            **data
+        )
+        item = super(RelationshipInstance, cls).from_dict(d, *args, **kwargs)
+        return item
+
+    def as_dict(self):
+        d = super(RelationshipInstance, self).as_dict()
+        d['to'] = self.destination
+        d['from'] = self.source
+
+        return d
+
+    def __repr__(self):
+        return u"<RelationshipInstance type='{}' id='{}' source='{}' destination='{}'>".format(self.type, self.id, self.source, self.destination)
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Proxies
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+class ProxyInstance(BaseConceptInstance):
+    _object_key = ''
+
+    def __init__(self, dataset_id, type, *args, **kwargs):
+        super(ProxyInstance, self).__init__(dataset_id, type, *args, **kwargs)
+
+    def item(self):
+        if self.type == 'proxy:package':
+            package_id = self.get('id')
+            return self._api.packages.get(package_id)
+        else:
+            raise Exception("unsupported proxy type: {}".format(self.type))
+
+    def update(self):
+        raise Exception("Updating a ProxyInstance is not available at this time.")
+
+    def set(self, name, value):
+        raise Exception("Updating a ProxyInstance is not available at this time.")
+
+    def __repr__(self):
+        return u"<ProxyInstance type='{}' id='{}'>".format(self.type, self.id)
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Concept/Relation Instance Sets
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+class BaseInstanceList(list):
+    _accept_type = None
+
+    def __init__(self, type, *args, **kwargs):
+        super(BaseInstanceList, self).__init__(*args, **kwargs)
+        assert isinstance(type, self._accept_type), "type must be type {}".format(self._accept_type)
+        self.type = type
+
+    def as_dataframe(self):
+        pass
+
+class ConceptInstanceSet(BaseInstanceList):
+    _accept_type = Concept
+
+    def as_dataframe(self):
+        """
+        Converts the list of ``Conceptinstance`` to a pandas DataFrame
+
+        Returns:
+          pd.DataFrame
+        """
+        cols = self.type.schema.keys()
+        data = []
+        for instance in self:
+            data.append(instance.values)
+        df = pd.DataFrame(data=data, columns=cols)
+        return df
+
+class RelationshipInstanceSet(BaseInstanceList):
+    _accept_type = Relationship
+
+    def as_dataframe(self):
+        """
+        Converts the list of ``RelationshipInstance`` to a pandas DataFrame
+
+        Returns:
+          pd.DataFrame
+
+        Note:
+          In addition to the values in each relationship instance, the DataFrame
+          contains three columns that describe each instance:
+            ``__source__``: ID of the instance's source
+            ``__destination__``: ID of the instance's destination
+            ``__type__``: Type of relationship that the instance is
+        """
+        cols = ['__source__', '__destination__', '__type__']
+        cols.extend(self.type.schema.keys())
+
+        data = []
+        for instance in self:
+            d = {}
+            d['_type'] = self.type.type
+            d['_source'] = instance.source
+            d['_destination'] = instance.destination
+
+            for name, value in instance.values.items():
+                d[name] = value
+
+            data.append(d)
+
+        df = pd.DataFrame(data=data, columns=cols)
+        return df
