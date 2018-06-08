@@ -280,7 +280,7 @@ class IOAPI(APIBase):
                     raise future.exception()
                 import_id = import_id_map[fname]
                 # check to see if rest of the import group has uploaded
-                if all([ file_results[name] for name, id in import_id_map.items() if id == import_id ]):
+                if all([ name in file_results for name, id in import_id_map.items() if id == import_id ]):
                     # trigger ETL import
                     group_results.append(self.set_upload_complete(import_id, dataset_id, destination_id, append))
 
@@ -310,7 +310,7 @@ class IOAPI(APIBase):
             import_id = p.get("importId")
             warnings = p.get("warnings", list())
             for warning in warnings:
-                logger.warn("API warning: {}".format(warning))
+                log.warn("API warning: {}".format(warning))
             for f in p.get("files", list()):
                 index = f.get("uploadId")
                 import_id_map[files[index]] = import_id
