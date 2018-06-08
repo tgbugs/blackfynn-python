@@ -1322,9 +1322,10 @@ class TimeSeriesChannel(BaseDataNode):
         self.__dict__.update(r.__dict__)
 
     @property
-    def segments(self):
-        # TODO: query API to get segments
-        raise NotImplementedError
+    def segments(self, start=None, stop=None):
+        start = self.start if start is None else start
+        stop  = self.end   if stop  is None else stop
+        return self._api.timeseries.get_segments(self._pkg, self, start=start, stop=stop)
 
     @property
     def gaps(self):
