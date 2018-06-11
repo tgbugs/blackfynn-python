@@ -2058,7 +2058,7 @@ def uncast_value(value):
 
 
 class BaseModelProperty(object):
-    def __init__(self, name, display_name=None, data_type=basestring, id=None, locked = False, default = True, title = False):
+    def __init__(self, name, display_name=None, data_type=basestring, id=None, locked=False, default=True, title=False, description=""):
         assert ' ' not in name, "name cannot contain spaces, alternative names include {} and {}".format(name.replace(" ", "_"), name.replace(" ", "-"))
 
         self.id = id
@@ -2068,6 +2068,7 @@ class BaseModelProperty(object):
         self.locked = locked
         self.default = default
         self.title = title
+        self.description = description
 
     @classmethod
     def from_tuple(cls, data):
@@ -2098,7 +2099,16 @@ class BaseModelProperty(object):
         return cls(name=data['name'], display_name=display_name, data_type=data_type, id=id, locked=locked, default=default, title=title)
 
     def as_dict(self):
-        return dict(name=self.name, displayName=self.display_name, dataType=convert_datatype_to_model_type(self.type), id=self.id, locked=self.locked, default=self.default, conceptTitle=self.title)
+        return dict(
+            id           = self.id,
+            name         = self.name,
+            displayName  = self.display_name,
+            dataType     = convert_datatype_to_model_type(self.type),
+            locked       = self.locked,
+            default      = self.default,
+            conceptTitle = self.title,
+            description  = self.description
+        )
 
     def as_tuple(self):
         return (self.name, self.type, self.display_name, self.title)
@@ -2164,8 +2174,8 @@ class BaseModelNode(BaseNode):
 
         self._add_properties(schema)
 
-    def _add_property(self, name, display_name=None, data_type=basestring):
-        prop = self._property_cls(name=name, display_name=display_name, data_type=data_type)
+    def _add_property(self, name, display_name=None, data_type=basestring, title=False):
+        prop = self._property_cls(name=name, display_name=display_name, data_type=data_type, title=title)
         self.schema[prop.name] = prop
 
     def _add_properties(self, properties):
@@ -2199,7 +2209,7 @@ class BaseModelNode(BaseNode):
     def update(self):
         pass
 
-    def add_property(self, name, data_type=basestring, display_name=None):
+    def add_property(self, name, data_type=basestring, display_name=None, title=False):
         """
         Appends a property to the object's schema and updates the object on the platform.
 
@@ -2215,7 +2225,7 @@ class BaseModelNode(BaseNode):
           Adding a new property with the ``float`` data_type::
             mouse.add_property('weight', float)
         """
-        self._add_property(name, data_type=data_type, display_name=display_name)
+        self._add_property(name, data_type=data_type, display_name=display_name, title=title)
 
         try:
             self.update()

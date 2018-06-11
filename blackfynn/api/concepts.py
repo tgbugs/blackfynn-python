@@ -346,7 +346,7 @@ class ModelProxiesAPI(ModelsAPIBase):
             {
                 'direction': direction,
                 'linkTarget': { 
-                    "Record": {
+                    "ConceptInstance": {
                         'id': concept_instance_id
                     }
                 },
