@@ -107,6 +107,27 @@ class ModelsAPI(ModelsAPIBase):
 
         return self._del(self._uri('/{dataset_id}/concepts/{id}/instances', dataset_id=dataset_id, id=concept_id), json=ids)
 
+    def files(self, dataset, concept, instance):
+        """
+        Return list of files (i.e. packages) related to record.
+        """
+        dataset_id  = self._get_id(dataset)
+        concept_id  = self._get_id(concept)
+        instance_id = self._get_id(instance)
+        resp = self._get(
+            self._uri('/{dataset_id}/concepts/{concept_id}/instances/{instance_id}/files',
+                dataset_id=dataset_id, 
+                concept_id=concept_id,
+                instance_id=instance_id
+            ))
+        for r,pkg in resp:
+            print " * relation: {}".format(r)
+            print " * package: {}".format(pkg)
+            print "~"*20
+        return [DataPackage.from_dict(pkg, api=self.session) for r,pkg in resp]
+
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Model Instances
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

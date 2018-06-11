@@ -446,8 +446,8 @@ class BaseDataNode(BaseNode):
             pass
 
         # parse, store parent (ID only)
-        if 'parent' in data:
-            parent = data['parent']
+        parent = data.get('parent', None)
+        if parent is not None:
             if isinstance(parent, basestring):
                 item.parent = parent
             else:
@@ -826,7 +826,8 @@ class DataPackage(BaseDataNode):
         item = super(DataPackage, cls).from_dict(data, *args, **kwargs)
 
         # parse objects
-        if 'objects' in data:
+        objects = data.get('objects', None)
+        if objects is not None:
             for otype in ['sources','files','view']:
                 if otype not in data['objects']:
                     continue
@@ -2617,7 +2618,7 @@ class Record(BaseRecord):
 
     # TODO: Models API is not returing proxy instances from /relations endpoint
     #       When these are provided by the API, rewrite
-    def files(self, relationship=None):
+    def files(self):
         """
         All files that this instance is related.
         Optionally, filtered by a type of relationship.
@@ -2631,10 +2632,7 @@ class Record(BaseRecord):
         Example::
             eegs = mouse_001.data('recorded-from')
         """
-        neighbors = self.neighbors(relationship)
-        proxies = filter(lambda n: isinstance(n, ProxyInstance), neighbors)
-
-        return [p.item() for p in proxies]
+        return self._api.concepts.files(self.dataset_id, self.type, self)
 
     def link(self, relationship, destination, values=dict()):
         """
