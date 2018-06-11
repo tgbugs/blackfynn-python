@@ -786,30 +786,34 @@ class DataPackage(BaseDataNode):
         self._check_exists()
         return self._api.packages.get_view(self)
 
-    def link(self, relationship, source, values=dict()):
+    def link(self, relationship, record, values=None):
         """
-        Links a ``DataPackage`` to a ``ConceptInstance`` given a type of ``Relationship``
+        Links a ``DataPackage`` to a ``Record`` given a type of ``Relationship``.
 
         Args:
-            relationship (Relationship or str): type of relationship to create between the data package and concept instance
-            source (ConceptInstance): instance that is related to the data package
+            relationship (Relationship or str): type of relationship to create
+            record (Record): record that is related to the data package
             values (dict, optional): values for properties definied in the relationship's schema
 
         Returns:
             ``RelationshipInstance`` that defines the link
 
         Example:
-            Create a link between a data package and a concept instance::
+            Create a link between a data package and a record::
 
                 eeg.link('from', mouse_001)
 
-            Create a link (with values) between a data package and a concept instance::
+            Create a link (with values) between a data package and record::
 
                 eeg.link('from', mouse_001, {"date": datetime.datetime(1991, 02, 26, 07, 0)})
+
+        Note:
+            Relationship direction is ``Record`` --to--> ``DataPackage``.
         """
+        values = dict() if values is None else values
         self._check_exists()
-        assert isinstance(source, ConceptInstance), "source must be object of type ConceptInstance"
-        return self._api.concepts.relationships.instances.link(self.dataset, relationship, source, self, values)
+        assert isinstance(record, Record), "record must be object of type Record"
+        return self._api.concepts.relationships.instances.link(self.dataset, relationship, record, self, values)
 
     def as_dict(self):
         d = super(DataPackage, self).as_dict()
@@ -1820,10 +1824,10 @@ class Dataset(BaseCollection):
         self._check_exists()
         return self._api.datasets.remove_collaborators(self, *collaborator_ids)
 
-    def concepts(self):
+    def models(self):
         """
         Returns:
-            List of concepts defined in Dataset
+            List of models defined in Dataset
         """
         return self._api.concepts.get_all(self.id)
 
@@ -1834,19 +1838,19 @@ class Dataset(BaseCollection):
         """
         return self._api.concepts.relationships.get_all(self.id)
 
-    def get_concept(self, name_or_id):
+    def get_model(self, name_or_id):
         """
-        Retrieve a ``Concept`` by name or id
+        Retrieve a ``Model`` by name or id
 
         Args:
-            name_or_id (str or int): name or id of the concept
+            name_or_id (str or int): name or id of the model
 
         Returns:
-            The requested ``Concept`` in Dataset
+            The requested ``Model`` in Dataset
 
         Example::
 
-            mouse = ds.get_concept('mouse')
+            mouse = ds.get_model('mouse')
         """
         return self._api.concepts.get(self.id, name_or_id)
 
@@ -1866,23 +1870,23 @@ class Dataset(BaseCollection):
         """
         return self._api.concepts.relationships.get(self.id, name_or_id)
 
-    def create_concept(self, name, display_name=None, description=None, schema=None, **kwargs):
+    def create_model(self, name, display_name=None, description=None, schema=None, **kwargs):
         """
-        Defines a ``Concept`` on the platform.
+        Defines a ``Model`` on the platform.
 
         Args:
-            name (str): name of the concept
-            description (str, optional): description of the concept
-            schema (dict, optional): definitation of the concept's schema
+            name (str):                  name of the model
+            description (str, optional): description of the model
+            schema (dict, optional):     definitation of the model's schema
 
         Returns:
-            The newly created ``Concept``
+            The newly created ``Model``
 
         Example::
 
             ds.create_concept('mouse', 'Mouse', 'epileptic mice', schema={'id': str, 'weight': float})
         """
-        c = Concept(dataset_id=self.id, name=name, display_name=display_name, description=description, schema=schema, **kwargs)
+        c = Model(dataset_id=self.id, name=name, display_name=display_name, description=description, schema=schema, **kwargs)
         return self._api.concepts.create(self.id, c)
 
     def create_relationship(self, name, description, schema=None, **kwargs):
@@ -1890,8 +1894,8 @@ class Dataset(BaseCollection):
         Defines a ``Relationship`` on the platform.
 
         Args:
-            name (str): name of the relationship
-            description (str): description of the relationship
+            name (str):              name of the relationship
+            description (str):       description of the relationship
             schema (dict, optional): definitation of the relationship's schema
 
         Returns:
@@ -1973,15 +1977,15 @@ class LedgerEntry(BaseNode):
                 }
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Concepts & Relationships
+# Models & Relationships
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Concept Helpers
+# Model Helpers
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-concept_type_map = {
+model_type_map = {
     basestring: 'string',
     unicode: 'string',
     str: 'string',
@@ -1993,7 +1997,7 @@ concept_type_map = {
     datetime.datetime: 'date'
 }
 
-concept_type_reverse_map = {
+model_type_reverse_map = {
     'string': unicode,
     'long': long,
     'double': float,
@@ -2001,30 +2005,30 @@ concept_type_reverse_map = {
     'date': datetime.datetime
 }
 
-def parse_concept_datatype(data_type=None):
-    if data_type is None or isinstance(data_type, type) and data_type in concept_type_map:
+def parse_model_datatype(data_type=None):
+    if data_type is None or isinstance(data_type, type) and data_type in model_type_map:
         t = data_type
-    elif isinstance(data_type, basestring) and data_type.lower() in concept_type_reverse_map:
-        t = concept_type_reverse_map[data_type.lower()]
+    elif isinstance(data_type, basestring) and data_type.lower() in model_type_reverse_map:
+        t = model_type_reverse_map[data_type.lower()]
     else:
         raise Exception('data_type {} not supported'.format(data_type))
 
     return t
 
-def convert_datatype_to_concept_type(data_type):
+def convert_datatype_to_model_type(data_type):
     if data_type is None:
         return
 
-    assert isinstance(data_type, type) and data_type in concept_type_map, "data_type must be one of {}".format(concept_type_map.keys())
+    assert isinstance(data_type, type) and data_type in model_type_map, "data_type must be one of {}".format(model_type_map.keys())
 
-    t = concept_type_map[data_type]
+    t = model_type_map[data_type]
     return t.title()
 
 def cast_value(value, data_type=None):
     if data_type is None or value is None:
         return value
 
-    assert isinstance(data_type, type) and data_type in concept_type_map, "data_type must be None or one of {}".format(concept_type_map.keys())
+    assert isinstance(data_type, type) and data_type in model_type_map, "data_type must be None or one of {}".format(model_type_map.keys())
 
     if data_type in (datetime.date, datetime.datetime):
         if isinstance(value, (datetime.date, datetime.datetime)):
@@ -2040,7 +2044,7 @@ def uncast_value(value):
     if value is None:
         return
 
-    assert type(value) in concept_type_map, "value's type must be one of {}".format(concept_type_map.keys())
+    assert type(value) in model_type_map, "value's type must be one of {}".format(model_type_map.keys())
 
     if type(value) in (datetime.date, datetime.datetime):
         if value.tzinfo is None or value.tzinfo.utcoffset(value) is None:
@@ -2053,14 +2057,14 @@ def uncast_value(value):
     return v
 
 
-class BaseConceptProperty(object):
+class BaseModelProperty(object):
     def __init__(self, name, display_name=None, data_type=basestring, id=None, locked = False, default = True, title = False):
         assert ' ' not in name, "name cannot contain spaces, alternative names include {} and {}".format(name.replace(" ", "_"), name.replace(" ", "-"))
 
         self.id = id
         self.name = name
         self.display_name = display_name or name
-        self.type = parse_concept_datatype(data_type)
+        self.type = parse_model_datatype(data_type)
         self.locked = locked
         self.default = default
         self.title = title
@@ -2094,22 +2098,22 @@ class BaseConceptProperty(object):
         return cls(name=data['name'], display_name=display_name, data_type=data_type, id=id, locked=locked, default=default, title=title)
 
     def as_dict(self):
-        return dict(name=self.name, displayName=self.display_name, dataType=convert_datatype_to_concept_type(self.type), id=self.id, locked=self.locked, default=self.default, conceptTitle=self.title)
+        return dict(name=self.name, displayName=self.display_name, dataType=convert_datatype_to_model_type(self.type), id=self.id, locked=self.locked, default=self.default, conceptTitle=self.title)
 
     def as_tuple(self):
         return (self.name, self.type, self.display_name, self.title)
 
     def __repr__(self):
-        return u"<BaseConceptProperty name='{}' {}>".format(self.name, self.type)
+        return u"<BaseModelProperty name='{}' {}>".format(self.name, self.type)
 
-class BaseConceptValue(object):
+class BaseModelValue(object):
     def __init__(self, name, value, *args, **kwargs):
         assert " " not in name, "name cannot contain spaces, alternative names include {} and {}".format(name.replace(" ", "_"), name.replace(" ", "-"))
 
         self.name = name
 
         data_type = kwargs.pop('data_type', None)
-        self.type = parse_concept_datatype(data_type)
+        self.type = parse_model_datatype(data_type)
 
         self.set_value(value)
 
@@ -2127,18 +2131,18 @@ class BaseConceptValue(object):
         return cls(name=data['name'], value=data['value'], data_type=data_type)
 
     def as_dict(self):
-        return dict(name=self.name, value=uncast_value(self.value), dataType=convert_datatype_to_concept_type(self.type))
+        return dict(name=self.name, value=uncast_value(self.value), dataType=convert_datatype_to_model_type(self.type))
 
     def as_tuple(self):
         return (self.name, self.value)
 
     def __repr__(self):
-        return u"<BaseConceptValue name='{}' value='{}' {}>".format(self.name, self.value, self.type)
+        return u"<BaseModelValue name='{}' value='{}' {}>".format(self.name, self.value, self.type)
 
 
-class BaseConceptNode(BaseNode):
+class BaseModelNode(BaseNode):
     _object_key = ''
-    _property_cls = BaseConceptProperty
+    _property_cls = BaseModelProperty
 
     def __init__(self, dataset_id, name, display_name = None, description = None, locked = False, default = True, *args, **kwargs):
         assert " " not in name, "type cannot contain spaces, alternative types include {} and {}".format(name.replace(" ", "_"), name.replace(" ", "-"))
@@ -2152,7 +2156,7 @@ class BaseConceptNode(BaseNode):
         self.updated_at   = kwargs.pop('updatedAt', None)
         schema            = kwargs.pop('schema', None)
 
-        super(BaseConceptNode, self).__init__(*args, **kwargs)
+        super(BaseModelNode, self).__init__(*args, **kwargs)
 
         self.schema = dict()
         if schema is None:
@@ -2258,9 +2262,9 @@ class BaseConceptNode(BaseNode):
             schema = [p.as_dict() for p in self.schema.values()]
         )
 
-class BaseConceptInstance(BaseNode):
+class BaseRecord(BaseNode):
     _object_key = ''
-    _value_cls = BaseConceptValue
+    _value_cls = BaseModelValue
 
     def __init__(self, dataset_id, type, *args, **kwargs):
         self.type       = type
@@ -2269,7 +2273,7 @@ class BaseConceptInstance(BaseNode):
         self.updated_at = kwargs.pop('updatedAt', None)
         values          = kwargs.pop('values', None)
 
-        super(BaseConceptInstance, self).__init__(*args, **kwargs)
+        super(BaseRecord, self).__init__(*args, **kwargs)
 
         self._values = dict()
         if values is None:
@@ -2339,45 +2343,45 @@ class BaseConceptInstance(BaseNode):
         return {'values': [v.as_dict() for v in self._values.values()] }
 
     def __repr__(self):
-        return u"<BaseConceptInstance type='{}' id='{}'>".format(self.type, self.id)
+        return u"<BaseRecord type='{}' id='{}'>".format(self.type, self.id)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Concepts
+# Models
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class ConceptProperty(BaseConceptProperty):
+class ModelProperty(BaseModelProperty):
     def __repr__(self):
-        return u"<ConceptProperty name='{}' {}>".format(self.name, self.type)
+        return u"<ModelProperty name='{}' {}>".format(self.name, self.type)
 
-class ConceptValue(BaseConceptValue):
+class ModelValue(BaseModelValue):
     def __repr__(self):
-        return u"<ConceptValue name='{}' value='{}' {}>".format(self.name, self.value, self.type)
+        return u"<ModelValue name='{}' value='{}' {}>".format(self.name, self.value, self.type)
 
 
-class Concept(BaseConceptNode):
+class Model(BaseModelNode):
     """
-    Model for defining concepts and creating instances of them.
+    Representation of a Model in the knowledge graph.
     """
 
     _object_key = ''
-    _property_cls = ConceptProperty
+    _property_cls = ModelProperty
 
     def __init__(self, dataset_id, name, display_name = None, description = None, locked = False, *args, **kwargs):
         self.count = kwargs.pop('count', None)
         self.state = kwargs.pop('state', None)
 
-        super(Concept, self).__init__(dataset_id, name, display_name, description, locked, *args, **kwargs)
+        super(Model, self).__init__(dataset_id, name, display_name, description, locked, *args, **kwargs)
 
     def update(self):
         """
-        Updates the details of the ``Concept`` on the platform.
+        Updates the details of the ``Model`` on the platform.
 
         Example::
 
           mouse.update()
 
         Note:
-            Currently, you can only append new properties to a ``Concept``.
+            Currently, you can only append new properties to a ``Model``.
         """
         self._check_exists()
 
@@ -2385,16 +2389,16 @@ class Concept(BaseConceptNode):
 
     def delete(self):
         """
-        Deletes a concept from the platform. Must not have any instances.
+        Deletes a model from the platform. Must not have any instances.
         """
         return self._api.concepts.delete(self.dataset_id, self)
 
     def get_all(self, limit=100):
         """
-        Retrieves all instances of the concept from the platform.
+        Retrieves all records of the model from the platform.
 
         Returns:
-            List of ``ConceptInstance``
+            List of ``Record``
 
         Example::
 
@@ -2404,13 +2408,13 @@ class Concept(BaseConceptNode):
 
     def get(self, id):
         """
-        Retrieves an instance of the concept by id from the platform.
+        Retrieves a record of the model by id from the platform.
 
         Args:
-            id (int): the id of the instance
+            id (int): the id of the record 
 
         Returns:
-            A single ``ConceptInstance``
+            A single ``Record``
 
         Example::
 
@@ -2418,19 +2422,20 @@ class Concept(BaseConceptNode):
         """
         return self._api.concepts.instances.get(self.dataset_id, id, self)
 
-    def create(self, values=dict()):
+    def create_record(self, values=dict()):
         """
-        Creates an instance of the concept on the platform.
+        Creates a record of the model on the platform.
 
         Args:
-            values (dict, optional): values for properties defined in the `Concept` schema
+            values (dict, optional): values for properties defined in the `Model` schema
 
         Returns:
-            The newly created ``ConceptInstance``
+            The newly created ``Record``
 
         Example::
 
           mouse_002 = mouse.create({"id": 2, "weight": 2.2})
+
         """
         self._check_exists()
 
@@ -2441,19 +2446,19 @@ class Concept(BaseConceptNode):
         self._validate_values_against_schema(values)
 
         values = [dict(name=k, value=v, dataType=self.schema.get(k).type) for k,v in values.items()]
-        ci = ConceptInstance(dataset_id=self.dataset_id, type=self.type, values=values)
+        ci = Record(dataset_id=self.dataset_id, type=self.type, values=values)
         ci = self._api.concepts.instances.create(self.dataset_id, ci)
         return ci
 
-    def create_many(self, *values_list):
+    def create_records(self, *values_list):
         """
-        Create multiple instances of the concept on the platform.
+        Creates multiple records of the model on the platform.
 
         Args:
-            values_list (list): array of dictionaries corresponding to instance values.
+            values_list (list): array of dictionaries corresponding to record values.
 
         Returns:
-            Array of newly created ``ConceptInstance``s.
+            Array of newly created ``Record``s.
         """
         self._check_exists()
         schema_keys = set(self.schema.keys())
@@ -2464,7 +2469,7 @@ class Concept(BaseConceptNode):
             self._validate_values_against_schema(values)
 
         ci_list = [
-            ConceptInstance(
+            Record(
                 dataset_id = self.dataset_id,
                 type       = self.type,
                 values     = [
@@ -2483,65 +2488,70 @@ class Concept(BaseConceptNode):
     def from_dataframe(self, df):
         return self.create_many(*df.to_dict(orient='records'))
 
-    def delete_items(self, *instances):
+    def delete_records(self, *records):
         """
-        Deletes multiple instances of a concept from the platform.
+        Deletes multiple records of a concept from the platform.
 
         Args:
-            *instances: instances and/or ids of instances to delete
+            *records: instances and/or ids of records to delete
 
         Returns:
-            None
+            ``None``
 
-            Prints the list of instances that failed to delete.
+            Prints the list of records that failed to delete.
 
         Example::
 
           mouse.delete(mouse_002, 123456789, mouse_003.id)
+
         """
         result = self._api.concepts.delete_instances(self.dataset_id, self, *instances)
 
         for error in result['errors']:
             print "Failed to delete instance {} with error: {}".format(error[0], error[1])
 
+    def __iter__(self):
+        for record in self.get_all():
+            yield record
+
     def __repr__(self):
-        return u"<Concept type='{}' id='{}'>".format(self.type, self.id)
+        return u"<Model type='{}' id='{}'>".format(self.type, self.id)
 
 
-class ConceptInstance(BaseConceptInstance):
+class Record(BaseRecord):
     """
-    Model that describes a single instance of a ``Concept``.
+    Represents a record of a ``Model``.
 
     Includes its neighbors, relationships, and links.
     """
     _object_key = ''
-    _value_cls = ConceptValue
+    _value_cls = ModelValue
 
     def __init__(self, dataset_id, type, *args, **kwargs):
-        super(ConceptInstance, self).__init__(dataset_id, type, *args, **kwargs)
+        super(Record, self).__init__(dataset_id, type, *args, **kwargs)
 
     def _get_relationship_type(self, relationship):
         return relationship.type if isinstance(relationship, Relationship) else relationship
 
-    def _get_links(self, concept):
-        return self._api.concepts.instances.relations(self.dataset_id, self, concept)
+    def _get_links(self, model):
+        return self._api.concepts.instances.relations(self.dataset_id, self, model)
 
-    def links(self, concept, relationship=None):
+    def links(self, model, relationship=None):
         """
-        Returns all neighboring instances of the given concept type and their relationships to this instance.
+        Returns all neighboring records of the given model type and their relationships to this instance.
         Optionally, filtered by a type of relationship.
 
         Args:
-            concept (str, Concept): type of neighboring concepts desired
+            model (str, Model):                         type of neighboring model desired
             relationship (str, Relationship, optional): relationship type to filter results by
 
         Returns:
-            List of tuples of (``RelationshipInstance``, ``ConceptInstance``)
+            List of tuples of (``RelationshipInstance``, ``Record``)
 
         Example::
             links = mouse_001.links('disease', 'has')
         """
-        links = self._get_links(concept)
+        links = self._get_links(model)
 
         if relationship is None:
             return links
@@ -2550,54 +2560,56 @@ class ConceptInstance(BaseConceptInstance):
             filtered = filter(lambda l: l[0].type == relationship_type, links)
             return filtered
 
-    def relationships(self, concept, relationship=None):
+    def relationships(self, model, relationship=None):
         """
-        All relationships to concept instances of the given type, that this
-        instance is a member of (as source or destination).
+        All relationships to records of the given model that the current
+        record is a member of (as source or destination).
 
         Args:
-            concept (str, Concept): type of neighboring concepts to find relationships to
+            model (str, Model):                         type of neighboring records to find
             relationship (str, Relationship, optional): single relationship type to filter results by
         Returns:
             List of ``RelationshipInstance``
 
         Example::
             relationships = mouse_001.neighbors('disease', 'has')
+
         """
-        links = self.links(concept, relationship)
+        links = self.links(model, relationship)
         if not links:
             return list()
         else:
             relationships, _ = zip(*links)
             return list(relationships)
 
-    def neighbors(self, concept, relationship=None):
+    def neighbors(self, model, relationship=None):
         """
-        All instances of the given concept type that this instance is linked to.
+        All records of the given model that are related to this record.
         Optionally, filtered by a type of relationship.
 
         Args:
-            concept (str, Concept): type of neighboring concepts desired
+            model (str, Model):                         type of neighboring records desired
             relationship (str, Relationship, optional): relationship type to filter results by
 
         Returns:
-            List of ``ConceptInstance``
+            List of ``Record``
 
         Example::
             diseases = mouse_001.neighbors('disease', 'has')
+
         """
-        links = self.links(concept, relationship)
+        links = self.links(model, relationship)
         if not links:
             return list()
         else:
             _, neighbors = zip(*links)
             return list(neighbors)
 
-    # TODO: Concepts API is not returing proxy instances from /relations endpoint
+    # TODO: Models API is not returing proxy instances from /relations endpoint
     #       When these are provided by the API, rewrite
-    def data(self, relationship=None):
+    def files(self, relationship=None):
         """
-        All data that this instance is related to.
+        All files that this instance is related.
         Optionally, filtered by a type of relationship.
 
         Args:
@@ -2616,31 +2628,31 @@ class ConceptInstance(BaseConceptInstance):
 
     def link(self, relationship, destination, values=dict()):
         """
-        Creates a link between this instance and another ``ConceptInstance`` or ``DataPackage``
+        Creates a link between this instance and another ``Record`` or ``DataPackage``
 
         Args:
             relationship (Relationship, str): type of Relationship to create
-            destination (ConceptInstance, DataPackage): ``ConceptInstance`` or ``DataPackage`` that is related to the instance
+            destination (Record, DataPackage): ``Record`` or ``DataPackage`` that is related to the instance
             values (dict, optional): values for properties definied in the Relationship's schema
 
         Returns:
             RelationshipInstance that defines the link
 
         Example:
-            Create a link between a ``ConceptInstance`` and a ``DataPackage``::
+            Create a link between a ``Record`` and a ``DataPackage``::
 
                 mouse_001.link('from', eeg)
 
-            Create a link between two ``ConceptInstance``::
+            Create a link between two ``Record``::
 
                 mouse_001.link('located_at', lab_009)
 
-            Create a link (with values) between a ``ConceptInstance`` and a ``DataPackage``::
+            Create a link (with values) between a ``Record`` and a ``DataPackage``::
 
                 mouse_001.link('from', eeg, {"date": datetime.datetime(1991, 02, 26, 07, 0)})
         """
         self._check_exists()
-        assert isinstance(destination, (ConceptInstance, DataPackage)), "destination must be object of type ConceptInstance or DataPackage"
+        assert isinstance(destination, (Record, DataPackage)), "destination must be object of type Record or DataPackage"
         return self._api.concepts.relationships.instances.link(self.dataset_id, relationship, self, destination, values)
 
     def link_many(self, relationship, destinations, values=None):
@@ -2648,15 +2660,16 @@ class ConceptInstance(BaseConceptInstance):
         values = [dict() for _ in values] if values is None else values
         assert len(destinations)==len(values), "Length of values must match length of destinations"
         for destination, dvalues in zip(destinations, values):
-            assert isinstance(destination, (ConceptInstance, DataPackage)), "destination must be object of type ConceptInstance or DataPackage"
+            assert isinstance(destination, (Record, DataPackage)), "destination must be object of type Record or DataPackage"
             yield self._api.concepts.relationships.instances.link(self.dataset_id, relationship, self, destination, dvalues)
 
-    def concept(self):
+    @property
+    def model(self):
         """
-        Retrieves the concept definition of this instance from the platform
+        The ``Model`` of the current record.
 
         Returns:
-           A single ``Concept``.
+           A single ``Model``.
         """
         return self._api.concepts.get(self.dataset_id, self.type)
 
@@ -2683,23 +2696,23 @@ class ConceptInstance(BaseConceptInstance):
         return self._api.concepts.instances.delete(self.dataset_id, self)
 
     def __repr__(self):
-        return u"<ConceptInstance type='{}' id='{}'>".format(self.type, self.id)
+        return u"<Record type='{}' id='{}'>".format(self.type, self.id)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Relationships
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class RelationshipProperty(BaseConceptProperty):
+class RelationshipProperty(BaseModelProperty):
     def __repr__(self):
         return u"<RelationshipProperty name='{}' {}>".format(self.name, self.type)
 
-class RelationshipValue(BaseConceptValue):
+class RelationshipValue(BaseModelValue):
     def __repr__(self):
         return u"<RelationshipValue name='{}' value='{}' {}>".format(self.name, self.value, self.type)
 
 
-class Relationship(BaseConceptNode):
+class Relationship(BaseModelNode):
     """
     Model for defining a relationships.
     """
@@ -2758,22 +2771,22 @@ class Relationship(BaseConceptNode):
 
     def link(self, source, destination, values=dict()):
         """
-        Creates a link between a concept instance and another instance or data package on the platform.
+        Creates a link a record and another record or data package.
 
         Args:
-            source (ConceptInstance, DataPackage): instance or data package the relationship orginates from
-            destination (ConceptInstance, DataPackage): instance or data package the relationship points to
+            source (Record, DataPackage): record or data package the relationship orginates from
+            destination (Record, DataPackage): record or data package the relationship points to
             values (dict, optional): values for properties defined in the relationship's schema
 
         Returns:
             The newly created ``RelationshipInstance``
 
         Example:
-            Create a link between a ``ConceptInstance`` and a ``DataPackage``::
+            Create a link between a ``Record`` and a ``DataPackage``::
 
                 from_relationship.link(mouse_001, eeg)
 
-            Create a link (with values) between a ``ConceptInstance`` and a ``DataPackage``::
+            Create a link (with values) between a ``Record`` and a ``DataPackage``::
 
                 from_relationship.link(mouse_001, eeg, {"date": datetime.datetime(1991, 02, 26, 07, 0)})
         """
@@ -2797,7 +2810,7 @@ class Relationship(BaseConceptNode):
         # values = [dict() for _ in values] if values is None else values
         # assert len(destinations)==len(values), "Length of values must match length of destinations"
         # for destination, dvalues in zip(destinations, values):
-        #     assert isinstance(destination, (ConceptInstance, DataPackage)), "destination must be object of type ConceptInstance or DataPackage"
+        #     assert isinstance(destination, (Record, DataPackage)), "destination must be object of type Record or DataPackage"
         #     yield self._api.concepts.relationships.instances.link(self.dataset_id, relationship, self, destination, dvalues)
 
         #instance = RelationshipInstance(dataset_id=dataset_id, type=relationship_type, source=source, destination=destination, values=values)
@@ -2806,8 +2819,8 @@ class Relationship(BaseConceptNode):
 
         # Check sources and destinations
         for value in item_list:
-            assert isinstance(value['destination'], (ConceptInstance, DataPackage)), 'destination must be object of type ConceptInstance or DataPackage'
-            assert isinstance(value['source'], (ConceptInstance, DataPackage)), 'source must be object of type ConceptInstance or DataPackage'
+            assert isinstance(value['destination'], (Record, DataPackage)), 'destination must be object of type Record or DataPackage'
+            assert isinstance(value['source'], (Record, DataPackage)), 'source must be object of type Record or DataPackage'
             assert value['relationship_type']==self.type, u'Relationship type of items need to match relationship type: "{}"'.format(self.type)
 
         li_list = [
@@ -2840,19 +2853,19 @@ class Relationship(BaseConceptNode):
         return u"<Relationship type='{}' id='{}'>".format(self.type, self.id)
 
 
-class RelationshipInstance(BaseConceptInstance):
+class RelationshipInstance(BaseRecord):
     """
     Model that describes a single instance of a ``Relationship``.
     """
     _object_key = ''
 
     def __init__(self, dataset_id, type, source, destination, *args, **kwargs):
-        assert isinstance(source,  (ConceptInstance, basestring)), "source must be Concept or UUID"
-        assert isinstance(destination, (ConceptInstance, basestring)), "destination must be Concept or UUID"
+        assert isinstance(source,  (Record, basestring)), "source must be Model or UUID"
+        assert isinstance(destination, (Record, basestring)), "destination must be Model or UUID"
 
-        if isinstance(source, ConceptInstance):
+        if isinstance(source, Record):
             source = source.id
-        if isinstance(destination, ConceptInstance):
+        if isinstance(destination, Record):
             destination = destination.id
 
         self.source = source
@@ -2914,7 +2927,7 @@ class RelationshipInstance(BaseConceptInstance):
 # Proxies
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class ProxyInstance(BaseConceptInstance):
+class ProxyInstance(BaseRecord):
     _object_key = ''
 
     def __init__(self, dataset_id, type, *args, **kwargs):
@@ -2938,7 +2951,7 @@ class ProxyInstance(BaseConceptInstance):
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Concept/Relation Instance Sets
+# Model/Relation Instance Sets
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class BaseInstanceList(list):
@@ -2952,12 +2965,12 @@ class BaseInstanceList(list):
     def as_dataframe(self):
         pass
 
-class ConceptInstanceSet(BaseInstanceList):
-    _accept_type = Concept
+class RecordSet(BaseInstanceList):
+    _accept_type = Model
 
     def as_dataframe(self):
         """
-        Converts the list of ``Conceptinstance`` to a pandas DataFrame
+        Converts the list of ``Modelinstance`` to a pandas DataFrame
 
         Returns:
           pd.DataFrame

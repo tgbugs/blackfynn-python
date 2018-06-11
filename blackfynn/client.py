@@ -8,7 +8,7 @@ from blackfynn.api.compute import ComputeAPI
 from blackfynn.api.ledger import LedgerAPI
 from blackfynn.api.user import UserAPI
 from blackfynn.api.concepts import (
-    ConceptsAPI, ConceptInstancesAPI, ConceptRelationshipsAPI, ConceptRelationshipInstancesAPI
+    ModelsAPI, RecordsAPI, ModelRelationshipsAPI, ModelRelationshipInstancesAPI
 )
 from blackfynn.api.timeseries import TimeSeriesAPI
 from blackfynn.base import ClientSession
@@ -109,10 +109,10 @@ class Blackfynn(object):
             IOAPI,
             LedgerAPI,
             UserAPI,
-            ConceptsAPI,
-            ConceptInstancesAPI,
-            ConceptRelationshipsAPI,
-            ConceptRelationshipInstancesAPI
+            ModelsAPI,
+            RecordsAPI,
+            ModelRelationshipsAPI,
+            ModelRelationshipInstancesAPI
         )
 
         self._api._context = self._api.organizations.get(self._api._organization)

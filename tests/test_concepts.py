@@ -2,7 +2,7 @@ import time
 import pytest
 import datetime
 
-from blackfynn.models import Concept, ConceptInstance, DataPackage, Relationship, RelationshipInstance
+from blackfynn.models import Model, Record, DataPackage, Relationship, RelationshipInstance
 
 def test_concepts(dataset):
     current_ts = lambda: int(round(time.time() * 1000))
@@ -12,12 +12,12 @@ def test_concepts(dataset):
     values = {'an_integer': 100, 'a_long': 100000L, 'a_bool': True, 'a_string': 'fnsdlkn#$#42nlfds$3nlds$#@$23fdsnfkls', 'a_datetime': datetime.datetime.now()}
 
     #################################
-    ## Concepts
+    ## Models
     ################################
 
     concepts = dataset.concepts()
 
-    new_concept = dataset.create_concept('New_Concept_{}'.format(current_ts()), 'A New Concept', 'a new concept', schema)
+    new_concept = dataset.create_concept('New_Model_{}'.format(current_ts()), 'A New Model', 'a new concept', schema)
 
     assert len(dataset.concepts()) == len(concepts) + 1
 

@@ -1,23 +1,23 @@
 # -*- coding: utf-8 -*-
 from blackfynn.api.base import APIBase
 from blackfynn.models import (
-    Concept, ConceptInstance, ConceptInstanceSet, ConceptProperty, ProxyInstance,
+    Model, Record, RecordSet, ModelProperty, ProxyInstance,
     Relationship, RelationshipInstance, RelationshipInstanceSet, RelationshipProperty,
     DataPackage
 )
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Concepts
+# Models
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class ConceptsAPIBase(APIBase):
+class ModelsAPIBase(APIBase):
 
     def _get_concept_type(self, concept, instance = None):
-        if isinstance(concept, Concept):
+        if isinstance(concept, Model):
             return concept.type
         elif isinstance(concept, basestring):
             return concept
-        elif isinstance(instance, ConceptInstance):
+        elif isinstance(instance, Record):
             return instance.type
         else:
             raise Exception("could not get concept type from concept {} or instance {} ".format(concept, instance))
@@ -32,30 +32,30 @@ class ConceptsAPIBase(APIBase):
         else:
             raise Exception("could not get relationship type from relationship {} or instance {} ".format(relationship, instance))
 
-class ConceptsAPI(ConceptsAPIBase):
+class ModelsAPI(ModelsAPIBase):
     base_uri = "/datasets"
     name = 'concepts'
 
     def __init__(self, session):
         self.host = session._concepts_host
-        self.instances = ConceptInstancesAPI(session)
-        self.relationships = ConceptRelationshipsAPI(session)
-        self.proxies = ConceptProxiesAPI(session)
-        super(ConceptsAPI, self).__init__(session)
+        self.instances = RecordsAPI(session)
+        self.relationships = ModelRelationshipsAPI(session)
+        self.proxies = ModelProxiesAPI(session)
+        super(ModelsAPI, self).__init__(session)
 
     def get_properties(self, dataset, concept):
         dataset_id = self._get_id(dataset)
         concept_id = self._get_id(concept)
         resp = self._get(self._uri('/{dataset_id}/concepts/{id}/properties', dataset_id=dataset_id, id=concept_id))
-        return [ConceptProperty.from_dict(r) for r in resp]
+        return [ModelProperty.from_dict(r) for r in resp]
 
     def update_properties(self, dataset, concept):
-        assert isinstance(concept, Concept), "concept must be type Concept"
+        assert isinstance(concept, Model), "concept must be type Model"
         assert concept.schema, "concept schema cannot be empty"
         data = concept.as_dict()['schema']
         dataset_id = self._get_id(dataset)
         resp = self._put(self._uri('/{dataset_id}/concepts/{id}/properties', dataset_id=dataset_id, id=concept.id), json=data)
-        return [ConceptProperty.from_dict(r) for r in resp]
+        return [ModelProperty.from_dict(r) for r in resp]
 
     def get(self, dataset, concept):
         dataset_id = self._get_id(dataset)
@@ -63,7 +63,7 @@ class ConceptsAPI(ConceptsAPIBase):
         r = self._get(self._uri('/{dataset_id}/concepts/{id}', dataset_id=dataset_id, id=concept_id))
         r['dataset_id'] = r.get('dataset_id', dataset_id)
         r['schema'] = self.get_properties(dataset, concept)
-        return Concept.from_dict(r, api=self.session)
+        return Model.from_dict(r, api=self.session)
 
     def delete(self, dataset, concept):
         dataset_id = self._get_id(dataset)
@@ -71,7 +71,7 @@ class ConceptsAPI(ConceptsAPIBase):
         return self._del(self._uri('/{dataset_id}/concepts/{id}', dataset_id=dataset_id, id=concept.id))
 
     def update(self, dataset, concept):
-        assert isinstance(concept, Concept), "concept must be type Concept"
+        assert isinstance(concept, Model), "concept must be type Model"
         data = concept.as_dict()
         data['id'] = concept.id
         dataset_id = self._get_id(dataset)
@@ -79,17 +79,17 @@ class ConceptsAPI(ConceptsAPIBase):
         r['dataset_id'] = r.get('dataset_id', dataset_id)
         if concept.schema:
             r['schema'] = self.update_properties(dataset, concept)
-        return Concept.from_dict(r, api=self.session)
+        return Model.from_dict(r, api=self.session)
 
     def create(self, dataset, concept):
-        assert isinstance(concept, Concept), "concept must be type Concept"
+        assert isinstance(concept, Model), "concept must be type Model"
         dataset_id = self._get_id(dataset)
         r = self._post(self._uri('/{dataset_id}/concepts', dataset_id=dataset_id), json=concept.as_dict())
         concept.id = r['id']
         r['dataset_id'] = r.get('dataset_id', dataset_id)
         if concept.schema:
             r['schema'] = self.update_properties(dataset, concept)
-        return Concept.from_dict(r, api=self.session)
+        return Model.from_dict(r, api=self.session)
 
     def get_all(self, dataset):
         dataset_id = self._get_id(dataset)
@@ -97,7 +97,7 @@ class ConceptsAPI(ConceptsAPIBase):
         for r in resp:
             r['dataset_id'] = r.get('dataset_id', dataset_id)
             r['schema']     = self.get_properties(dataset, r['id'])
-        concepts = [Concept.from_dict(r, api=self.session) for r in resp]
+        concepts = [Model.from_dict(r, api=self.session) for r in resp]
         return { c.type: c for c in concepts }
 
     def delete_instances(self, dataset, concept, *instances):
@@ -108,16 +108,16 @@ class ConceptsAPI(ConceptsAPIBase):
         return self._del(self._uri('/{dataset_id}/concepts/{id}/instances', dataset_id=dataset_id, id=concept_id), json=ids)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Concept Instances
+# Model Instances
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class ConceptInstancesAPI(ConceptsAPIBase):
+class RecordsAPI(ModelsAPIBase):
     base_uri = "/datasets"
     name = 'concepts.instances'
 
     def __init__(self, session):
         self.host = session._concepts_host
-        super(ConceptInstancesAPI, self).__init__(session)
+        super(RecordsAPI, self).__init__(session)
 
     def get(self, dataset, instance, concept=None):
         dataset_id = self._get_id(dataset)
@@ -126,7 +126,7 @@ class ConceptInstancesAPI(ConceptsAPIBase):
 
         r = self._get(self._uri('/{dataset_id}/concepts/{concept_type}/instances/{id}', dataset_id=dataset_id, concept_type=concept_type, id=instance_id))
         r['dataset_id'] = r.get('dataset_id', dataset_id)
-        return ConceptInstance.from_dict(r, api=self.session)
+        return Record.from_dict(r, api=self.session)
 
     def relations(self, dataset, instance, related_concept, concept=None):
         dataset_id = self._get_id(dataset)
@@ -145,7 +145,7 @@ class ConceptInstancesAPI(ConceptsAPIBase):
             concept['dataset_id'] = concept.get('dataset_id', dataset_id)
 
             relationship = RelationshipInstance.from_dict(relationship, api=self.session)
-            concept = ConceptInstance.from_dict(concept, api=self.session)
+            concept = Record.from_dict(concept, api=self.session)
 
             relations.append((relationship, concept))
 
@@ -158,35 +158,35 @@ class ConceptInstancesAPI(ConceptsAPIBase):
         resp = self._get(self._uri('/{dataset_id}/concepts/{concept_type}/instances', dataset_id=dataset_id, concept_type=concept_type), params=dict(limit=limit), stream=True)
         for r in resp:
           r['dataset_id'] = r.get('dataset_id', dataset_id)
-        instances = [ConceptInstance.from_dict(r, api=self.session) for r in resp]
+        instances = [Record.from_dict(r, api=self.session) for r in resp]
 
-        return ConceptInstanceSet(concept, instances)
+        return RecordSet(concept, instances)
 
     def delete(self, dataset, instance):
-        assert isinstance(instance, ConceptInstance), "instance must be type ConceptInstance"
+        assert isinstance(instance, Record), "instance must be type Record"
         dataset_id = self._get_id(dataset)
         r = self._del(self._uri('/{dataset_id}/concepts/{concept_type}/instances/{id}', dataset_id=dataset_id, concept_type=instance.type, id=instance.id))
         r['dataset_id'] = r.get('dataset_id', dataset_id)
         return r
 
     def create(self, dataset, instance):
-        assert isinstance(instance, ConceptInstance), "instance must be type ConceptInstance"
+        assert isinstance(instance, Record), "instance must be type Record"
         dataset_id = self._get_id(dataset)
         r = self._post(self._uri('/{dataset_id}/concepts/{concept_type}/instances', dataset_id=dataset_id, concept_type=instance.type), json=instance.as_dict())
         r['dataset_id'] = r.get('dataset_id', dataset_id)
-        return ConceptInstance.from_dict(r, api=self.session)
+        return Record.from_dict(r, api=self.session)
 
     def update(self, dataset, instance):
-        assert isinstance(instance, ConceptInstance), "instance must be type ConceptInstance"
+        assert isinstance(instance, Record), "instance must be type Record"
         dataset_id = self._get_id(dataset)
         r = self._put(self._uri('/{dataset_id}/concepts/{concept_type}/instances/{id}', dataset_id=dataset_id, concept_type=instance.type, id=instance.id), json=instance.as_dict())
         r['dataset_id'] = r.get('dataset_id', dataset_id)
-        return ConceptInstance.from_dict(r, api=self.session)
+        return Record.from_dict(r, api=self.session)
 
     def create_many(self, dataset, concept, *instances):
         instance_type = instances[0].type
         for inst in instances:
-            assert isinstance(inst, ConceptInstance), "instance must be type ConceptInstance"
+            assert isinstance(inst, Record), "instance must be type Record"
             assert inst.type == instance_type, "Expected instance of type {}, found instance of type {}".format(instance_type, inst.type)
         dataset_id = self._get_id(dataset)
         values = [inst.as_dict() for inst in instances]
@@ -194,22 +194,22 @@ class ConceptInstancesAPI(ConceptsAPIBase):
         
         for r in resp:
             r['dataset_id'] = r.get('dataset_id', dataset_id)
-        instances = [ConceptInstance.from_dict(r, api=self.session) for r in resp]
-        return ConceptInstanceSet(concept, instances)
+        instances = [Record.from_dict(r, api=self.session) for r in resp]
+        return RecordSet(concept, instances)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Relationships
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class ConceptRelationshipsAPI(ConceptsAPIBase):
+class ModelRelationshipsAPI(ModelsAPIBase):
     base_uri = "/datasets"
     name = 'concepts.relationships'
 
     def __init__(self, session):
         self.host = session._concepts_host
-        self.instances = ConceptRelationshipInstancesAPI(session)
-        super(ConceptRelationshipsAPI, self).__init__(session)
+        self.instances = ModelRelationshipInstancesAPI(session)
+        super(ModelRelationshipsAPI, self).__init__(session)
 
     def create(self, dataset, relationship):
         assert isinstance(relationship, Relationship), "Must be of type Relationship"
@@ -233,13 +233,13 @@ class ConceptRelationshipsAPI(ConceptsAPIBase):
         relations = [Relationship.from_dict(r, api=self.session) for r in resp]
         return {r.type: r for r in relations}
 
-class ConceptRelationshipInstancesAPI(ConceptsAPIBase):
+class ModelRelationshipInstancesAPI(ModelsAPIBase):
     base_uri = "/datasets"
     name = 'concepts.relationships.instances'
 
     def __init__(self, session):
         self.host = session._concepts_host
-        super(ConceptRelationshipInstancesAPI, self).__init__(session)
+        super(ModelRelationshipInstancesAPI, self).__init__(session)
 
     def get_all(self, dataset, relationship):
         dataset_id = self._get_id(dataset)
@@ -265,14 +265,14 @@ class ConceptRelationshipInstancesAPI(ConceptsAPIBase):
         return self._del( self._uri('/{dataset_id}/relationships/{r_type}/instances/{id}', dataset_id=dataset_id, r_type=instance.type, id=instance.id))
 
     def link(self, dataset, relationship, source, destination, values=dict()):
-        assert isinstance(source, (ConceptInstance, DataPackage)), "source must be an object of type ConceptInstance or DataPackage"
-        assert isinstance(destination, (ConceptInstance, DataPackage)), "destination must be an object of type ConceptInstance or DataPackage"
+        assert isinstance(source, (Record, DataPackage)), "source must be an object of type Record or DataPackage"
+        assert isinstance(destination, (Record, DataPackage)), "destination must be an object of type Record or DataPackage"
 
         if isinstance(source, DataPackage):
-            assert isinstance(destination, ConceptInstance), "DataPackages can only be linked to ConceptInstances"
+            assert isinstance(destination, Record), "DataPackages can only be linked to Records"
             return self.session.concepts.proxies.create(dataset, source.id, relationship, destination, values, "ToTarget", "package")
         elif isinstance(destination, DataPackage):
-            assert isinstance(source, ConceptInstance), "DataPackages can only be linked to ConceptInstances"
+            assert isinstance(source, Record), "DataPackages can only be linked to Records"
             return self.session.concepts.proxies.create(dataset, destination.id, relationship, source, values, "FromTarget", "package")
         else:
             dataset_id = self._get_id(dataset)
@@ -302,10 +302,10 @@ class ConceptRelationshipInstancesAPI(ConceptsAPIBase):
         return RelationshipInstanceSet(relationship, instances)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Concept Proxies
+# Model Proxies
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class ConceptProxiesAPI(ConceptsAPIBase):
+class ModelProxiesAPI(ModelsAPIBase):
     base_uri = "/datasets"
     name = 'concepts.proxies'
 
@@ -314,7 +314,7 @@ class ConceptProxiesAPI(ConceptsAPIBase):
 
     def __init__(self, session):
         self.host = session._concepts_host
-        super(ConceptProxiesAPI, self).__init__(session)
+        super(ModelProxiesAPI, self).__init__(session)
 
     def get_all(self, dataset, proxy_type):
         dataset_id = self._get_id(dataset)
@@ -328,7 +328,7 @@ class ConceptProxiesAPI(ConceptsAPIBase):
         r['dataset_id'] = r.get('dataset_id', dataset_id)
         return r
 
-    def create(self, dataset, external_id, relationship, concept_instance, values, direction = "ToConcept", proxy_type = "package", concept = None):
+    def create(self, dataset, external_id, relationship, concept_instance, values, direction = "ToModel", proxy_type = "package", concept = None):
         assert proxy_type in self.proxy_types, "proxy_type must be one of {}".format(self.proxy_types)
         assert direction in self.direction_types, "direction must be one of {}".format(self.direction_types)
 
@@ -346,7 +346,7 @@ class ConceptProxiesAPI(ConceptsAPIBase):
             {
                 'direction': direction,
                 'linkTarget': { 
-                    "ConceptInstance": {
+                    "Record": {
                         'id': concept_instance_id
                     }
                 },
