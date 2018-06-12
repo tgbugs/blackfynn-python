@@ -2616,32 +2616,26 @@ class Record(BaseRecord):
             _, neighbors = zip(*links)
             return list(neighbors)
 
-    # TODO: Models API is not returing proxy instances from /relations endpoint
-    #       When these are provided by the API, rewrite
     def files(self):
         """
-        All files that this instance is related.
-        Optionally, filtered by a type of relationship.
-
-        Args:
-            relationship (str, Relationship, optional): relationship to filter results by
+        All files related to the current record.
 
         Returns:
             List of data objects i.e. ``DataPackage``
 
         Example::
-            eegs = mouse_001.data('recorded-from')
+            eegs = mouse_001.files()
         """
         return self._api.concepts.files(self.dataset_id, self.type, self)
 
     def link(self, relationship, destination, values=dict()):
         """
-        Creates a link between this instance and another ``Record`` or ``DataPackage``
+        Creates a link between this record and another ``Record`` or ``DataPackage``
 
         Args:
-            relationship (Relationship, str): type of Relationship to create
+            relationship (Relationship, str):  type of Relationship to create
             destination (Record, DataPackage): ``Record`` or ``DataPackage`` that is related to the instance
-            values (dict, optional): values for properties definied in the Relationship's schema
+            values (dict, optional):           values for properties definied in the Relationship's schema
 
         Returns:
             RelationshipInstance that defines the link
@@ -2683,10 +2677,11 @@ class Record(BaseRecord):
 
     def update(self):
         """
-        Updates the values of the instance on the platform.
+        Updates the values of the record on the platform (after modification).
 
         Example::
 
+          mouse_001.set('name', 'Mickey')
           mouse_001.update()
         """
         self._check_exists()
@@ -2779,22 +2774,22 @@ class Relationship(BaseModelNode):
 
     def link(self, source, destination, values=dict()):
         """
-        Creates a link a record and another record or data package.
+        Links a ``Record`` to another ``Record`` or ``DataPackage`` using current relationship.
 
         Args:
-            source (Record, DataPackage): record or data package the relationship orginates from
+            source (Record, DataPackage):      record or data package the relationship orginates from
             destination (Record, DataPackage): record or data package the relationship points to
-            values (dict, optional): values for properties defined in the relationship's schema
+            values (dict, optional):           values for properties defined in the relationship's schema
 
         Returns:
             The newly created ``RelationshipInstance``
 
         Example:
-            Create a link between a ``Record`` and a ``DataPackage``::
+            Create a relationship between a ``Record`` and a ``DataPackage``::
 
                 from_relationship.link(mouse_001, eeg)
 
-            Create a link (with values) between a ``Record`` and a ``DataPackage``::
+            Create a relationship (with values) between a ``Record`` and a ``DataPackage``::
 
                 from_relationship.link(mouse_001, eeg, {"date": datetime.datetime(1991, 02, 26, 07, 0)})
         """
@@ -2804,25 +2799,17 @@ class Relationship(BaseModelNode):
 
     def create_many(self, *item_list):
         """
-        Create multiple links between records in the dataset
+        Create multiple relationships between ``Records`` using current relationship.
 
         Args:
-            value_list (list): array of dictionaries corresponding to record relationships.
+            value_list (list): Array of dictionaries corresponding to relationships to be created.
+                               Each relationship should be a dictionary containing 'source', 'destination',
+                               and optional 'values' keys, where 'values' is also a dictionary.
 
         Returns:
-            Array of newly created ``Relationships``
+            Array of newly created ``RelationshipInstances``s
 
         """
-
-        # self._check_exists()
-        # values = [dict() for _ in values] if values is None else values
-        # assert len(destinations)==len(values), "Length of values must match length of destinations"
-        # for destination, dvalues in zip(destinations, values):
-        #     assert isinstance(destination, (Record, DataPackage)), "destination must be object of type Record or DataPackage"
-        #     yield self._api.concepts.relationships.instances.link(self.dataset_id, relationship, self, destination, dvalues)
-
-        #instance = RelationshipInstance(dataset_id=dataset_id, type=relationship_type, source=source, destination=destination, values=values)
-
         self._check_exists()
 
         # Check sources and destinations
@@ -2843,7 +2830,7 @@ class Relationship(BaseModelNode):
                         value=v,
                         dataType=self.schema.get(k).type
                     )
-                    for k,v in item['values'].items()
+                    for k,v in item.get('values', {}).items()
                 ]
             )
             for item in item_list
@@ -2863,7 +2850,7 @@ class Relationship(BaseModelNode):
 
 class RelationshipInstance(BaseRecord):
     """
-    Model that describes a single instance of a ``Relationship``.
+    A single instance of a ``Relationship``.
     """
     _object_key = ''
 
@@ -2908,8 +2895,6 @@ class RelationshipInstance(BaseRecord):
           mouse_001_eeg_link.delete()
         """
         return self._api.concepts.relationships.instances.delete(self.dataset_id, self)
-
-    
 
     @classmethod
     def from_dict(cls, data, *args, **kwargs):
@@ -2973,12 +2958,13 @@ class BaseInstanceList(list):
     def as_dataframe(self):
         pass
 
+
 class RecordSet(BaseInstanceList):
     _accept_type = Model
 
     def as_dataframe(self):
         """
-        Converts the list of ``Modelinstance`` to a pandas DataFrame
+        Converts the list of ``Record``s to a pandas DataFrame
 
         Returns:
           pd.DataFrame
@@ -2989,6 +2975,7 @@ class RecordSet(BaseInstanceList):
             data.append(instance.values)
         df = pd.DataFrame(data=data, columns=cols)
         return df
+
 
 class RelationshipInstanceSet(BaseInstanceList):
     _accept_type = Relationship
