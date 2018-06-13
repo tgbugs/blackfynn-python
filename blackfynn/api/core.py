@@ -9,8 +9,8 @@ from blackfynn.models import (
     User,
     Model,
     Record,
+    RelationshipType,
     Relationship,
-    RelationshipInstance,
     get_package_class
 )
 
@@ -48,9 +48,9 @@ class CoreAPI(APIBase):
             item = self.session.concepts.create(thing)
         elif isinstance(thing, Record):
             item = self.session.concepts.instances.create(thing)
-        elif isinstance(thing, Relationship):
+        elif isinstance(thing, RelationshipType):
             item = self.session.concepts.relations.create_type(thing)
-        elif isinstance(thing, RelationshipInstance):
+        elif isinstance(thing, Relationship):
             item = self.session.concepts.relations.create(thing)
         else:
             raise Exception('Unable to create object.')

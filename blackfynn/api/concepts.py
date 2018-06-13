@@ -2,7 +2,7 @@
 from blackfynn.api.base import APIBase
 from blackfynn.models import (
     Model, Record, RecordSet, ModelProperty, ProxyInstance,
-    Relationship, RelationshipInstance, RelationshipInstanceSet, RelationshipProperty,
+    RelationshipType, Relationship, RelationshipSet, RelationshipProperty,
     DataPackage
 )
 
@@ -23,11 +23,11 @@ class ModelsAPIBase(APIBase):
             raise Exception("could not get concept type from concept {} or instance {} ".format(concept, instance))
 
     def _get_relationship_type(self, relationship, instance = None):
-        if isinstance(relationship, Relationship):
+        if isinstance(relationship, RelationshipType):
             return relationship.type
         elif isinstance(relationship, basestring):
             return relationship
-        elif isinstance(instance, RelationshipInstance):
+        elif isinstance(instance, Relationship):
             return instance.type
         else:
             raise Exception("could not get relationship type from relationship {} or instance {} ".format(relationship, instance))
@@ -120,10 +120,6 @@ class ModelsAPI(ModelsAPIBase):
                 concept_id=concept_id,
                 instance_id=instance_id
             ))
-        for r,pkg in resp:
-            print " * relation: {}".format(r)
-            print " * package: {}".format(pkg)
-            print "~"*20
         return [DataPackage.from_dict(pkg, api=self.session) for r,pkg in resp]
 
 
@@ -165,7 +161,7 @@ class RecordsAPI(ModelsAPIBase):
             relationship['dataset_id'] = relationship.get('dataset_id', dataset_id)
             concept['dataset_id'] = concept.get('dataset_id', dataset_id)
 
-            relationship = RelationshipInstance.from_dict(relationship, api=self.session)
+            relationship = Relationship.from_dict(relationship, api=self.session)
             concept = Record.from_dict(concept, api=self.session)
 
             relations.append((relationship, concept))
@@ -233,25 +229,25 @@ class ModelRelationshipsAPI(ModelsAPIBase):
         super(ModelRelationshipsAPI, self).__init__(session)
 
     def create(self, dataset, relationship):
-        assert isinstance(relationship, Relationship), "Must be of type Relationship"
+        assert isinstance(relationship, RelationshipType), "Must be of type Relationship"
         dataset_id = self._get_id(dataset)
         r = self._post(self._uri('/{dataset_id}/relationships', dataset_id=dataset_id), json=relationship.as_dict())
         r['dataset_id'] = r.get('dataset_id', dataset_id)
-        return Relationship.from_dict(r, api=self.session)
+        return RelationshipType.from_dict(r, api=self.session)
 
     def get(self, dataset, relationship):
         dataset_id = self._get_id(dataset)
         relationship_id = self._get_id(relationship)
         r = self._get(self._uri('/{dataset_id}/relationships/{r_id}', dataset_id=dataset_id, r_id=relationship_id))
         r['dataset_id'] = r.get('dataset_id', dataset_id)
-        return Relationship.from_dict(r, api=self.session)
+        return RelationshipType.from_dict(r, api=self.session)
 
     def get_all(self, dataset):
         dataset_id = self._get_id(dataset)
         resp = self._get(self._uri('/{dataset_id}/relationships', dataset_id=dataset_id), stream=True)
         for r in resp:
           r['dataset_id'] = r.get('dataset_id', dataset_id)
-        relations = [Relationship.from_dict(r, api=self.session) for r in resp]
+        relations = [RelationshipType.from_dict(r, api=self.session) for r in resp]
         return {r.type: r for r in relations}
 
 class ModelRelationshipInstancesAPI(ModelsAPIBase):
@@ -269,8 +265,8 @@ class ModelRelationshipInstancesAPI(ModelsAPIBase):
         resp = self._get(self._uri('/{dataset_id}/relationships/{r_id}/instances', dataset_id=dataset_id, r_id=relationship_id), stream=True)
         for r in resp:
           r['dataset_id'] = r.get('dataset_id', dataset_id)
-        instances = [RelationshipInstance.from_dict(r, api=self.session) for r in resp]
-        return RelationshipInstanceSet(relationship, instances)
+        instances = [Relationship.from_dict(r, api=self.session) for r in resp]
+        return RelationshipSet(relationship, instances)
 
     def get(self, dataset, instance, relationship=None):
         dataset_id = self._get_id(dataset)
@@ -278,10 +274,10 @@ class ModelRelationshipInstancesAPI(ModelsAPIBase):
         relationship_type = self._get_relationship_type(relationship, instance)
         r = self._get( self._uri('/{dataset_id}/relationships/{r_type}/instances/{id}', dataset_id=dataset_id, r_type=relationship_type, id=instance_id))
         r['dataset_id'] = r.get('dataset_id', dataset_id)
-        return RelationshipInstance.from_dict(r, api=self.session)
+        return Relationship.from_dict(r, api=self.session)
 
     def delete(self, dataset, instance):
-        assert isinstance(instance, RelationshipInstance), "instance must be of type RelationshipInstance"
+        assert isinstance(instance, Relationship), "instance must be of type Relationship"
         dataset_id = self._get_id(dataset)
         return self._del( self._uri('/{dataset_id}/relationships/{r_type}/instances/{id}', dataset_id=dataset_id, r_type=instance.type, id=instance.id))
 
@@ -299,19 +295,19 @@ class ModelRelationshipInstancesAPI(ModelsAPIBase):
             dataset_id = self._get_id(dataset)
             relationship_type = self._get_relationship_type(relationship)
             values = [dict(name=k, value=v) for k,v in values.items()]
-            instance = RelationshipInstance(dataset_id=dataset_id, type=relationship_type, source=source, destination=destination, values=values)
+            instance = Relationship(dataset_id=dataset_id, type=relationship_type, source=source, destination=destination, values=values)
             return self.create(dataset, instance)
 
     def create(self, dataset, instance):
-        assert isinstance(instance, RelationshipInstance), "instance must be of type RelationshipInstance"
+        assert isinstance(instance, Relationship), "instance must be of type Relationship"
         dataset_id = self._get_id(dataset)
         resp = self._post( self._uri('/{dataset_id}/relationships/{r_type}/instances', dataset_id=dataset_id, r_type=instance.type), json=instance.as_dict())
         r = resp[0] # responds with list
         r['dataset_id'] = r.get('dataset_id', dataset_id)
-        return RelationshipInstance.from_dict(r, api=self.session)
+        return Relationship.from_dict(r, api=self.session)
 
     def create_many(self, dataset, relationship, *instances):
-        assert all([isinstance(i, RelationshipInstance) for i in instances]), "instances must be of type RelationshipInstance"
+        assert all([isinstance(i, Relationship) for i in instances]), "instances must be of type Relationship"
         instance_type = instances[0].type
         dataset_id = self._get_id(dataset)
         values = [inst.as_dict() for inst in instances]
@@ -319,8 +315,8 @@ class ModelRelationshipInstancesAPI(ModelsAPIBase):
 
         for r in resp:
             r[0]['dataset_id'] = r[0].get('dataset_id', dataset_id)
-        instances =  [RelationshipInstance.from_dict(r[0], api=self.session) for r in resp]
-        return RelationshipInstanceSet(relationship, instances)
+        instances =  [Relationship.from_dict(r[0], api=self.session) for r in resp]
+        return RelationshipSet(relationship, instances)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Model Proxies
@@ -379,4 +375,4 @@ class ModelProxiesAPI(ModelsAPIBase):
         r = self._post(self._uri('/{dataset_id}/proxy/{p_type}/instances', dataset_id=dataset_id, p_type=proxy_type), json=request)
         instance = r[0]['relationshipInstance']
         instance['dataset_id'] = instance.get('dataset_id', dataset_id)
-        return RelationshipInstance.from_dict(instance, api=self.session)
+        return Relationship.from_dict(instance, api=self.session)

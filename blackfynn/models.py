@@ -786,17 +786,17 @@ class DataPackage(BaseDataNode):
         self._check_exists()
         return self._api.packages.get_view(self)
 
-    def link(self, relationship, record, values=None):
+    def link(self, record, values=None):
         """
-        Links a ``DataPackage`` to a ``Record`` given a type of ``Relationship``.
+        Links a ``DataPackage`` to a ``Record`` given a type of ``belongs_to``.
 
         Args:
-            relationship (Relationship or str): type of relationship to create
+            relationship_type (RelationshipType or str): type of relationship to create
             record (Record): record that is related to the data package
             values (dict, optional): values for properties definied in the relationship's schema
 
         Returns:
-            ``RelationshipInstance`` that defines the link
+            ``Relationship`` that defines the link
 
         Example:
             Create a link between a data package and a record::
@@ -813,7 +813,14 @@ class DataPackage(BaseDataNode):
         values = dict() if values is None else values
         self._check_exists()
         assert isinstance(record, Record), "record must be object of type Record"
-        return self._api.concepts.relationships.instances.link(self.dataset, relationship, record, self, values)
+
+        # auto-create relationship type
+        relationships = self._api.concepts.relationships.get_all(self.dataset)
+        if 'belongs_to' not in relationships:
+            r = RelationshipType(dataset_id=self.dataset, name='belongs_to', description='belongs_to')
+            self._api.concepts.relationships.create(self.dataset, r)
+
+        return self._api.concepts.relationships.instances.link(self.dataset, 'belongs_to', record, self, values)
 
     def as_dict(self):
         d = super(DataPackage, self).as_dict()
@@ -1857,13 +1864,13 @@ class Dataset(BaseCollection):
 
     def get_relationship(self, name_or_id):
         """
-        Retrieve a ``Relationship`` by name or id
+        Retrieve a ``RelationshipType`` by name or id
 
         Args:
             name_or_id (str or int): name or id of the relationship
 
         Returns:
-            The requested ``Relationship``
+            The requested ``RelationshipType``
 
         Example::
 
@@ -1892,7 +1899,7 @@ class Dataset(BaseCollection):
 
     def create_relationship(self, name, description, schema=None, **kwargs):
         """
-        Defines a ``Relationship`` on the platform.
+        Defines a ``RelationshipType`` on the platform.
 
         Args:
             name (str):              name of the relationship
@@ -1900,13 +1907,13 @@ class Dataset(BaseCollection):
             schema (dict, optional): definitation of the relationship's schema
 
         Returns:
-            The newly created ``Relationship``
+            The newly created ``RelationshipType``
 
         Example::
 
             ds.create_relationship('belongs-to', 'this belongs to that')
         """
-        r = Relationship(dataset_id=self.id, name=name, description=description, schema=schema, **kwargs)
+        r = RelationshipType(dataset_id=self.id, name=name, description=description, schema=schema, **kwargs)
         return self._api.concepts.relationships.create(self.id, r)
 
     @property
@@ -2542,7 +2549,7 @@ class Record(BaseRecord):
         super(Record, self).__init__(dataset_id, type, *args, **kwargs)
 
     def _get_relationship_type(self, relationship):
-        return relationship.type if isinstance(relationship, Relationship) else relationship
+        return relationship.type if isinstance(relationship, RelationshipType) else relationship
 
     def _get_links(self, model):
         return self._api.concepts.instances.relations(self.dataset_id, self, model)
@@ -2554,10 +2561,10 @@ class Record(BaseRecord):
 
         Args:
             model (str, Model):                         type of neighboring model desired
-            relationship (str, Relationship, optional): relationship type to filter results by
+            relationship (str, RelationshipType, optional): relationship type to filter results by
 
         Returns:
-            List of tuples of (``RelationshipInstance``, ``Record``)
+            List of tuples of (``Relationship``, ``Record``)
 
         Example::
             links = mouse_001.links('disease', 'has')
@@ -2578,9 +2585,9 @@ class Record(BaseRecord):
 
         Args:
             model (str, Model):                         type of neighboring records to find
-            relationship (str, Relationship, optional): single relationship type to filter results by
+            relationship (str, RelationshipType, optional): single relationship type to filter results by
         Returns:
-            List of ``RelationshipInstance``
+            List of ``Relationship``
 
         Example::
             relationships = mouse_001.neighbors('disease', 'has')
@@ -2600,7 +2607,7 @@ class Record(BaseRecord):
 
         Args:
             model (str, Model):                         type of neighboring records desired
-            relationship (str, Relationship, optional): relationship type to filter results by
+            relationship (str, RelationshipType, optional): relationship type to filter results by
 
         Returns:
             List of ``Record``
@@ -2628,17 +2635,17 @@ class Record(BaseRecord):
         """
         return self._api.concepts.files(self.dataset_id, self.type, self)
 
-    def link(self, relationship, destination, values=dict()):
+    def link(self, relationship_type, destination, values=dict()):
         """
         Creates a link between this record and another ``Record`` or ``DataPackage``
 
         Args:
-            relationship (Relationship, str):  type of Relationship to create
-            destination (Record, DataPackage): ``Record`` or ``DataPackage`` that is related to the instance
-            values (dict, optional):           values for properties definied in the Relationship's schema
+            relationship_type (RelationshipType, str): type of relationship to create
+            destination (Record, DataPackage):         ``Record`` or ``DataPackage`` that is related to the instance
+            values (dict, optional):                   values for properties definied in the Relationship's schema
 
         Returns:
-            RelationshipInstance that defines the link
+            Relationship that defines the link
 
         Example:
             Create a link between a ``Record`` and a ``DataPackage``::
@@ -2655,15 +2662,31 @@ class Record(BaseRecord):
         """
         self._check_exists()
         assert isinstance(destination, (Record, DataPackage)), "destination must be object of type Record or DataPackage"
-        return self._api.concepts.relationships.instances.link(self.dataset_id, relationship, self, destination, values)
 
-    def link_many(self, relationship, destinations, values=None):
+        # auto-create relationship type
+        if isinstance(relationship_type, basestring):
+            relationships = self._api.concepts.relationships.get_all(self.dataset_id)
+            if relationship_type not in relationships:
+                r = RelationshipType(dataset_id=self.dataset_id, name=relationship_type, description=relationship_type)
+                self._api.concepts.relationships.create(self.dataset_id, r)
+
+        return self._api.concepts.relationships.instances.link(self.dataset_id, relationship_type, self, destination, values)
+
+    def link_many(self, relationship_type, destinations, values=None):
         self._check_exists()
         values = [dict() for _ in values] if values is None else values
         assert len(destinations)==len(values), "Length of values must match length of destinations"
+        
+        # auto-create relationship type
+        if isinstance(relationship_type, basestring):
+            relationships = self._api.concepts.relationships.get_all(self.dataset_id)
+            if relationship_type not in relationships:
+                r = RelationshipType(dataset_id=self.dataset_id, name=relationship_type, description=relationship_type)
+                self._api.concepts.relationships.create(self.dataset_id, r)
+
         for destination, dvalues in zip(destinations, values):
             assert isinstance(destination, (Record, DataPackage)), "destination must be object of type Record or DataPackage"
-            yield self._api.concepts.relationships.instances.link(self.dataset_id, relationship, self, destination, dvalues)
+            yield self._api.concepts.relationships.instances.link(self.dataset_id, relationship_type, self, destination, dvalues)
 
     @property
     def model(self):
@@ -2715,7 +2738,7 @@ class RelationshipValue(BaseModelValue):
         return u"<RelationshipValue name='{}' value='{}' {}>".format(self.name, self.value, self.type)
 
 
-class Relationship(BaseModelNode):
+class RelationshipType(BaseModelNode):
     """
     Model for defining a relationships.
     """
@@ -2725,7 +2748,7 @@ class Relationship(BaseModelNode):
     def __init__(self, dataset_id, name, display_name=None, description=None, locked=False, *args, **kwargs):
 
         kwargs.pop('type', None)
-        super(Relationship, self).__init__(dataset_id, name, display_name, description, locked, *args, **kwargs)
+        super(RelationshipType, self).__init__(dataset_id, name, display_name, description, locked, *args, **kwargs)
 
     def update(self):
         raise Exception("Updating Relationships is not available at this time.")
@@ -2748,7 +2771,7 @@ class Relationship(BaseModelNode):
         Retrieves all instances of the relationship from the platform.
 
         Returns:
-            List of ``RelationshipInstance``
+            List of ``Relationship``
 
         Example::
 
@@ -2764,7 +2787,7 @@ class Relationship(BaseModelNode):
             id (int): the id of the instance
 
         Returns:
-            A single ``RelationshipInstance``
+            A single ``Relationship``
 
         Example::
 
@@ -2782,7 +2805,7 @@ class Relationship(BaseModelNode):
             values (dict, optional):           values for properties defined in the relationship's schema
 
         Returns:
-            The newly created ``RelationshipInstance``
+            The newly created ``Relationship``
 
         Example:
             Create a relationship between a ``Record`` and a ``DataPackage``::
@@ -2807,7 +2830,7 @@ class Relationship(BaseModelNode):
                                and optional 'values' keys, where 'values' is also a dictionary.
 
         Returns:
-            Array of newly created ``RelationshipInstances``s
+            Array of newly created ``Relationships``s
 
         """
         self._check_exists()
@@ -2816,10 +2839,10 @@ class Relationship(BaseModelNode):
         for value in item_list:
             assert isinstance(value['destination'], (Record, DataPackage)), 'destination must be object of type Record or DataPackage'
             assert isinstance(value['source'], (Record, DataPackage)), 'source must be object of type Record or DataPackage'
-            assert value['relationship_type']==self.type, u'Relationship type of items need to match relationship type: "{}"'.format(self.type)
+            assert value['relationship_type']==self.type, u'RelationshipType type of items need to match relationship type: "{}"'.format(self.type)
 
         li_list = [
-            RelationshipInstance(
+            Relationship(
                 dataset_id  = self.dataset_id,
                 type        = item['relationship_type'],
                 source      = item['source'],
@@ -2839,18 +2862,18 @@ class Relationship(BaseModelNode):
         return self._api.concepts.relationships.instances.create_many(self.dataset_id, self, *li_list)
 
     def as_dict(self):
-        d = super(Relationship, self).as_dict()
+        d = super(RelationshipType, self).as_dict()
         d['type'] = 'relationship'
 
         return d
 
     def __repr__(self):
-        return u"<Relationship type='{}' id='{}'>".format(self.type, self.id)
+        return u"<RelationshipType type='{}' id='{}'>".format(self.type, self.id)
 
 
-class RelationshipInstance(BaseRecord):
+class Relationship(BaseRecord):
     """
-    A single instance of a ``Relationship``.
+    A single instance of a ``RelationshipType``.
     """
     _object_key = ''
 
@@ -2867,23 +2890,23 @@ class RelationshipInstance(BaseRecord):
         self.destination = destination
 
         kwargs.pop('schemaRelationshipId', None)
-        super(RelationshipInstance, self).__init__(dataset_id, type, *args, **kwargs)
+        super(Relationship, self).__init__(dataset_id, type, *args, **kwargs)
 
     def relationship(self):
         """
         Retrieves the relationship definition of this instance from the platform
 
         Returns:
-           A single ``Relationship``.
+           A single ``RelationshipType``.
         """
         return self._api.concepts.relationships.get(self.dataset_id, self.type)
 
     # TODO: delete when update is supported, handled in super-class
     def set(self, name, value):
-        raise Exception("Updating a RelationshipInstance is not available at this time.")
+        raise Exception("Updating a Relationship is not available at this time.")
 
     def update(self):
-        raise Exception("Updating a RelationshipInstance is not available at this time.")
+        raise Exception("Updating a Relationship is not available at this time.")
         #TODO: _update_self(self, self._api.concepts.relationships.instances.update(self.dataset_id, self))
 
     def delete(self):
@@ -2903,18 +2926,18 @@ class RelationshipInstance(BaseRecord):
             destination = data.pop('to', None),
             **data
         )
-        item = super(RelationshipInstance, cls).from_dict(d, *args, **kwargs)
+        item = super(Relationship, cls).from_dict(d, *args, **kwargs)
         return item
 
     def as_dict(self):
-        d = super(RelationshipInstance, self).as_dict()
+        d = super(Relationship, self).as_dict()
         d['to'] = self.destination
         d['from'] = self.source
 
         return d
 
     def __repr__(self):
-        return u"<RelationshipInstance type='{}' id='{}' source='{}' destination='{}'>".format(self.type, self.id, self.source, self.destination)
+        return u"<Relationship type='{}' id='{}' source='{}' destination='{}'>".format(self.type, self.id, self.source, self.destination)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Proxies
@@ -2977,12 +3000,12 @@ class RecordSet(BaseInstanceList):
         return df
 
 
-class RelationshipInstanceSet(BaseInstanceList):
-    _accept_type = Relationship
+class RelationshipSet(BaseInstanceList):
+    _accept_type = RelationshipType
 
     def as_dataframe(self):
         """
-        Converts the list of ``RelationshipInstance`` to a pandas DataFrame
+        Converts the list of ``Relationship`` to a pandas DataFrame
 
         Returns:
           pd.DataFrame

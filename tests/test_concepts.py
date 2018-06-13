@@ -2,7 +2,7 @@ import time
 import pytest
 import datetime
 
-from blackfynn.models import Model, Record, DataPackage, Relationship, RelationshipInstance
+from blackfynn.models import Model, Record, DataPackage, RelationshipType, Relationship
 
 def test_concepts(dataset):
     current_ts = lambda: int(round(time.time() * 1000))

@@ -49,7 +49,7 @@ Tabular
 ..    Concept
 ..    ConceptInstance
 ..    Relationship
-..    RelationshipInstance
+..    Relationship
 
 
 Base Class
@@ -150,6 +150,6 @@ Tabular
 ..    :members:
 ..    :show-inheritance:
 
-.. .. autoclass:: RelationshipInstance
+.. .. autoclass:: Relationship
 ..    :members:
 ..    :show-inheritance:

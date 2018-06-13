@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 Documentation at http://docs.blackfynn.io
 
+## [2.3.0]
+### Added
+- Preliminary graph features, beta-quality
+- Basic timeseries segments functionality
+- Documentation dump (needs revision)
+
+### Changed 
+- Upload using preview/grouping endpoint
+
 ## [2.1.4]
 ### Added
 - A field for `size` to the File model
