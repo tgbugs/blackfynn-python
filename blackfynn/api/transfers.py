@@ -316,7 +316,7 @@ class IOAPI(APIBase):
                 import_id_map[files[index]] = import_id
         return import_id_map
 
-    def set_upload_complete(self, import_id, dataset_id, destination_id, append=False):
+    def set_upload_complete(self, import_id, dataset_id, destination_id, append=False, targets=None):
         params = dict(
             append = append,
             datasetId = dataset_id,
@@ -324,8 +324,9 @@ class IOAPI(APIBase):
         )
         if destination_id is not None:
             params['destinationId'] = destination_id
-
+        
         return self._post(
-            endpoint = self._uri('/files/upload/complete/{import_id}', import_id=import_id),
-            params = params,
+            endpoint=self._uri('/files/upload/complete/{import_id}', import_id=import_id),
+            params=params,
+            json = targets
             )
