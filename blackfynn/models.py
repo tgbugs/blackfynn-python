@@ -1011,7 +1011,6 @@ class TimeSeries(DataPackage):
             segment for channel in self.channels 
             for segment in channel.segments(start=start, stop=stop)
         ]
-        print channel_segments
         # union all segments
         union_segments = []
         for begin,end in sorted(channel_segments):
