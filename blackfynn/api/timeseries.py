@@ -476,6 +476,8 @@ class TimeSeriesAPI(APIBase):
     def get_segments(self, ts, channel, start, stop):
         channel_id = self._get_id(channel)
         package_id = self._get_id(ts)
+        start = infer_epoch(start)
+        stop  = infer_epoch(stop)
 
         resp = self._get(
             # Note: uses streaming server
@@ -487,11 +489,11 @@ class TimeSeriesAPI(APIBase):
                 channel = channel_id,
                 package = package_id,
                 session = self.session.token,
-                start   = self.start,
-                end     = self.stop
+                start   = start,
+                end     = stop
             )
         )
-        return np.array(resp)
+        return [tuple(x) for x in resp]
 
     # ~~~~~~~~~~~~~~~~~~~
     # Annotation Layers
