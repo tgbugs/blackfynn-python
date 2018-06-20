@@ -1833,6 +1833,7 @@ class Organization(BaseNode):
 class Dataset(BaseCollection):
     def __init__(self, name, description=None, **kwargs):
         kwargs.pop('package_type', None)
+        kwargs.pop('type', None)
         super(Dataset, self).__init__(name, "DataSet", **kwargs)
         self.description = description or ''
 
