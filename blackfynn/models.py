@@ -2563,7 +2563,7 @@ class Model(BaseModelNode):
           mouse.delete(mouse_002, 123456789, mouse_003.id)
 
         """
-        result = self._api.concepts.delete_instances(self.dataset_id, self, *instances)
+        result = self._api.concepts.delete_instances(self.dataset_id, self, *records)
 
         for error in result['errors']:
             print "Failed to delete instance {} with error: {}".format(error[0], error[1])
