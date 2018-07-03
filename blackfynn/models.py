@@ -2877,8 +2877,8 @@ class RelationshipType(BaseModelNode):
 
         # Check sources and destinations
         for value in item_list:
-            assert isinstance(value['destination'], (Record, DataPackage)), 'destination must be object of type Record or DataPackage'
-            assert isinstance(value['source'], (Record, DataPackage)), 'source must be object of type Record or DataPackage'
+            assert isinstance(value['destination'], (Record, DataPackage, basestring)), 'destination must be object of type Record, DataPackage, or Model UUID'
+            assert isinstance(value['source'], (Record, DataPackage, basestring)), 'source must be object of type Record, DataPackage, or model UUID'
             assert value['relationship_type']==self.type, u'RelationshipType type of items need to match relationship type: "{}"'.format(self.type)
 
         li_list = [
@@ -2918,12 +2918,12 @@ class Relationship(BaseRecord):
     _object_key = ''
 
     def __init__(self, dataset_id, type, source, destination, *args, **kwargs):
-        assert isinstance(source,  (Record, basestring)), "source must be Model or UUID"
-        assert isinstance(destination, (Record, basestring)), "destination must be Model or UUID"
+        assert isinstance(source,  (Record, basestring, DataPackage)), "source must be Model, UUID, or DataPackage"
+        assert isinstance(destination, (Record, basestring, DataPackage)), "destination must be Model, UUID, or DataPackage"
 
-        if isinstance(source, Record):
+        if isinstance(source, (Record, DataPackage)):
             source = source.id
-        if isinstance(destination, Record):
+        if isinstance(destination, (Record, DataPackage)):
             destination = destination.id
 
         self.source = source
