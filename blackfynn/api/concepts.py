@@ -32,6 +32,7 @@ class ModelsAPIBase(APIBase):
         else:
             raise Exception("could not get relationship type from relationship {} or instance {} ".format(relationship, instance))
 
+
 class ModelsAPI(ModelsAPIBase):
     base_uri = "/datasets"
     name = 'concepts'
@@ -56,6 +57,15 @@ class ModelsAPI(ModelsAPIBase):
         dataset_id = self._get_id(dataset)
         resp = self._put(self._uri('/{dataset_id}/concepts/{id}/properties', dataset_id=dataset_id, id=concept.id), json=data)
         return [ModelProperty.from_dict(r) for r in resp]
+
+    def delete_property(self, dataset, concept, prop):
+        dataset_id  = self._get_id(dataset)
+        concept_id  = self._get_id(concept)
+        property_id = self._get_id(prop)
+        return self._del(self._uri('/{dataset_id}/concepts/{concept_id}/properties/{property_id}',
+                dataset_id  = dataset_id,
+                concept_id  = concept_id,
+                property_id = property_id))
 
     def get(self, dataset, concept):
         dataset_id = self._get_id(dataset)
@@ -121,7 +131,6 @@ class ModelsAPI(ModelsAPIBase):
                 instance_id=instance_id
             ))
         return [DataPackage.from_dict(pkg, api=self.session) for r,pkg in resp]
-
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -214,6 +223,42 @@ class RecordsAPI(ModelsAPIBase):
         instances = [Record.from_dict(r, api=self.session) for r in resp]
         return RecordSet(concept, instances)
 
+    def get_all_related(self, dataset, source_instance):
+        related = self.get_counts(dataset, source_instance)
+        return {
+            item['name']: self.get_all_related_of_type(dataset, source_instance, item['name'])
+            for item in related
+            if not (item['name']=='package' and item['displayName']=='Files') 
+            # ^^ TODO: have API provide better means of distinguishing proxy vs. model
+        }
+
+    def get_all_related_of_type(self, dataset, source_instance, return_type, source_concept=None):
+        """
+        Return all records of type return_type related to instance.
+        """
+        dataset_id   = self._get_id(dataset)
+        instance_id  = self._get_id(source_instance)
+        instance_type = self._get_concept_type(source_concept, source_instance)
+        resp = self._get(self._uri('/{dataset_id}/concepts/{instance_type}/instances/{instance_id}/relations/{return_type}',
+                    dataset_id    = dataset_id,
+                    instance_type = instance_type,
+                    instance_id   = instance_id,
+                    return_type   = return_type))
+        for edge,node in resp:
+            node['dataset_id'] = node.get('dataset_id', dataset_id)
+        if not isinstance(return_type, Model):
+            return_type = self.session.concepts.get(dataset, return_type)
+        records = [Record.from_dict(r, api=self.session) for _,r in resp]
+        return RecordSet(return_type, records)
+
+    def get_counts(self, dataset, instance, concept=None):
+        dataset_id   = self._get_id(dataset)
+        concept_type = self._get_concept_type(concept, instance)
+        instance_id  = self._get_id(instance)
+        return self._get(self._uri('/{dataset_id}/concepts/{concept_type}/instances/{instance_id}/relationCounts',
+                    dataset_id   = dataset_id,
+                    concept_type = concept_type,
+                    instance_id  = instance_id))
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Relationships
