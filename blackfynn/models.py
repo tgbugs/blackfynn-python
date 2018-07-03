@@ -3052,10 +3052,10 @@ class RelationshipType(BaseModelNode):
                 raise Exception("Expected relationship as tuple or dictionary, found {}".format(type(value)))
 
             # Check sources and destinations
-            if not isinstance(src, (Record, DataPackage)):
-                raise Exception('source must be object of type Record or DataPackage')
-            if not isinstance(dest, (Record, DataPackage)):
-                raise Exception('destination must be object of type Record or DataPackage')
+            if not isinstance(src, (Record, DataPackage, basestring)):
+                raise Exception('source must be object of type Record, DataPackage, or UUID')
+            if not isinstance(dest, (Record, DataPackage, basestring)):
+                raise Exception('destination must be object of type Record, DataPackage, or UUID')
 
             # create local relationship object
             relations.append(
