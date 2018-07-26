@@ -14,10 +14,10 @@ def test_upload(client, dataset):
 
     # upload a file into dataset
     r = dataset.upload(*files)
-    assert len(r['files']) == len(files)
-    assert 'destination' not in r
-    assert r['dataset'] == dataset.id
-    assert r['appendToPackage'] == False
+    assert len(r) == len(files)
+    manifest = r[0][0]['manifest']
+    assert manifest['content'] is not None
+    assert manifest['type'] == 'upload'
 
     # try uploading into a DataPackage
     pkg = DataPackage('Rando Thing', package_type='MRI')
@@ -45,7 +45,7 @@ def test_append(client, dataset):
 
     # upload/append file into package
     r = pkg.append_files(file1)
-    assert len(r['files']) == 1
-    assert r['destination'] == pkg.id
-    assert r['dataset'] == pkg.dataset
-    assert r['appendToPackage'] == True
+    assert len(r) == 1
+    manifest = r[0][0]['manifest']
+    assert manifest['content'] is not None
+    assert manifest['type'] == 'append'

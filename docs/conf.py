@@ -18,10 +18,6 @@
 #
 import os, sys
 
-bf_code_dir = os.environ.get('BLACKFYNN_CODE_DIR', None)
-if bf_code_dir is None:
-    raise Exception("Must set BLACKFYNN_CODE_DIR environment variable")
-
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.

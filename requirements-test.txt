@@ -1,0 +1,4 @@
+pytest
+pytest-cov
+sphinx
+-e git+git://github.com/Blackfynn/sphinx_rtd_theme.git#egg=sphinx-rtd-theme

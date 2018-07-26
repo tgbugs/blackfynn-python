@@ -9,30 +9,15 @@ from blackfynn.models import (
 )
 from blackfynn.base import UnauthorizedException
 
-def test_get_all_datasets(client, superuser_client):
-    n_ds_to = len(client.datasets())
-    ds1 = client.create_dataset("DS 1")
-    ds2 = client.create_dataset("DS 2")
 
-    assert len(client.datasets()) == n_ds_to + 2
-
-    ds3 = client.create_dataset("DS 3")
-    assert len(client.datasets()) == n_ds_to + 3
-
-    # cleanup
-    superuser_client._api.datasets.delete(ds1)
-    superuser_client._api.datasets.delete(ds2)
-    superuser_client._api.datasets.delete(ds3)
-
-    assert len(client.datasets()) == n_ds_to
-
-def test_update_dataset(client, dataset):
+def test_update_dataset(client, dataset, session_id):
     # update name of dataset
-    dataset.name = 'Same Dataset, Different Name'
+    ds_name = 'Same Dataset, Different Name {}'.format(session_id)
+    dataset.name = ds_name
     dataset.update()
     ds2 = client.get_dataset(dataset.id)
     assert ds2.id == dataset.id
-    assert ds2.name == dataset.name
+    assert ds2.name == ds_name
 
 def test_datasets(dataset):
     ds_items = len(dataset)
@@ -198,7 +183,7 @@ def test_properties(client, dataset):
     with pytest.raises(Exception):
         assert pkg2.get_property('my-key')
 
-def test_package_objects(client, superuser_client, dataset):
+def test_package_objects(client, client2, dataset):
     """
     Only super-users are allowed to create/modify package sources/files.
     """
@@ -210,44 +195,15 @@ def test_package_objects(client, superuser_client, dataset):
     file   = File(name='My File', s3_key='s3/file', s3_bucket='my-bucket', file_type="CSV", size=1000)
     view   = File(name='My View File', s3_key='s3/view', s3_bucket='my-bucket', file_type="NIFTI", size=1000)
 
-    # get dataset (but as super-user)
-    superuser_dataset = superuser_client._api.datasets.get(dataset.id)
+    # get dataset (but as different client)
+    dataset2 = client2._api.datasets.get(dataset.id)
 
-    assert superuser_dataset.id == dataset.id
-    assert superuser_dataset.exists
+    assert dataset2.id == dataset.id
+    assert dataset2.exists
 
     # create package (super-admin user session)
-    superuser_dataset.add(pkg)
+    dataset2.add(pkg)
     assert pkg.exists
-
-    # add source (super-admin)
-    pkg.set_sources(source)
-
-    # get as normal user
-    pkg2 = client.get(pkg)
-    print "sources =", pkg2.sources
-    assert len(pkg2.sources) > 0
-    assert pkg2.sources[0].name == 'My Source File'
-    del pkg2
-
-    # add files (super-admin)
-    pkg.set_files(file)
-
-    # get as normal user
-    pkg2 = client.get(pkg)
-    print "files =", pkg2.files
-    assert len(pkg2.files) > 0
-    del pkg2
-
-    # add views (super-admin)
-    pkg.set_view(view)
-
-    # get as normal user
-    pkg2 = client.get(pkg)
-    print "view =", pkg2.view
-    assert len(pkg2.view) > 0
-    del pkg2
-    del pkg
 
     # create package (normal user owns)
     pkg = DataPackage('Some Video', package_type='Video')

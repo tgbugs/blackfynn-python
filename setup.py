@@ -43,7 +43,7 @@ setup(
     },
     license = "",
     keywords = "blackfynn client rest api",
-    url = "http://app.blackfynn.io",
+    url = "http://www.blackfynn.com",
     download_url = "",
     classifiers=[
         "Development Status :: 3 - Alpha",

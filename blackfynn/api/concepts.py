@@ -390,7 +390,7 @@ class ModelProxiesAPI(ModelsAPIBase):
         r['dataset_id'] = r.get('dataset_id', dataset_id)
         return r
 
-    def create(self, dataset, external_id, relationship, concept_instance, values, direction = "ToModel", proxy_type = "package", concept = None):
+    def create(self, dataset, external_id, relationship, concept_instance, values, direction = "ToTarget", proxy_type = "package", concept = None):
         assert proxy_type in self.proxy_types, "proxy_type must be one of {}".format(self.proxy_types)
         assert direction in self.direction_types, "direction must be one of {}".format(self.direction_types)
 

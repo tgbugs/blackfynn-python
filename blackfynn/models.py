@@ -829,13 +829,10 @@ class DataPackage(BaseDataNode):
             r = RelationshipType(dataset_id=self.dataset, name='belongs_to', description='belongs_to')
             self._api.concepts.relationships.create(self.dataset, r)
 
-        # create relationships
-        relationships = [
-            Relationship(type=relationship_type.type, dataset_id=self.dataset, source=r.id, destination=self)
+        return [
+            self._api.concepts.proxies.create(self.dataset, self.id, 'belongs_to', r, {})
             for r in records
         ]
-        # use batch endpoint to create relationships
-        return self._api.concepts.relationships.instances.create_many(self.dataset, "belongs_to", *relationships)
 
     def as_dict(self):
         d = super(DataPackage, self).as_dict()

@@ -4,7 +4,7 @@ import datetime
 
 from blackfynn.models import Model, Record, DataPackage, RelationshipType, Relationship
 
-def test_concepts(dataset):
+def test_models(dataset):
     current_ts = lambda: int(round(time.time() * 1000))
     schema = [('an_integer', int, 'An Integer', True), ('a_long', long), ('a_bool', bool), ('a_string', str), ('a_datetime', datetime.datetime)]
     display_name = 'A New Property'
@@ -15,71 +15,65 @@ def test_concepts(dataset):
     ## Models
     ################################
 
-    concepts = dataset.concepts()
+    models = dataset.models()
 
-    new_concept = dataset.create_concept('New_Model_{}'.format(current_ts()), 'A New Model', 'a new concept', schema)
+    new_model = dataset.create_model('New_Model_{}'.format(current_ts()), 'A New Model', 'a new model', schema)
 
-    assert len(dataset.concepts()) == len(concepts) + 1
+    assert len(dataset.models()) == len(models) + 1
 
-    assert dataset.get_concept(new_concept.id) == new_concept
-    assert dataset.get_concept(new_concept.type) == new_concept
+    assert dataset.get_model(new_model.id) == new_model
+    assert dataset.get_model(new_model.type) == new_model
 
-    new_concept.add_property('a_new_property', str, display_name)
-    new_concept.description = description
-    new_concept.update()
+    new_model.add_property('a_new_property', str, display_name)
+    new_model.description = description
+    new_model.update()
 
-    new_concept = dataset.get_concept(new_concept.id)
+    new_model = dataset.get_model(new_model.id)
 
-    assert new_concept.description == description
-    assert new_concept.get_property('a_new_property').display_name == display_name
+    assert new_model.description == description
+    assert new_model.get_property('a_new_property').display_name == display_name
 
-    new_concept.add_properties([('a_new_float', float), {'name': 'a_new_int', 'data_type': int}, 'a_new_string'])
-    assert new_concept.get_property('a_new_float').type == float
-    assert new_concept.get_property('a_new_int').type == long
-    assert new_concept.get_property('a_new_string').type == unicode
+    new_model.add_properties([('a_new_float', float), {'name': 'a_new_int', 'data_type': int}, 'a_new_string'])
+    assert new_model.get_property('a_new_float').type == float
+    assert new_model.get_property('a_new_int').type == long
+    assert new_model.get_property('a_new_string').type == unicode
 
-    nc_one = new_concept.create(values)
-    nc_two = new_concept.create({'an_integer': 1, 'a_long': 0L, 'a_bool': False, 'a_string': '', 'a_datetime': datetime.datetime.now()})
-    nc_three = new_concept.create({'an_integer': 10000, 'a_long': 9349234L, 'a_bool': False, 'a_string': '43132312', 'a_datetime': datetime.datetime.now()})
-    nc_four = new_concept.create({'a_datetime': datetime.datetime.now()})
+    nc_one = new_model.create_record(values)
+    nc_two = new_model.create_record({'an_integer': 1, 'a_long': 0L, 'a_bool': False, 'a_string': '', 'a_datetime': datetime.datetime.now()})
+    nc_three = new_model.create_record({'an_integer': 10000, 'a_long': 9349234L, 'a_bool': False, 'a_string': '43132312', 'a_datetime': datetime.datetime.now()})
+    nc_four = new_model.create_record({'a_datetime': datetime.datetime.now()})
 
-    nc_delete_one = new_concept.create({'a_datetime': datetime.datetime.now()})
-    nc_delete_two = new_concept.create({'a_datetime': datetime.datetime.now()})
+    nc_delete_one = new_model.create_record({'a_datetime': datetime.datetime.now()})
+    nc_delete_two = new_model.create_record({'a_datetime': datetime.datetime.now()})
 
-    try:
-        new_concept.create()
-        assert False
-    except:
-        assert True
+    with pytest.raises(Exception):
+        new_model.create_record()
 
-    new_concepts_old = new_concept.get_all()
-    new_concept.delete_items(nc_delete_one, nc_delete_two.id)
-    new_concepts = new_concept.get_all()
+    new_models_old = new_model.get_all()
+    new_model.delete_records(nc_delete_one, nc_delete_two.id)
+    new_models = new_model.get_all()
 
-    assert len(new_concepts) == (len(new_concepts_old) - 2)
+    assert len(new_models) == (len(new_models_old) - 2)
 
-    assert nc_two.concept() == new_concept
+    assert nc_two.model == new_model
     assert nc_two.get('a_string') == ''
 
     nc_four.set('a_string', 'hello')
-    assert nc_four.get('a_string') == new_concept.get(nc_four).get('a_string')
+    assert nc_four.get('a_string') == new_model.get(nc_four).get('a_string')
 
-    try:
+    with pytest.raises(Exception):
         nc_four.set('an_integer', datetime.datetime.now())
-        assert False
-    except:
-        assert True
 
     assert nc_four.get('an_integer') == None
     nc_four.set('an_integer', 10L)
     assert nc_four.get('an_integer') == 10
 
-    nc_delete_three = new_concept.create({'a_string': 'delete me'})
-    assert len(new_concept.get_all()) == len(new_concepts) + 1
+    nc_delete_three = new_model.create_record({'a_string': 'delete me'})
+    assert len(new_model.get_all()) == len(new_models) + 1
     nc_delete_three.delete()
-    assert len(new_concept.get_all()) == len(new_concepts)
+    assert len(new_model.get_all()) == len(new_models)
 
-    df_cs = new_concept.get_all().as_dataframe()
+    df_cs = new_model.get_all().as_dataframe()
 
     #################################
     ## Relationships
@@ -87,50 +81,30 @@ def test_concepts(dataset):
 
     relationships = dataset.relationships()
 
-    new_relationship = dataset.create_relationship('New_Relationship_{}'.format(current_ts()), 'a new relationship')
+    new_relationship = dataset.create_relationship_type('New_Relationship_{}'.format(current_ts()), 'a new relationship')
 
     assert len(dataset.relationships()) == len(relationships) + 1
 
     assert dataset.get_relationship(new_relationship.id) == new_relationship
     assert dataset.get_relationship(new_relationship.type) == new_relationship
 
-    nr_one = new_relationship.link(nc_one, nc_two)
-    nr_two = nc_two.link(new_relationship, nc_three)
-    nr_three = nc_three.link(new_relationship.type, nc_four)
-    nr_four = new_relationship.link(nc_four, nc_one)
-    nr_five = new_relationship.link(nc_four, nc_two)
-    nr_six = nc_four.link(new_relationship, nc_three)
+    nr_one = new_relationship.relate(nc_one, nc_two)
+    nr_four = new_relationship.relate(nc_four, nc_one)
+    nr_five = new_relationship.relate(nc_four, nc_two)
+
+    nr_two = nc_two.relate_to(nc_three, new_relationship)
+    nr_three = nc_three.relate_to(nc_four, new_relationship)
+    nr_six = nc_four.relate_to(nc_three, new_relationship)
 
     nc_four.update()
-    assert len(nc_four.relationships(new_concept)) == 4
-    assert len(nc_four.neighbors(new_concept)) == 4
-    assert len(nc_four.links(new_concept)) == 4
-    assert len(nc_four.relationships(new_concept.type, new_relationship.type)) == 4
-    assert len(nc_four.neighbors(new_concept.type, new_relationship.type)) == 4
-    assert len(nc_four.links(new_concept.type, new_relationship.type)) == 4
+    assert len(nc_four.get_related(new_model.type)) == 4
 
     new_relationships = new_relationship.get_all()
 
-    assert nr_two.relationship() == new_relationship
-
-    try:
-        nr_four.set('an_integer', datetime.datetime.now())
-        assert False
-    except:
-        assert True
-
-    assert nr_four.get('an_integer') == None
-
-    nr_delete_three = new_relationship.link(nc_one, nc_two)
+    nr_delete_three = new_relationship.relate(nc_one, nc_two)
     assert len(new_relationship.get_all()) == len(new_relationships) + 1
     nr_delete_three.delete()
     assert len(new_relationship.get_all()) == len(new_relationships)
-
-    try:
-        new_relationship.link(nc_one, nc_one)
-        assert False
-    except:
-        assert True
 
     df_rs = new_relationship.get_all().as_dataframe()
 
@@ -139,15 +113,10 @@ def test_concepts(dataset):
     dataset.update()
     assert p.exists
 
-    p.link(new_relationship, nc_one)
-    p.link(new_relationship.type, nc_two)
-    nc_three.link(new_relationship, p)
-    new_relationship.link(nc_four, p)
+    p.relate_to(nc_one)
+    p.relate_to(nc_two)
+    nc_three.relate_to(p, new_relationship)
+    new_relationship.relate(nc_four, p)
 
     nc_four.update()
-    assert len(nc_four.relationships(new_concept)) == 4
-    assert len(nc_four.neighbors(new_concept)) == 4
-    assert len(nc_four.links(new_concept)) == 4
-    assert len(nc_four.relationships(new_concept.type, new_relationship.type)) == 4
-    assert len(nc_four.neighbors(new_concept.type, new_relationship.type)) == 4
-    assert len(nc_four.links(new_concept.type, new_relationship.type)) == 4
+    assert len(nc_four.get_related(new_model.type)) == 4

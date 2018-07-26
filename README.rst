@@ -1,6 +1,9 @@
 blackfynn-python
 ================
 
+.. image:: https://travis-ci.org/Blackfynn/blackfynn-python.svg?branch=master
+    :target: https://travis-ci.org/Blackfynn/blackfynn-python
+
 Python client and command line tool for Blackfynn.
 
 Installation
@@ -20,4 +23,4 @@ Documentation
 Client and command line documentation can be found on `Blackfynn’s
 documentation website`_.
 
-.. _Blackfynn’s documentation website: http://docs.blackfynn.io/platform/clients/index.html#python-client
+.. _Blackfynn’s documentation website: http://docs.blackfynn.io/python/latest
