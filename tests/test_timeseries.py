@@ -3,6 +3,7 @@ import pdb
 from blackfynn import TimeSeries, TimeSeriesChannel
 from blackfynn.models import TimeSeriesAnnotationLayer, TimeSeriesAnnotation
 import datetime
+
 @pytest.fixture()
 def timeseries(client, dataset):
     # create
@@ -205,6 +206,32 @@ def test_timeseries_annotations(client, timeseries):
     next_annot= annot_gen.next()
     assert next_annot[0].label == 'test_label2'
 
+    ### TEST ANNOTATION COUNTS
+    layer1_expected_counts = [
+        {'start': 0, 'end': 250000, 'value': 1.0},
+        {'start': 250000, 'end': 500000, 'value': 1.0},
+        {'start': 500000, 'end': 750000, 'value': 1.0},
+        {'start': 750000, 'end': 1000000, 'value': 1.0},
+        {'start': 1000000, 'end': 1250000, 'value': 2.0},
+        {'start': 1250000, 'end': 1500000, 'value': 1.0},
+        {'start': 1500000, 'end': 1750000, 'value': 1.0},
+        {'start': 1750000, 'end': 2000000, 'value': 1.0},
+        {'start': 2000000, 'end': 2000001, 'value': 1.0}
+    ]
+    assert sorted(
+        timeseries.annotation_counts(
+            start = timeseries.channels[0].start * 1e6,
+            end = timeseries.channels[0].start + 2 * 1e6,
+            layers=[layer1], period="0.25s"
+        )[str(layer1.id)]
+    ) == layer1_expected_counts
+    assert sorted(
+        layer1.annotation_counts(
+            start = timeseries.channels[0].start * 1e6,
+            end = timeseries.channels[0].start + 2 * 1e6,
+            period="0.25s"
+        )[str(layer1.id)]
+    ) == layer1_expected_counts
 
     ### TEST DELETION
 

@@ -1286,7 +1286,7 @@ class TimeSeries(DataPackage):
         self._check_exists()
         return self._api.timeseries.delete_annotation_layer(layer)
 
-    def query_annotation_counts(self, channels, start, end, layer=None):
+    def annotation_counts(self, start, end, layers, period, channels=None):
         """
         Get annotation counts between ``start`` and ``end``.
 
@@ -1298,7 +1298,9 @@ class TimeSeries(DataPackage):
         """
         self._check_exists()
         return self._api.timeseries.query_annotation_counts(
-            channels=channels,start=start,end=end,layer=layer)
+            ts=self, layers=layers, channels=channels, start=start, end=end,
+            period=period
+        )
 
     def __repr__(self):
         return u"<TimeSeries name=\'{}\' id=\'{}\'>".format(self.name, self.id)
@@ -1559,9 +1561,10 @@ class TimeSeriesAnnotationLayer(BaseNode):
         self._check_exists()
         ts = self._api.core.get(self.time_series_id)
         return self._api.timeseries.query_annotations(
-            ts=ts, layer=self, channels=channels, start=start, end=end)
+            ts=ts, layer=self, channels=channels, start=start, end=end
+        )
 
-    def annotation_counts(self, start, end, channels=None):
+    def annotation_counts(self, start, end, period, channels=None):
         """
         The number of annotations between ``start`` and ``end`` over selected
         channels (all by default).
@@ -1574,7 +1577,8 @@ class TimeSeriesAnnotationLayer(BaseNode):
         self._check_exists()
         ts = self._api.core.get(self.time_series_id)
         return self._api.timeseries.query_annotation_counts(
-            ts=ts, layer=self, channels=channels, start=start, end=end)
+            ts=ts, layers=[self], channels=channels, start=start, end=end, period=period
+        )
 
     def delete(self):
         """

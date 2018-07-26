@@ -734,7 +734,7 @@ class TimeSeriesAPI(APIBase):
 
         return [TimeSeriesAnnotation.from_dict(x, api=self.session) for x in resp['annotations']['results']]
 
-    def annotation_counts(self, ts, layer, start, end, period, channels=None):
+    def query_annotation_counts(self, ts, layers, start, end, period, channels=None, merge_periods=False):
         """
         Retrives annotation counts for a given ts, channel, start, end, and/or layer
         """
@@ -751,14 +751,16 @@ class TimeSeriesAPI(APIBase):
         period = parse_timedelta(period)
 
         params = {
+            'aggregation': 'count',
             'start': long(start),
             'end': long(end),
-            'channelIds': ch_list,
-            'period': period,
-            'layer': layer.name
+            'period': long(period),
+            'mergePeriods': merge_periods,
+            'layerIds': [l.id for l in layers],
+            'channelIds': ch_list
         }
 
-        path = self._uri('/{ts_id}/annotations',
+        path = self._uri('/{ts_id}/annotations/window',
                     ts_id = self._get_id(ts))
 
         resp = self._get(path, params=params)
