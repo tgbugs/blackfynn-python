@@ -4,8 +4,20 @@ import datetime
 
 from blackfynn.models import Model, Record, DataPackage, RelationshipType, Relationship
 
+def current_ts():
+    return int(round(time.time() * 1000))
+
+
+def test_model_with_invalid_properties(dataset):
+    invalid_schema = [('an_integer', int, 'An Integer')]
+    new_model = dataset.create_model(
+        'New_Model_{}'.format(current_ts()), 'A New Model', 'a new model', invalid_schema
+    )
+
+    assert not new_model.schema
+
+
 def test_models(dataset):
-    current_ts = lambda: int(round(time.time() * 1000))
     schema = [('an_integer', int, 'An Integer', True), ('a_long', long), ('a_bool', bool), ('a_string', str), ('a_datetime', datetime.datetime)]
     display_name = 'A New Property'
     description = 'a new description'

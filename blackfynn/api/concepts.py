@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+import logging
+import requests
+
 from blackfynn.api.base import APIBase
 from blackfynn.models import (
     Model, Record, RecordSet, ModelProperty, ProxyInstance,
@@ -97,8 +100,21 @@ class ModelsAPI(ModelsAPIBase):
         r = self._post(self._uri('/{dataset_id}/concepts', dataset_id=dataset_id), json=concept.as_dict())
         concept.id = r['id']
         r['dataset_id'] = r.get('dataset_id', dataset_id)
+
         if concept.schema:
-            r['schema'] = self.update_properties(dataset, concept)
+            try:
+                r['schema'] = self.update_properties(dataset, concept)
+            except requests.exceptions.HTTPError as e:
+                if e.response.status_code == 400:
+                    logging.error(
+                        "Model was successfully created, but properties were "
+                        "rejected with the following error: {}".format(str(
+                            e.response.content.split('\n')[0]
+                        ))
+                    )
+                else:
+                    raise
+
         return Model.from_dict(r, api=self.session)
 
     def get_all(self, dataset):
@@ -126,7 +142,7 @@ class ModelsAPI(ModelsAPIBase):
         instance_id = self._get_id(instance)
         resp = self._get(
             self._uri('/{dataset_id}/concepts/{concept_id}/instances/{instance_id}/files',
-                dataset_id=dataset_id, 
+                dataset_id=dataset_id,
                 concept_id=concept_id,
                 instance_id=instance_id
             ))
@@ -217,7 +233,7 @@ class RecordsAPI(ModelsAPIBase):
         dataset_id = self._get_id(dataset)
         values = [inst.as_dict() for inst in instances]
         resp = self._post(self._uri('/{dataset_id}/concepts/{concept_type}/instances/batch', dataset_id=dataset_id, concept_type=instance_type), json=values, stream=True)
-        
+
         for r in resp:
             r['dataset_id'] = r.get('dataset_id', dataset_id)
         instances = [Record.from_dict(r, api=self.session) for r in resp]
@@ -228,7 +244,7 @@ class RecordsAPI(ModelsAPIBase):
         return {
             item['name']: self.get_all_related_of_type(dataset, source_instance, item['name'])
             for item in related
-            if not (item['name']=='package' and item['displayName']=='Files') 
+            if not (item['name']=='package' and item['displayName']=='Files')
             # ^^ TODO: have API provide better means of distinguishing proxy vs. model
         }
 
@@ -407,7 +423,7 @@ class ModelProxiesAPI(ModelsAPIBase):
         request['targets'] = [
             {
                 'direction': direction,
-                'linkTarget': { 
+                'linkTarget': {
                     "ConceptInstance": {
                         'id': concept_instance_id
                     }
