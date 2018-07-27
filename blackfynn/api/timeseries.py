@@ -346,6 +346,14 @@ class TimeSeriesAPI(APIBase):
 
         return self._del(path)
 
+    def delete_channel_by_id(self, pkg_id, channel_id):
+        """
+        Deletes a timeseries channel on the platform.
+        """
+
+        path = self._uri('/{pkg_id}/channels/{id}', pkg_id=pkg_id, id=channel_id)
+        return self._del(path)
+
     def get_streaming_credentials(self, ts):
         """
         Get the streaming credentials for the given time series package.
@@ -895,5 +903,3 @@ class TimeSeriesAPI(APIBase):
                 raise Exception('Expecting TimeSeries instance or ID')
 
         return channels
-
-

@@ -87,17 +87,23 @@ def test_timeseries_channels(client, timeseries):
     # get channels (via API)
     ch_ids = [x.id for x in channels]
 
-    # check 
+    # check
     for ch in chs:
         assert ch.id in ch_ids
 
-    # TODO: remove channel
     ch = channels[0]
     timeseries.remove_channels(ch)
     channels = timeseries.channels
-    assert len(channels) == num_channels-1
+    assert len(channels) == num_channels - 1
     assert ch not in channels
     assert ch.id not in [x.id for x in channels]
+
+    # remove by id
+    ch_id = channels[0].id
+    timeseries.remove_channels(ch_id)
+    channels = timeseries.channels
+    assert len(channels) == num_channels - 2
+    assert ch_id not in [x.id for x in channels]
 
 
 def test_timeseries_annotations(client, timeseries):
@@ -246,4 +252,3 @@ def test_timeseries_annotations(client, timeseries):
     assert layer2.exists
     # layer2.delete()
     # assert not layer2.exists
-
