@@ -236,46 +236,45 @@ def test_timeseries_annotations(client, timeseries):
     ### TEST DELETION
 
     annot3 = TimeSeriesAnnotation(label= 'test_label3', channel_ids= channel_ids,start = timeseries.channels[0].start+1*1e6,end=timeseries.channels[0].start+2*1e6)
-    #layer1.add_annotations([annot2,annot3])
+    layer1.add_annotations([annot2,annot3])
     annot3 = timeseries.add_annotations(layer=layer1,annotations=annot3)
     assert annot3.exists
-    #annot3.delete()
-    #assert not annot3.exists
+    annot3.delete()
+    assert not annot3.exists
 
     annot4 = timeseries.insert_annotation(layer=layer1,annotation='test_label3',start= timeseries.channels[0].start+1*1e6,end=timeseries.channels[0].start+2*1e6)
     assert annot4.exists
-    #annot4.delete()
-    #assert not annot4.exists
+    annot4.delete()
+    assert not annot4.exists
 
     annot5 = timeseries.insert_annotation(layer='test_layer4',annotation='test_label3',start=timeseries.channels[0].start+1*1e6,end=timeseries.channels[0].start+2*1e6)
     assert annot5.exists
-    #annot5.delete()
-    #assert not annot5.exists
+    annot5.delete()
+    assert not annot5.exists
 
     layer1.add_annotations([annot2,annot3])
     assert annot2.exists
     assert annot3.exists
 
-    #test datetime input
+    # test datetime input
     annot4 = timeseries.insert_annotation(layer='test_layer4',annotation='test_label3',start= datetime.datetime.utcfromtimestamp((timeseries.channels[0].start+1*1e6)/1e6),end=datetime.datetime.utcfromtimestamp(timeseries.channels[0].start+2*1e6))
     assert annot4.exists
-    # annot4.delete()
-    # assert not annot4.exists
+    annot4.delete()
+    assert not annot4.exists
 
     layer = timeseries.get_layer('test_layer4')
     assert layer.exists
-    # layer.delete()
-    # assert not layer.exists
-
+    layer.delete()
+    assert not layer.exists
 
     # delete annotations
-    # annot[0].delete()
-    # assert not annot[0].exists
+    annot[0].delete()
+    assert not annot[0].exists
 
     assert timeseries.exists
-    # timeseries.delete_layer(layer1)
-    # assert not layer1.exists
+    timeseries.delete_layer(layer1)
+    assert not layer1.exists
 
     assert layer2.exists
-    # layer2.delete()
-    # assert not layer2.exists
+    layer2.delete()
+    assert not layer2.exists
