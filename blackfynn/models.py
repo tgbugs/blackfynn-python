@@ -1291,10 +1291,12 @@ class TimeSeries(DataPackage):
         Get annotation counts between ``start`` and ``end``.
 
         Args:
-            channels: list of channels to query over
-            start: start time of query (datetime object or usecs from Epoch)
-            end: end time of query (datetime object or usecs from Epoch)
-
+            start (datetime or microseconds) : The starting time of the range to query
+            end (datetime or microseconds)   : The ending time of the the range to query
+            layers ([TimeSeriesLayer])       : List of layers for which to count annotations
+            period (string)                  : The length of time to group the counts.
+                                               Formatted as a string - e.g. '1s', '5m', '3h'
+            channels ([TimeSeriesChannel])   : List of channel (if omitted, all channels will be used)
         """
         self._check_exists()
         return self._api.timeseries.query_annotation_counts(
@@ -1570,9 +1572,11 @@ class TimeSeriesAnnotationLayer(BaseNode):
         channels (all by default).
 
         Args:
-            start:    Start time
-            end:      End time
-            channels: List of channel objects or IDs
+            start (datetime or microseconds) : The starting time of the range to query
+            end (datetime or microseconds)   : The ending time of the the range to query
+            period (string)                  : The length of time to group the counts.
+                                               Formatted as a string - e.g. '1s', '5m', '3h'
+            channels ([TimeSeriesChannel])   : List of channel (if omitted, all channels will be used)
         """
         self._check_exists()
         ts = self._api.core.get(self.time_series_id)
