@@ -9,6 +9,8 @@ from types import NoneType
 from itertools import islice, count
 from concurrent.futures import ThreadPoolExecutor
 
+import requests
+
 # blackfynn
 from blackfynn.api.base import APIBase
 from blackfynn.streaming import TimeSeriesStream
@@ -554,12 +556,12 @@ class TimeSeriesAPI(APIBase):
 
     def delete_annotation_layer(self, layer):
         ts_id = layer.time_series_id
-
         path = self._uri('/{id}/layers/{layer_id}',id = ts_id,  layer_id =layer.id)
-        if self._del(path):
+        try:
+            self._del(path)
             layer.id = None
             return True
-        else:
+        except requests.exceptions.HTTPError:
             return False
 
     # ~~~~~~~~~~~~~~~~~~~
