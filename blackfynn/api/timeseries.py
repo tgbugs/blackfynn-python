@@ -734,12 +734,27 @@ class TimeSeriesAPI(APIBase):
 
         return [TimeSeriesAnnotation.from_dict(x, api=self.session) for x in resp['annotations']['results']]
 
-    def annotation_counts(self, ts, layer, start, end, period, channels=None):
+    def query_annotation_counts(self, ts, layers, start, end, period, channels=None, merge_periods=False):
         """
-        Retrives annotation counts for a given ts, channel, start, end, and/or layer
+        Retrieves annotation counts for a given ts, channel, start, end, and/or layer
+
+        Args:
+            ts (TimeSeries)                  : The timeseries package for which to count annotations
+            layers ([TimeSeriesLayer])       : List of layers for which to count annotations
+            start (datetime or microseconds) : The starting time of the range to query
+            end (datetime or microseconds)   : The ending time of the the range to query
+            period (string)                  : The length of time to group the counts.
+                                               Formatted as a string - e.g. '1s', '5m', '3h'
+            channels ([TimeSeriesChannel])   : List of channel (if omitted, all channels will be used)
+            merge_periods(Boolean)           : If true, merge consecutive result periods together to
+                                               reduce the size of the resulting payload
+
+        Returns:
+            A dict
+            layer_id -> list of counts for each period
         """
         if channels is None:
-            ch_list = [] #empty uses all channels
+            ch_list = [] # empty uses all channels
         else:
             ch_list = [self._get_id(x) for x in channels]
 
@@ -751,14 +766,16 @@ class TimeSeriesAPI(APIBase):
         period = parse_timedelta(period)
 
         params = {
+            'aggregation': 'count',
             'start': long(start),
             'end': long(end),
-            'channelIds': ch_list,
-            'period': period,
-            'layer': layer.name
+            'period': long(period),
+            'mergePeriods': merge_periods,
+            'layerIds': [l.id for l in layers],
+            'channelIds': ch_list
         }
 
-        path = self._uri('/{ts_id}/annotations',
+        path = self._uri('/{ts_id}/annotations/window',
                     ts_id = self._get_id(ts))
 
         resp = self._get(path, params=params)
