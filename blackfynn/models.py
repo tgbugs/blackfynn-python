@@ -3228,7 +3228,7 @@ class RecordSet(BaseInstanceList):
                 raise ValueError("There is already a column called '{}' in this data set.".format(
                     record_id_column_name
                 ))
-            cols = [record_id_column_name] + cols
+            cols.insert(0, record_id_column_name)
 
         data = []
         for instance in self:
