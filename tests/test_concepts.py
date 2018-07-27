@@ -75,6 +75,11 @@ def test_models(dataset):
 
     df_cs = new_model.get_all().as_dataframe()
 
+    # confirm that all record ids are present in this dataframe
+    assert 'record_id' in df_cs.columns
+    for record in new_model.get_all():
+        assert not df_cs.query('record_id == @record.id').empty
+
     #################################
     ## Relationships
     ################################

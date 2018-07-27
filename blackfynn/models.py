@@ -3216,10 +3216,12 @@ class RecordSet(BaseInstanceList):
         Returns:
           pd.DataFrame
         """
-        cols = self.type.schema.keys()
+        cols = ['record_id'] + self.type.schema.keys()
         data = []
         for instance in self:
-            data.append(instance.values)
+            data.append(
+                dict([('record_id', instance.id)] + instance.values.items())
+            )
         df = pd.DataFrame(data=data, columns=cols)
         return df
 
