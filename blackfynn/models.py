@@ -797,11 +797,11 @@ class DataPackage(BaseDataNode):
             ``Relationship`` that defines the link
 
         Example:
-    
+
             Relate package to a single record::
 
                 eeg.relate_to(participant_123)
-            
+
             Relate package to multiple records::
 
                 # relate to explicit list of records
@@ -1008,7 +1008,7 @@ class TimeSeries(DataPackage):
         """
         Returns list of contiguous data segments available for package. Segments are
         assesssed for all channels, and the union of segments is returned.
-        
+
         Args:
             start (int, datetime, optional): return segments starting after this time
                                              (default earliest start of any channel)
@@ -1020,7 +1020,7 @@ class TimeSeries(DataPackage):
         """
         # flattenened list of segments across all channels
         channel_segments = [
-            segment for channel in self.channels 
+            segment for channel in self.channels
             for segment in channel.segments(start=start, stop=stop)
         ]
         # union all segments
@@ -1090,9 +1090,12 @@ class TimeSeries(DataPackage):
         """
         self._check_exists()
         for channel in channels:
-            self._api.timeseries.delete_channel(channel)
-            channel.id = None
-            channel._pkg = None
+            if isinstance(channel, TimeSeriesChannel):
+                self._api.timeseries.delete_channel(channel)
+                channel.id = None
+                channel._pkg = None
+            else:
+                self._api.timeseries.delete_channel_by_id(self.id, channel)
 
     # ~~~~~~~~~~~~~~~~~~
     # Data
@@ -1946,7 +1949,7 @@ class Dataset(BaseCollection):
             It is required that a model includes at least _one_ property that serves as the "title".
 
         Example:
-            
+
             Create a participant model, including schema::
 
                 from blackfynn import ModelProperty
@@ -1965,7 +1968,7 @@ class Dataset(BaseCollection):
                     schema = [
                         {
                             'name': 'full_name',
-                            'type': str, 
+                            'type': str,
                             'title': True
                         },
                         {
@@ -2345,7 +2348,7 @@ class BaseModelNode(BaseNode):
     def add_properties(self, properties):
         """
         Appends multiple properties to the object's schema and updates the object
-        on the platform. 
+        on the platform.
 
         Args:
           properties (list): List of properties to add
@@ -2368,7 +2371,7 @@ class BaseModelNode(BaseNode):
                 model.add_properties([
                         {
                             'name': 'full_name',
-                            'type': str, 
+                            'type': str,
                             'title': True
                         },
                         {
@@ -2416,7 +2419,7 @@ class BaseModelNode(BaseNode):
             raise Exception("Property '{}' not found in model's schema.".format(property))
 
         prop_id = self.schema.get(prop_name).id
-            
+
         self._api.concepts.delete_property(self.dataset_id, self, prop_id)
         self.schema.pop(prop_name)
 
@@ -2588,7 +2591,7 @@ class Model(BaseModelNode):
         Retrieves a record of the model by id from the platform.
 
         Args:
-            id (int): the id of the record 
+            id (int): the id of the record
 
         Returns:
             A single ``Record``
@@ -2812,7 +2815,7 @@ class Record(BaseRecord):
 
         if not destinations:
             return None
-            
+
         # default values
         if values is None:
             values = [dict() for _ in destinations] if values is None else values
@@ -2999,15 +3002,15 @@ class RelationshipType(BaseModelNode):
 
         Args:
             items (list): List of relationships to be created.
-                            Each relationship should be either a dictionary or tuple. 
+                            Each relationship should be either a dictionary or tuple.
 
-                            If relationships are dictionaries, they are required to have 
-                            ``from``/``to`` or ``source``/``destination`` keys. 
+                            If relationships are dictionaries, they are required to have
+                            ``from``/``to`` or ``source``/``destination`` keys.
                             There is an optional ``values`` key which can be used
-                            to attach metadata to the relationship; 
+                            to attach metadata to the relationship;
                             ``values`` should be a dictionary with key/value pairs.
 
-                            If relationships are tuples, they must be in the form 
+                            If relationships are tuples, they must be in the form
                             ``(source, dest)``.
 
         Returns:
@@ -3041,7 +3044,7 @@ class RelationshipType(BaseModelNode):
             if isinstance(value, tuple):
                 src, dest = value
                 vals = {}
-            elif isinstance(value, dict): 
+            elif isinstance(value, dict):
                 src  = value.get('from',value.get('source'))
                 dest = value.get('to',value.get('destination'))
                 vals = value.get('values',{})
