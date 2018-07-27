@@ -85,7 +85,25 @@ def test_models(dataset):
     nc_delete_three.delete()
     assert len(new_model.get_all()) == len(new_models)
 
-    df_cs = new_model.get_all().as_dataframe()
+    # cannot add a record id column using an existing name
+    with pytest.raises(ValueError):
+        new_model.get_all().as_dataframe(
+            record_id_column_name=new_model.get_all().type.schema.keys()[0]
+        )
+
+    # assert no extra columns are added by default
+    df_cs_no_rec = new_model.get_all().as_dataframe()
+    assert len(df_cs_no_rec.columns) == len(new_model.get_all().type.schema.keys())
+
+    # assert record id column is added when arg is present and valid
+    df_cs = new_model.get_all().as_dataframe(
+        record_id_column_name='record_id'
+    )
+
+    # confirm that all record ids are present in this dataframe
+    assert 'record_id' in df_cs.columns
+    for record in new_model.get_all():
+        assert not df_cs.query('record_id == @record.id').empty
 
     #################################
     ## Relationships

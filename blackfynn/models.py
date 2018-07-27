@@ -3209,17 +3209,34 @@ class BaseInstanceList(list):
 class RecordSet(BaseInstanceList):
     _accept_type = Model
 
-    def as_dataframe(self):
+    def as_dataframe(self, record_id_column_name=None):
         """
         Converts the list of ``Record``s to a pandas DataFrame
 
+        Args:
+          record_id_column_name (string): If set, a column with the desired name will be
+                                          prepended to this dataframe that contains record ids.
+
         Returns:
           pd.DataFrame
+
         """
         cols = self.type.schema.keys()
+
+        if record_id_column_name:
+            if record_id_column_name in cols:
+                raise ValueError("There is already a column called '{}' in this data set.".format(
+                    record_id_column_name
+                ))
+            cols.insert(0, record_id_column_name)
+
         data = []
         for instance in self:
-            data.append(instance.values)
+            values = dict(instance.values)
+            if record_id_column_name:
+                values[record_id_column_name] = instance.id
+            data.append(values)
+
         df = pd.DataFrame(data=data, columns=cols)
         return df
 
