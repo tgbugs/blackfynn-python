@@ -1,8 +1,8 @@
-
 import urllib
 
 # blackfynn
 from blackfynn.models import get_package_class
+import blackfynn.log as log
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Base class
@@ -19,6 +19,7 @@ class APIBase(object):
         """
         # api session
         self.session = session
+        self._logger = log.get_logger('blackfynn.api')
 
     def _get_id(self, thing):
         """

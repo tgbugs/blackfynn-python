@@ -11,8 +11,11 @@ global options:
 from docopt import docopt
 from blackfynn import Dataset
 from blackfynn.models import Collection
+import blackfynn.log as log
 
 from cli_utils import get_item
+
+logger = log.get_logger('blackfynn.cli.bf_move')
 
 def main(bf):
     args = docopt(__doc__)
@@ -29,7 +32,7 @@ def main(bf):
         try:
             bf.move(destination, item)
         except Exception, e:
-            print(e)
+            logger.error(e)
             exit("Failed to move {} into {}.".format(item, destination))
     else:
         exit("Destination must be a collection.")

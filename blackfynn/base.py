@@ -7,7 +7,7 @@ from concurrent.futures import TimeoutError
 from requests_futures.sessions import FuturesSession
 
 # blackfynn
-from blackfynn.utils import log
+import blackfynn.log as log
 from blackfynn.models import User
 
 class UnauthorizedException(Exception):
@@ -21,11 +21,14 @@ class BlackfynnRequest(object):
         self._args = args
         self._kwargs = kwargs
         self._request = None
+
+        self._logger = log.get_logger('blackfynn.base.BlackfynnRequest')
+
         self.call()
 
     def _handle_response(self, sess, resp):
-        log.debug("resp = {}".format(resp))
-        log.debug("resp.content = {}".format(resp.content))
+        self._logger.debug("resp = {}".format(resp))
+        self._logger.debug("resp.content = {}".format(resp.content))
         if resp.status_code in [requests.codes.forbidden, requests.codes.unauthorized]:
             raise UnauthorizedException()
 
@@ -53,6 +56,8 @@ class ClientSession(object):
         self._concepts_host = settings.concepts_api_host
         self._api_token = settings.api_token
         self._api_secret = settings.api_secret
+
+        self._logger = log.get_logger('blackfynn.base.ClientSession')
 
         self._session = None
         self._token = None
@@ -111,11 +116,11 @@ class ClientSession(object):
         return self._session
 
     def _make_call(self, func, uri, *args, **kwargs):
-        log.debug('~'*60)
-        log.debug("uri = {} {}".format(func.__func__.func_name, uri))
-        log.debug("args = {}".format(args))
-        log.debug("kwargs = {}".format(kwargs))
-        log.debug("headers = {}".format(self.session.headers))
+        self._logger.debug('~'*60)
+        self._logger.debug("uri = {} {}".format(func.__func__.func_name, uri))
+        self._logger.debug("args = {}".format(args))
+        self._logger.debug("kwargs = {}".format(kwargs))
+        self._logger.debug("headers = {}".format(self.session.headers))
         return BlackfynnRequest(func, uri, *args, **kwargs)
 
     def _call(self, method, endpoint, base='', async=False, *args, **kwargs):

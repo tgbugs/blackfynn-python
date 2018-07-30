@@ -14,10 +14,13 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 # blackfynn
 from blackfynn.api.base import APIBase
 from blackfynn.models import TimeSeries, Collection, Dataset
-from blackfynn.utils import log
+import blackfynn.log as log
 
 # GLOBAL
 UPLOADS = {}
+
+logger = log.get_logger('blackfynn.api.transfers')
+
 
 def check_files(files):
     for f in files:
@@ -172,7 +175,7 @@ def upload_file(
         return s3_key
 
     except Exception as e:
-        log.debug(e)
+        logger.debug(e)
         progress.set_error()
         raise e
 
@@ -310,7 +313,7 @@ class IOAPI(APIBase):
             import_id = p.get("importId")
             warnings = p.get("warnings", list())
             for warning in warnings:
-                log.warn("API warning: {}".format(warning))
+                logger.warn("API warning: {}".format(warning))
             for f in p.get("files", list()):
                 index = f.get("uploadId")
                 import_id_map[files[index]] = import_id
@@ -324,7 +327,7 @@ class IOAPI(APIBase):
         )
         if destination_id is not None:
             params['destinationId'] = destination_id
-        
+
         return self._post(
             endpoint=self._uri('/files/upload/complete/{import_id}', import_id=import_id),
             params=params,

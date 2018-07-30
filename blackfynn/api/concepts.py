@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import logging
 import requests
 
 from blackfynn.api.base import APIBase
@@ -106,7 +105,7 @@ class ModelsAPI(ModelsAPIBase):
                 r['schema'] = self.update_properties(dataset, concept)
             except requests.exceptions.HTTPError as e:
                 if e.response.status_code == 400:
-                    logging.error(
+                    self._logger.error(
                         "Model was successfully created, but properties were "
                         "rejected with the following error: {}".format(str(
                             e.response.content.split('\n')[0]

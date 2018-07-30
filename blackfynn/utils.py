@@ -1,14 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import logging
 import datetime
 import numpy as np
 import pandas as pd
-import os
-
-logging.basicConfig()
-log = logging.getLogger('blackfynn')
-log.setLevel(os.environ.get('BLACKFYNN_LOG_LEVEL', 'INFO'))
 
 # data type helpers
 

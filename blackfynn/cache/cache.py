@@ -10,9 +10,12 @@ from itertools import groupby
 from datetime import datetime
 
 # blackfynn-specific
-from blackfynn.utils import usecs_to_datetime, usecs_since_epoch, log
+from blackfynn.utils import usecs_to_datetime, usecs_since_epoch
 from blackfynn.models import DataPackage, TimeSeriesChannel
+import blackfynn.log as log
 from .cache_segment_pb2 import CacheSegment
+
+logger = log.get_logger('blackfynn.cache')
 
 def filter_id(some_id):
     return some_id.replace(':','_').replace('-','_')
@@ -23,7 +26,7 @@ def remove_old_pages(cache, mbdiff):
 
     # 2. Delete some pages from cache
     with cache.index_con as con:
-        log.debug("Cache - removing {} pages...".format(n))
+        logger.debug("Cache - removing {} pages...".format(n))
         # find the oldest/least accessed pages
         q = """
             SELECT channel,page,access_count,last_access
@@ -43,23 +46,23 @@ def remove_old_pages(cache, mbdiff):
     with cache.index_con as con:
         con.execute("VACUUM")
 
-    log.debug('Cache - {} pages removed.'.format(n))
+    logger.debug('Cache - {} pages removed.'.format(n))
     return n
 
 
 def compact_cache(cache, max_mb):
-    log.debug('Inspecting cache...')
+    logger.debug('Inspecting cache...')
     wait = 2
     current_mb = (cache.size/(1024.0*1024))
     desired_mb = 0.9*max_mb
     while current_mb > desired_mb:
-        log.debug('Cache - current: {:02f} MB, maximum: {} MB'.format(current_mb, max_mb))
+        logger.debug('Cache - current: {:02f} MB, maximum: {} MB'.format(current_mb, max_mb))
         try:
             remove_old_pages(cache, current_mb-desired_mb)
         except sqlite3.OperationalError:
-            log.debug('Cache - Index DB was locked, waiting {} seconds...'.format(wait))
+            logger.debug('Cache - Index DB was locked, waiting {} seconds...'.format(wait))
             if wait >= 1024:
-                log.error('Cache - Unable to compact cache!')
+                logger.error('Cache - Unable to compact cache!')
                 return # silently fail
             time.sleep(wait)
             wait = wait*2
@@ -120,7 +123,7 @@ class Cache(object):
         q = "SELECT name FROM sqlite_master WHERE type='table' AND name='ts_pages'"
         r = con.execute(q)
         if r.fetchone() is None:
-            log.info('Cache - Creating \'ts_pages\' table')
+            logger.info('Cache - Creating \'ts_pages\' table')
             # create index table
             q = """
                 CREATE TABLE ts_pages (
@@ -138,7 +141,7 @@ class Cache(object):
         q = "SELECT name FROM sqlite_master WHERE type='table' AND name='settings'"
         r = con.execute(q)
         if r.fetchone() is None:
-            log.info('Cache - Creating \'settings\' table')
+            logger.info('Cache - Creating \'settings\' table')
             # create settings table
             q = """
                 CREATE TABLE settings (
@@ -169,7 +172,7 @@ class Cache(object):
             if 'ts_format' not in fields:
                 # this means they used an older client to initalize the cache, and because
                 # we switched the serialization format, we'll need to refresh it.
-                log.warn('Deprecated cache format detected - clearing & reinitializing cache...')
+                logger.warn('Deprecated cache format detected - clearing & reinitializing cache...')
                 self.clear()
 
             # 2. check page size
@@ -178,7 +181,7 @@ class Cache(object):
                 #  page size entry exists
                 self.page_size = result[0]
                 if self.settings.ts_page_size != self.page_size:
-                    log.warn('Using existing page_size={} from DB settings (user specified page_size={})' \
+                    logger.warn('Using existing page_size={} from DB settings (user specified page_size={})' \
                         .format( self.page_size, self.settings.ts_page_size))
             else:
                 # somehow, there is no page size entry
@@ -211,7 +214,7 @@ class Cache(object):
                 # adding a new page entry
                 self.set_page(channel, page, has_data)
         except sqlite3.OperationalError:
-            log.warn('Indexing DB inaccessible, resetting connection.')
+            logger.warn('Indexing DB inaccessible, resetting connection.')
             if self._conn is not None:
                 self._conn.close()
             self._conn = None
@@ -261,7 +264,7 @@ class Cache(object):
             return series
         else:
             # page file has been deleted recently?
-            log.warn('Page file not found: {}'.format(filename))
+            logger.warn('Page file not found: {}'.format(filename))
             return None
 
     def update_page(self, channel, page, has_data=True):
@@ -336,7 +339,7 @@ class Cache(object):
             # delete index file
             os.remove(self.index_loc)
         except:
-            log.warn('Could not delete index file: {}'.format(self.index_loc))
+            logger.warn('Could not delete index file: {}'.format(self.index_loc))
         shutil.rmtree(self.dir, ignore_errors=True)
         # reset
         self.init_dir()

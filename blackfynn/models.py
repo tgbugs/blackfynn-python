@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 
 from uuid import uuid4
+import blackfynn.log as log
 from blackfynn.utils import (
     infer_epoch, get_data_type, value_as_type, usecs_to_datetime
 )
@@ -2558,6 +2559,8 @@ class Model(BaseModelNode):
         self.count = kwargs.pop('count', None)
         self.state = kwargs.pop('state', None)
 
+        self._logger = log.get_logger('blackfynn.models.Model')
+
         super(Model, self).__init__(dataset_id, name, display_name, description, locked, *args, **kwargs)
 
     def update(self):
@@ -2697,7 +2700,7 @@ class Model(BaseModelNode):
         Returns:
             ``None``
 
-            Prints the list of records that failed to delete.
+            Logs the list of records that failed to delete.
 
         Example::
 
@@ -2707,7 +2710,7 @@ class Model(BaseModelNode):
         result = self._api.concepts.delete_instances(self.dataset_id, self, *records)
 
         for error in result['errors']:
-            print "Failed to delete instance {} with error: {}".format(error[0], error[1])
+            self._logger.error("Failed to delete instance {} with error: {}".format(error[0], error[1]))
 
     def __iter__(self):
         for record in self.get_all():

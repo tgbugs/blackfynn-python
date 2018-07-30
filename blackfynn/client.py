@@ -12,6 +12,7 @@ from blackfynn.api.concepts import (
 )
 from blackfynn.api.timeseries import TimeSeriesAPI
 from blackfynn.base import ClientSession
+import blackfynn.log as log
 from blackfynn.api.core import (
     CoreAPI, SecurityAPI, OrganizationsAPI, SearchAPI
 )
@@ -72,6 +73,8 @@ class Blackfynn(object):
 
     """
     def __init__(self, profile=None, api_token=None, api_secret=None, host=None, streaming_host=None, concepts_host=None, env_override=True, **overrides):
+
+        self._logger = log.get_logger("blackfynn.client.Blackfynn")
 
         overrides.update({ k: v for k, v in {
             'api_token': api_token,
@@ -158,11 +161,11 @@ class Blackfynn(object):
         try:
             return self._api.core.get(id, update=update)
         except:
-            print("Unable to retrieve object"\
-                  "\n\nAcceptable objects for get() are:"\
-                  "\n - DataPackages"\
-                  "\n - Collections"\
-                  "\n\nUse get_dataset() if trying to retrieve a dataset")
+            self._logger.info("Unable to retrieve object"\
+                             "\n\nAcceptable objects for get() are:"\
+                             "\n - DataPackages"\
+                             "\n - Collections"\
+                             "\n\nUse get_dataset() if trying to retrieve a dataset")
 
     def create(self, thing):
         """

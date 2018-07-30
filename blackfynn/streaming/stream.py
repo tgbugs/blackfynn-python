@@ -10,6 +10,7 @@ import pandas as pd
 # blackfynn
 from blackfynn.streaming.segment_pb2 import IngestSegment
 from blackfynn.utils import usecs_since_epoch
+import blackfynn.log as log
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Time Series Stream (upload)
@@ -29,6 +30,8 @@ class TimeSeriesStream():
         self._channels = ts.channels
 
         self.registered = False
+
+        self._logger = log.get_logger('blackfynn.streaming.TimeSeriesStream')
 
     @property
     def status(self):
@@ -181,7 +184,7 @@ class TimeSeriesStream():
                 raise Exception("Data contains extremely small contiguous section {}[{}:{}]" \
                                     .format(channel.id,starti,endi))
 
-            print "Sending contiguous data: {} to {}".format(starti, endi)
+            self._logger.info("Sending contiguous data: {} to {}".format(starti, endi))
             # get contiguous segment
             data = series[starti:endi+1]
             # send contiguous region of data

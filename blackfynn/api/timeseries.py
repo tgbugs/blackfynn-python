@@ -15,7 +15,7 @@ import requests
 from blackfynn.api.base import APIBase
 from blackfynn.streaming import TimeSeriesStream
 from blackfynn.utils import (
-    usecs_to_datetime, usecs_since_epoch, infer_epoch, log
+    usecs_to_datetime, usecs_since_epoch, infer_epoch
 )
 from blackfynn.models import (
     File, TimeSeries,TimeSeriesChannel, TimeSeriesAnnotation,
