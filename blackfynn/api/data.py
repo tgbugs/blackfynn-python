@@ -41,7 +41,7 @@ class DatasetsAPI(APIBase):
         Get Dataset by name or ID.
 
         When using name, this ignores case, spaces, hyphens, and underscores
-        such that these are equivelent:
+        such that these are equivalent:
 
           - "My Dataset"
           - "My-dataset"

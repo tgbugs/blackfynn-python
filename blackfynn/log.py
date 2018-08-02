@@ -1,4 +1,7 @@
 import logging
+import os
+
+logging.basicConfig()
 
 
 def get_logger(name='blackfynn-python'):
@@ -12,7 +15,8 @@ def get_logger(name='blackfynn-python'):
     Returns:
       Logger
     """
-    logger = logging.getLogger(name)
 
-    logger.setLevel(logging.INFO)
+    logger = logging.getLogger(name)
+    logger.setLevel(os.environ.get('BLACKFYNN_LOG_LEVEL', 'INFO'))
+
     return logger
