@@ -483,7 +483,13 @@ class TimeSeriesAPI(APIBase):
         """
         raise NotImplementedError
 
-    def get_segments(self, ts, channel, start, stop):
+    def get_segments(self, ts, channel, start, stop, gap_factor):
+        """
+        Retrieve ranges of time for channel (between start and stop)
+        where there exists contiguous data. Gap detection sensitivity
+        can be adjusted using ``gap_factor`` which is multiplied
+        with sampling period of channel for identifying gaps.
+        """
         channel_id = self._get_id(channel)
         package_id = self._get_id(ts)
         start = infer_epoch(start)
@@ -500,7 +506,8 @@ class TimeSeriesAPI(APIBase):
                 package = package_id,
                 session = self.session.token,
                 start   = start,
-                end     = stop
+                end     = stop,
+                gapThreshold = gap_factor
             )
         )
         return [tuple(x) for x in resp]

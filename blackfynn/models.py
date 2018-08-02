@@ -1005,24 +1005,30 @@ class TimeSeries(DataPackage):
         end   = sorted([x.end   for x in channels])[-1]
         return start, end
 
-    def segments(self, start=None, stop=None):
+    def segments(self, start=None, stop=None, gap_factor=2):
         """
         Returns list of contiguous data segments available for package. Segments are
         assesssed for all channels, and the union of segments is returned.
 
         Args:
-            start (int, datetime, optional): return segments starting after this time
-                                             (default earliest start of any channel)
-            stop (int, datetime, optional):  return segments starting before this time
-                                             (default latest end time of any channel)
+            start (int, datetime, optional):
+                Return segments starting after this time
+                (default earliest start of any channel)
+
+            stop (int, datetime, optional):
+                Return segments starting before this time
+                (default latest end time of any channel)
+
+            gap_factor (int, optional):
+                Gaps are computed by ``sampling_rate * gap_factor`` (default 2)
 
         Returns:
             List of tuples, where each tuple represents the (start, stop) of contiguous data.
         """
         # flattenened list of segments across all channels
         channel_segments = [
-            segment for channel in self.channels
-            for segment in channel.segments(start=start, stop=stop)
+            segment for channel in self.channels 
+            for segment in channel.segments(start=start, stop=stop, gap_factor=gap_factor)
         ]
         # union all segments
         union_segments = []
@@ -1383,20 +1389,26 @@ class TimeSeriesChannel(BaseDataNode):
         r = self._api.timeseries.update_channel(self)
         self.__dict__.update(r.__dict__)
 
-    def segments(self, start=None, stop=None):
+    def segments(self, start=None, stop=None, gap_factor=2):
         """
         Return list of contiguous segments of valid data for channel.
 
         Args:
-            start (long, datetime, optional): return segments starting after this time (default start of channel)
-            stop (long, datetime, optional):  return segments starting before this time (default end of channel)
+            start (long, datetime, optional):
+                Return segments starting after this time (default start of channel)
+
+            stop (long, datetime, optional):
+                Return segments starting before this time (default end of channel)
+
+            gap_factor (int, optional):
+                Gaps are computed by ``sampling_period * gap_factor`` (default 2)
 
         Returns:
             List of tuples, where each tuple represents the (start, stop) of contiguous data.
         """
         start = self.start if start is None else start
         stop  = self.end   if stop  is None else stop
-        return self._api.timeseries.get_segments(self._pkg, self, start=start, stop=stop)
+        return self._api.timeseries.get_segments(self._pkg, self, start=start, stop=stop, gap_factor=gap_factor)
 
     @property
     def gaps(self):
