@@ -13,7 +13,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # blackfynn
 from blackfynn.api.base import APIBase
-from blackfynn.models import TimeSeries, Collection, Dataset
+from blackfynn.models import TimeSeries, Collection, Dataset, DataPackage
 import blackfynn.log as log
 
 # GLOBAL
@@ -190,7 +190,8 @@ class IOAPI(APIBase):
         if isinstance(destination, Dataset):
             # uploading into dataset
             destination_id = None
-            dataset_id = self._get_id(destination)
+            dataset = destination
+            dataset_id = self._get_id(dataset)
         elif destination is None and dataset is not None:
             # uploading into dataset
             destination_id = None
@@ -217,13 +218,19 @@ class IOAPI(APIBase):
 
         # sanity check dataset
         try:
-            ds = self.session.datasets.get(dataset_id)
+            if isinstance(dataset, Dataset) and dataset.exists:
+                ds = dataset
+            else:
+                ds = self.session.datasets.get(dataset_id)
         except:
             raise Exception("dataset does not exist")
 
         if destination_id is not None:
             try:
-                destination = self.session.packages.get(destination_id)
+                if isinstance(destination, (Dataset, Collection, DataPackage)) and destination.exists:
+                    pass
+                else:
+                    destination = self.session.packages.get(destination_id)
             except:
                 raise Exception("destination does not exist")
 
