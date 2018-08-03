@@ -6,13 +6,26 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 Documentation at http://docs.blackfynn.io
 
+## [2.4.2]
+### Added
+- Channels can be deleted by `id`
+- A `gap_factor` argument has been added to `segments` and `get_segments` timeseries functions
+- Pull request templates
+
+### Changed
+- Standardized logging methodology (no more print statements)
+- Creating a model with invalid properties will no longer fail - the model will be created without any properties and an error will be logged
+- Fixed `delete_annotation_layer` and `delete_annotation`
+- Updated `query_annotation_counts` in accordance with updates to the concepts service
+- `RecordSet`.`as_dataframe` now accepts a `record_id_column_name` arg to optionally include the record_id in the dataframe
+
 ## [2.3.0]
 ### Added
 - Preliminary graph features, beta-quality
 - Basic timeseries segments functionality
 - Documentation dump (needs revision)
 
-### Changed 
+### Changed
 - Upload using preview/grouping endpoint
 
 ## [2.1.4]
