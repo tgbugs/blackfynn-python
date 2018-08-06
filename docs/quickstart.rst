@@ -12,7 +12,7 @@ Installation
 
 .. important:: 
 
-    In order to connect to Blackfynn using the *any* client, first you must :ref:`Generate an API token & secret <platform:generate an api token & secret>` and :ref:`Configure client to use credentials <platform:configure client to use credentials>`.
+    In order to connect to Blackfynn using the *any* client, first you must `Generate API token & secret and enable in client <http://help.blackfynn.com/blackfynn-developer-tools/overview/creating-an-api-key-for-the-blackfynn-clients>`_.
 
 .. note::
 
