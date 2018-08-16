@@ -17,7 +17,7 @@ html:
 	$(SPHINXBUILD) $(SOURCEDIR) -b html "$(BUILDDIR)/html/$(BF_VERSION)"
 
 html-latest:
-	cp -r $(BUILDDIR)/html/$(BF_VERSION) $(BUILDDIR)/html/latest
+	rm -rf $(BUILDDIR)/html/latest; cp -r $(BUILDDIR)/html/$(BF_VERSION) $(BUILDDIR)/html/latest
 
 clean:
 	rm -rf $(BUILDDIR)/*

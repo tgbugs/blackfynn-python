@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 Documentation at http://docs.blackfynn.io
 
+## [2.4.4]
+### Changed
+- Updated documentation
+
 ## [2.4.3]
 ### Changed
 - Resolved issue related to timed out APIs calls during file upload
