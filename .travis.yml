@@ -7,7 +7,7 @@ install:
 - pip install -r requirements-test.txt
 - pip install .
 script: pytest
-before_deploy: 
+before_deploy:
   - cd docs
   - make html
   - |
@@ -15,6 +15,8 @@ before_deploy:
       make html-latest
     fi
   - cd $TRAVIS_BUILD_DIR
+services:
+  - docker
 deploy:
   - provider: pypi
     on:
@@ -36,7 +38,11 @@ deploy:
     local_dir: docs/_build/html
     upload-dir: python
     acl: public_read
+  - provider: script
+    script: bash bin/docker_push.sh "$TRAVIS_TAG"
+    on:
+      tags: true
+      branch: master
 notifications:
   slack:
     secure: X1xWT7VNg8FB5i8ze65lckyMz/BXKAvftyK27HdSempXw+SOle/wSo2Om+6I52pl2UDxncYBspTFYs65A2mEpWXMVJdF6WIp4tYf+MzgpAQf2vMCi04YqMY22LaqVkwwuk6fVFjQ6lp4tZtwWoW3hjat1FD9E9f/sK3nH5bu8zRvnq6gseqkAEOu87U58FcL4mSjkigU36LulQUFEsSCDIzEmMng6CExMsjj3YLaYJu4S5N8viRl3iOUs6ksCzkwvM9V5+eOJ4K+y2wu/0GlDBgrGHjYPOojCV5hXOj3oAAAGuW+T+BM2mx5YPXqL7VNKOkiHsxzASwIExqDE3Tr+Z/L1+5b2LR0LZWU02aGbSsXjgTroShdKOkvsQlHMo7NaVBypGMVET7+zMTdwCqj2AZrIN6+k0PuqILnZBvMXeGePZYCxSOFsUczSq2jeh/DivW6ZAGHa5D/5UXCpAh88bzbnNnMai+gxjN/sYFqhDciXZBRvGi5NQBOwZdZf447O3ZreS2XJhDXxnbNduy1xMWOR82cDYlyqz+64QDzemoDs6P2tD/i/qs34iZSpgIWjjoMbx8kQxHsvOBBYDPifNW5mUPyduqs5S3VSqc+Fy6xk9yfxrN8U40Q/poqp7WEXG3cllL1/wgh2zGRk4boCymxUkFJoKhX8bPZvYPaJDU=
-

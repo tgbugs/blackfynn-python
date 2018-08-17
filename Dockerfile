@@ -1,10 +1,9 @@
-FROM ruimashita/numpy
+FROM python:2.7
 
-# only copy in necessary files
-ADD blackfynn /tmp/install/blackfynn
-ADD setup.py  /tmp/install/setup.py
-ADD README.md /tmp/install/README.md
+ADD requirements.txt /app/requirements.txt
+ADD requirements-test.txt /app/requirements-test.txt
+RUN pip install -r /app/requirements.txt
+RUN pip install -r /app/requirements-test.txt
 
-# install blackfynn
-RUN cd /tmp/install \
-    && python setup.py install
+ADD blackfynn /app/blackfynn
+ADD tests     /app/tests
