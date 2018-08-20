@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 Documentation at http://docs.blackfynn.io
 
+## [2.4.5]
+### Changed
+- Added a new release target which will build images on each new release that can be used to run unit tests.
+- Updated concepts instance delete function to handle new response
+
 ## [2.4.4]
 ### Changed
 - Updated documentation
@@ -58,7 +63,7 @@ Documentation at http://docs.blackfynn.io
 
 ### Changed
 - Better working_dataset handling
-- Timeseries query format has changed for the rest endpoint. Previously returned two arrays - times and values. Now returns a single array of time,value pairs. 
+- Timeseries query format has changed for the rest endpoint. Previously returned two arrays - times and values. Now returns a single array of time,value pairs.
 
 ## [2.0.3]
 ### Changed
@@ -120,10 +125,9 @@ Documentation at http://docs.blackfynn.io
 
 ### Changed
 - Reworked Annotations
-	- add, insert layers and annotations functions updated
+    - add, insert layers and annotations functions updated
 - Reduced thread count for parallel uploads
 
 ## [1.6.2] - 2017-06-01
 ### Added
 - Initial commit
-

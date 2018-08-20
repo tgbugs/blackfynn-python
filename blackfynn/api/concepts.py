@@ -206,9 +206,11 @@ class RecordsAPI(ModelsAPIBase):
     def delete(self, dataset, instance):
         assert isinstance(instance, Record), "instance must be type Record"
         dataset_id = self._get_id(dataset)
-        r = self._del(self._uri('/{dataset_id}/concepts/{concept_type}/instances/{id}', dataset_id=dataset_id, concept_type=instance.type, id=instance.id))
-        r['dataset_id'] = r.get('dataset_id', dataset_id)
-        return r
+        return self._del(self._uri(
+            '/{dataset_id}/concepts/{concept_type}/instances/{id}',
+            dataset_id=dataset_id, concept_type=instance.type,
+            id=instance.id
+        ))
 
     def create(self, dataset, instance):
         assert isinstance(instance, Record), "instance must be type Record"
