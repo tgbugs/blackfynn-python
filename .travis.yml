@@ -10,10 +10,7 @@ script: pytest
 before_deploy:
   - cd docs
   - make html
-  - |
-    if [[ "$TRAVIS_BRANCH" == "master" ]] && [[ "$TRAVIS_PULL_REQUEST" == "false" ]]; then
-      make html-latest
-    fi
+  - make html-latest
   - cd $TRAVIS_BUILD_DIR
 services:
   - docker
