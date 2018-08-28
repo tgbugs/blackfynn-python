@@ -17,6 +17,8 @@ def test_update_dataset(client, dataset, session_id):
     dataset.update()
     ds2 = client.get_dataset(dataset.id)
     assert ds2.id == dataset.id
+    assert(isinstance(ds2.int_id, int))
+    assert ds2.int_id == dataset.int_id
     assert ds2.name == ds_name
 
 def test_datasets(dataset):

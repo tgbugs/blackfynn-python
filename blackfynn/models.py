@@ -137,8 +137,9 @@ class BaseNode(object):
     _api = None
     _object_key = 'content'
 
-    def __init__(self, id=None, *args, **kargs):
+    def __init__(self, id=None, int_id=None, *args, **kargs):
         self.id = id
+        self.int_id = int_id
 
     @classmethod
     def from_dict(cls, data, api=None, object_key=None):
@@ -159,6 +160,7 @@ class BaseNode(object):
         # find overlapping keys
         kwargs = {}
         thing_id = content.pop('id', None)
+        thing_int_id = content.pop('intId', None)
         for k,v in content.iteritems():
             # check lower case var names
             k_lower = k.lower()
@@ -186,6 +188,9 @@ class BaseNode(object):
 
         if thing_id is not None:
             item.id = thing_id
+
+        if thing_int_id is not None:
+            item.int_id = thing_int_id
 
         if api is not None:
             item._api = api
