@@ -2139,9 +2139,22 @@ model_type_reverse_map = {
     'date': datetime.datetime
 }
 
-def parse_model_datatype(data_type=None):
-    if data_type is None or isinstance(data_type, type) and data_type in model_type_map:
+def convert_type_to_datatype(model_type):
+    if isinstance(model_type, type) and model_type in model_type_map:
+        t = model_type_map[model_type]
+    elif isinstance(model_type, ModelPropertyType) and model_type.data_type in model_type_map:
+        t = model_type_map[model_type.data_type]
+    elif isinstance(model_type, basestring) and model_type.lower() in model_type_reverse_map:
+        t = model_type.lower()
+    else:
+        raise Exception('type {} not supported'.format(model_type))
+    return t
+
+def convert_datatype_to_type(data_type):
+    if isinstance(data_type, type) and data_type in model_type_map:
         t = data_type
+    elif isinstance(data_type, ModelPropertyType) and data_type.data_type in model_type_map:
+        t = data_type.data_type
     elif isinstance(data_type, basestring) and data_type.lower() in model_type_reverse_map:
         t = model_type_reverse_map[data_type.lower()]
     else:
@@ -2149,14 +2162,10 @@ def parse_model_datatype(data_type=None):
 
     return t
 
-def convert_datatype_to_model_type(data_type):
-    if data_type is None:
-        return
-
-    assert isinstance(data_type, type) and data_type in model_type_map, "data_type must be one of {}".format(model_type_map.keys())
-
-    t = model_type_map[data_type]
-    return t.title()
+def wrap_datatype(data_type):
+    if isinstance(data_type, ModelPropertyType):
+        return data_type
+    return ModelPropertyType(data_type=data_type)
 
 def cast_value(value, data_type=None):
     if data_type is None or value is None:
@@ -2190,19 +2199,58 @@ def uncast_value(value):
 
     return v
 
+class ModelPropertyType(object):
+    def __init__(self, data_type, format=None, unit=None):
+        self.data_type = data_type
+        self.format = format
+        self.unit = unit
+
+    @classmethod
+    def from_dict(cls, data):
+
+        if isinstance(data, dict):
+            t = data['type'].lower()
+            f = data.get('format')
+            u = data.get('unit')
+        else:
+            t = data
+            f = None
+            u = None
+
+        return cls(data_type=convert_datatype_to_type(t), format=f, unit=u)
+
+    def as_dict(self):
+        if (self.format != None):
+            d = dict(
+                type=convert_type_to_datatype(self.data_type),
+                format=self.format
+            )
+        elif (self.unit != None):
+            d = dict(
+                type=convert_type_to_datatype(self.data_type),
+                unit=self.unit
+            )
+        else:
+            d = convert_type_to_datatype(self.data_type)
+
+        return d
+
+    def __repr__(self):
+        return u"<ModelPropertyType data_type='{}' format='{}' unit='{}'".format(self.data_type, self.format, self.unit)
 
 class BaseModelProperty(object):
-    def __init__(self, name, display_name=None, data_type=basestring, id=None, locked=False, default=True, title=False, description=""):
+    def __init__(self, name, display_name=None, data_type=basestring, id=None, locked=False, default=True, title=False, description="", required=False):
         assert ' ' not in name, "name cannot contain spaces, alternative names include {} and {}".format(name.replace(" ", "_"), name.replace(" ", "-"))
 
         self.id = id
         self.name = name
         self.display_name = display_name or name
-        self.type = parse_model_datatype(data_type)
+        self._type = wrap_datatype(data_type)
         self.locked = locked
         self.default = default
         self.title = title
         self.description = description
+        self.required = required
 
     @classmethod
     def from_tuple(cls, data):
@@ -2219,33 +2267,51 @@ class BaseModelProperty(object):
         except:
             title = False
 
-        return cls(name=name, display_name=display_name, data_type=data_type, title=title)
+        try:
+            required = data[4]
+        except:
+            required = False
+
+        return cls(name=name, display_name=display_name, data_type=data_type, title=title, required=required)
 
     @classmethod
     def from_dict(cls, data):
         display_name = data.get('displayName', data.get('display_name', dict()))
-        data_type = data.get('data_type', data.get('type', data.get('dataType')))
+        data_type = ModelPropertyType.from_dict(data.get('data_type', data.get('dataType')))
         locked = data.get('locked', False)
         default = data.get('default', True)
         title = data.get('title', data.get('conceptTitle', False))
         id = data.get('id', None)
+        required = data.get('required', False)
 
-        return cls(name=data['name'], display_name=display_name, data_type=data_type, id=id, locked=locked, default=default, title=title)
+        return cls(name=data['name'], display_name=display_name, data_type=data_type, id=id, locked=locked, default=default, title=title, required=required)
 
     def as_dict(self):
         return dict(
             id           = self.id,
             name         = self.name,
             displayName  = self.display_name,
-            dataType     = convert_datatype_to_model_type(self.type),
+            dataType     = self._type.as_dict(),
             locked       = self.locked,
             default      = self.default,
             conceptTitle = self.title,
-            description  = self.description
+            description  = self.description,
+            required     = self.required
         )
 
     def as_tuple(self):
-        return (self.name, self.type, self.display_name, self.title)
+        return (self.name, self.type, self.display_name, self.title, self.required)
+
+    @property
+    def type(self):
+        return convert_datatype_to_type(self._type)
+
+    @property
+    def unit(self):
+        return self._type.unit
+
+    def set_type(self, type):
+        self._type = wrap_datatype(type)
 
     def __repr__(self):
         return u"<BaseModelProperty name='{}' {}>".format(self.name, self.type)
@@ -2257,7 +2323,7 @@ class BaseModelValue(object):
         self.name = name
 
         data_type = kwargs.pop('data_type', None)
-        self.type = parse_model_datatype(data_type)
+        self.type = convert_datatype_to_type(data_type)
 
         self.set_value(value)
 
@@ -2270,12 +2336,12 @@ class BaseModelValue(object):
 
     @classmethod
     def from_dict(cls, data):
-        data_type = data.get('data_type', data.get('dataType'))
+        data_type = ModelPropertyType.from_dict(data.get('data_type', data.get('dataType')))
 
         return cls(name=data['name'], value=data['value'], data_type=data_type)
 
     def as_dict(self):
-        return dict(name=self.name, value=uncast_value(self.value), dataType=convert_datatype_to_model_type(self.type))
+        return dict(name=self.name, value=uncast_value(self.value), dataType=convert_type_to_datatype(self.type))
 
     def as_tuple(self):
         return (self.name, self.value)

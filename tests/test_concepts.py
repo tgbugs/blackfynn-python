@@ -2,11 +2,57 @@ import time
 import pytest
 import datetime
 
-from blackfynn.models import Model, Record, DataPackage, RelationshipType, Relationship
+from blackfynn.models import DataPackage, ModelPropertyType, ModelProperty, convert_type_to_datatype, convert_datatype_to_type
 
 def current_ts():
     return int(round(time.time() * 1000))
 
+def test_parse_model_datatype(dataset):
+    basic_numeric_1 = ModelPropertyType(data_type=long)
+    basic_numeric_2 = long
+
+    basic_string_1 = ModelPropertyType(data_type=unicode)
+    basic_string_2 = 'date'
+    complex_string = ModelPropertyType(data_type=str, format='date')
+
+    numeric_datatype_1 = convert_type_to_datatype(basic_numeric_1)
+    numeric_datatype_2 = convert_type_to_datatype(basic_numeric_2)
+    string_datatype_1 = convert_type_to_datatype(basic_string_1)
+    string_datatype_2 = convert_type_to_datatype(basic_string_2)
+    complex_datatype = convert_type_to_datatype(complex_string)
+
+    assert numeric_datatype_1 == 'long'
+    assert numeric_datatype_2 == 'long'
+    assert string_datatype_1 == 'string'
+    assert string_datatype_2 == 'date'
+    assert complex_datatype == 'string'
+
+    basic_type_1 = convert_datatype_to_type(string_datatype_1)
+    assert basic_type_1 == unicode
+
+    basic_type_2 = convert_datatype_to_type(string_datatype_2)
+    assert basic_type_2 == datetime.datetime
+
+    simple_json = 'string'
+    decoded_simple = ModelPropertyType.from_dict(simple_json)
+    assert (isinstance(decoded_simple, ModelPropertyType))
+    assert (decoded_simple.data_type == unicode)
+    assert (decoded_simple.format == None)
+    assert (decoded_simple.unit == None)
+
+    nested_json_1 = {'type':'string', 'format':'date'}
+    decoded_string = ModelPropertyType.from_dict(nested_json_1)
+    assert(isinstance(decoded_string, ModelPropertyType))
+    assert(decoded_string.data_type == unicode)
+    assert(decoded_string.format == 'date')
+    assert(decoded_string.unit == None)
+
+    nested_json_2 = {'type': 'double', 'unit': 'kg'}
+    decoded_numeric = ModelPropertyType.from_dict(nested_json_2)
+    assert (isinstance( decoded_numeric, ModelPropertyType))
+    assert (decoded_numeric.data_type == float)
+    assert (decoded_numeric.unit == 'kg')
+    assert (decoded_numeric.format == None)
 
 def test_model_with_invalid_properties(dataset):
     invalid_schema = [('an_integer', int, 'An Integer')]
@@ -150,3 +196,108 @@ def test_models(dataset):
 
     nc_four.update()
     assert len(nc_four.get_related(new_model.type)) == 4
+
+def test_simple_model_properties(dataset):
+
+     # Define properties as tuples
+     model_with_basic_props_1 = dataset.create_model('Basic_Props_1', description='a new description',schema=
+     [('an_integer', int, 'An Integer', True), ('a_long', long), ('a_bool', bool), ('a_string', str), ('a_date', datetime.datetime)])
+
+     assert dataset.get_model(model_with_basic_props_1.id) == model_with_basic_props_1
+
+     # Add a property
+     model_with_basic_props_1.add_property('a_new_property', float, display_name='Weight')
+     model_with_basic_props_1.update()
+
+     updated_model_1 = dataset.get_model(model_with_basic_props_1.id)
+
+     assert updated_model_1.get_property('a_new_property').display_name == 'Weight'
+
+     # Define properties as ModelProperty objects
+     model_with_basic_props_2 = dataset.create_model('Basic_Props_2', description='a new description', schema=[
+         ModelProperty('name', data_type=str, title=True, required=True),
+         ModelProperty('age', data_type=int),
+         ModelProperty('DOB', data_type=datetime.datetime)
+     ])
+
+     assert dataset.get_model(model_with_basic_props_2.id) == model_with_basic_props_2
+
+     # Add a property
+     model_with_basic_props_2.add_property('weight2', ModelPropertyType(data_type=float), display_name='Weight')
+     model_with_basic_props_2.update()
+
+     updated_model_2 = dataset.get_model(model_with_basic_props_2.id)
+
+     assert updated_model_2.get_property('weight2').display_name == 'Weight'
+     assert updated_model_2.get_property('name').required == True
+
+     # Define properties as ModelProperty objects with ModelPropertyType data_type
+     model_with_basic_props_3 = dataset.create_model('Basic_Props_3', description='a new description', schema=[
+         ModelProperty('name', data_type=ModelPropertyType(data_type=str), title=True),
+         ModelProperty('age', data_type=ModelPropertyType(data_type=int)),
+         ModelProperty('DOB', data_type=ModelPropertyType(data_type=str))
+     ])
+
+     assert dataset.get_model(model_with_basic_props_3.id) == model_with_basic_props_3
+
+     # Add a property
+     model_with_basic_props_3.add_property('weight3', ModelPropertyType(data_type=float), display_name='Weight')
+     model_with_basic_props_3.update()
+
+     updated_model_3 = dataset.get_model(model_with_basic_props_3.id)
+
+     assert updated_model_3.get_property('weight3').display_name == 'Weight'
+
+     # Reverse look up property data types
+     model_with_basic_props_4 = dataset.create_model('Basic_Props_4', description='a new description', schema=[
+         ModelProperty('name', data_type='string', title=True, required=True),
+         ModelProperty('age', data_type='long'),
+         ModelProperty('DOB', data_type='date')
+     ])
+
+     assert dataset.get_model(model_with_basic_props_4.id) == model_with_basic_props_4
+
+     # Add a property
+     model_with_basic_props_4.add_property('weight4', ModelPropertyType(data_type='double'), display_name='Weight')
+     model_with_basic_props_4.update()
+
+     updated_model_4 = dataset.get_model(model_with_basic_props_4.id)
+
+     assert updated_model_4.get_property('weight4').display_name == 'Weight'
+     assert updated_model_4.get_property('name').required == True
+
+def test_complex_model_properties(dataset):
+    model_with_complex_props = dataset.create_model('Complex_Props', description='a new description', schema=[
+        ModelProperty('name', data_type=ModelPropertyType(data_type=str), title=True),
+        ModelProperty('age', data_type=ModelPropertyType(data_type=int)),
+        ModelProperty('email', data_type=ModelPropertyType(data_type=str, format='email'))
+    ])
+
+    assert dataset.get_model(model_with_complex_props.id) == model_with_complex_props
+
+    # Add a property
+    model_with_complex_props.add_property('weight', ModelPropertyType(data_type=float, unit='kg'), display_name='Weight')
+    model_with_complex_props.update()
+
+    updated_model = dataset.get_model(model_with_complex_props.id)
+
+    weight_property = updated_model.get_property('weight')
+    assert (weight_property.display_name == 'Weight')
+    assert (weight_property.type == float)
+    assert (weight_property._type.data_type == float)
+    assert (weight_property._type.format == None)
+    assert (weight_property.unit == 'kg')
+
+    email_property = model_with_complex_props.get_property('email')
+    assert (email_property.type == unicode)
+    assert (email_property._type.data_type == unicode)
+    assert (email_property._type.format.lower() == 'email')
+    assert (email_property.unit == None)
+
+    good_values = {'name': 'Bob', 'age': 1, 'email': 'test@test.com', 'weight': 10}
+    good_record = updated_model.create_record(good_values)
+
+    bad_values = {'name': 'Bob', 'age': 1, 'email': '123455', 'weight': 10}
+
+    with pytest.raises(Exception):
+        bad_record = updated_model.create_record(bad_values)
