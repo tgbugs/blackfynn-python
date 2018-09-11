@@ -2,7 +2,7 @@ import time
 import pytest
 import datetime
 
-from blackfynn.models import DataPackage, ModelPropertyType, ModelProperty, convert_type_to_datatype, convert_datatype_to_type
+from blackfynn.models import DataPackage, ModelPropertyType, ModelPropertyEnumType, ModelProperty, convert_type_to_datatype, convert_datatype_to_type
 
 def current_ts():
     return int(round(time.time() * 1000))
@@ -301,3 +301,27 @@ def test_complex_model_properties(dataset):
 
     with pytest.raises(Exception):
         bad_record = updated_model.create_record(bad_values)
+
+def test_model_properties_with_enum(dataset):
+    model_with_enum_props = dataset.create_model('Enum_Props', description='a new description', schema=[
+        ModelProperty('name', data_type=str, title=True),
+        ModelProperty('some_enum', data_type=ModelPropertyEnumType(data_type=float, enum=[1.0, 2.0, 3.0], unit="cm", multi_select=False)),
+        ModelProperty('some_array',
+                      data_type=ModelPropertyEnumType(data_type=str, enum=['foo', 'bar', 'baz'], multi_select=True))
+    ])
+
+    result = dataset.get_model(model_with_enum_props.id)
+
+    assert result == model_with_enum_props
+
+    enum_property = result.get_property('some_enum')
+    array_property = result.get_property('some_array')
+
+    assert(enum_property.type == float)
+    assert(enum_property.multi_select == False)
+    assert(enum_property.enum == [1.0, 2.0, 3.0])
+    assert (enum_property.unit == 'cm')
+
+    assert (array_property.type == unicode)
+    assert (array_property.multi_select == True)
+    assert (array_property.enum == ['foo', 'bar', 'baz'])

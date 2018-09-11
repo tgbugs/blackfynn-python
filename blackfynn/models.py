@@ -2215,33 +2215,67 @@ class ModelPropertyType(object):
 
         if isinstance(data, dict):
             t = data['type'].lower()
-            f = data.get('format')
-            u = data.get('unit')
+            format = data.get('format')
+            unit = data.get('unit')
         else:
             t = data
-            f = None
-            u = None
+            format = None
+            unit = None
 
-        return cls(data_type=convert_datatype_to_type(t), format=f, unit=u)
+        return cls(data_type=convert_datatype_to_type(t), format=format, unit=unit)
 
     def as_dict(self):
-        if (self.format != None):
+        t = convert_type_to_datatype(self.data_type)
+
+        if (self.format is not None) or (self.unit is not None):
             d = dict(
-                type=convert_type_to_datatype(self.data_type),
-                format=self.format
-            )
-        elif (self.unit != None):
-            d = dict(
-                type=convert_type_to_datatype(self.data_type),
+                type=t,
+                format=self.format,
                 unit=self.unit
             )
         else:
-            d = convert_type_to_datatype(self.data_type)
+            d = t
 
         return d
 
     def __repr__(self):
-        return u"<ModelPropertyType data_type='{}' format='{}' unit='{}'".format(self.data_type, self.format, self.unit)
+        return u"<ModelPropertyType data_type='{}' format='{}' unit='{}'".format(self.data_type, self.format,
+                                                                                           self.unit)
+
+class ModelPropertyEnumType(ModelPropertyType):
+    def __init__(self, data_type, format=None, unit=None, enum=None, multi_select=False):
+        super(ModelPropertyEnumType, self).__init__(data_type, format, unit)
+        self.enum = enum
+        self.multi_select = multi_select
+        self.selection_type = 'array' if self.multi_select else 'enum'
+
+    @classmethod
+    def from_dict(cls, data):
+
+        selection_type = data['type'].lower()
+        multi_select = selection_type == 'array'
+        t = data['items'].get('type')
+        format = data['items'].get('format')
+        unit = data['items'].get('unit')
+        enum = data['items'].get('enum')
+
+        return cls(data_type=convert_datatype_to_type(t), format=format, unit=unit, enum=enum,
+                   multi_select=multi_select)
+
+    def as_dict(self):
+        return dict(
+            type=self.selection_type,
+            items=dict(
+                type=convert_type_to_datatype(self.data_type),
+                format=self.format,
+                unit=self.unit,
+                enum=self.enum
+            )
+        )
+
+    def __repr__(self):
+        return u"<ModelPropertyEnumType data_type='{}' format='{}' unit='{}' enum='{}'".format(self.data_type, self.format,
+                                                                                           self.unit, self.enum)
 
 class BaseModelProperty(object):
     def __init__(self, name, display_name=None, data_type=basestring, id=None, locked=False, default=True, title=False, description="", required=False):
@@ -2282,7 +2316,12 @@ class BaseModelProperty(object):
     @classmethod
     def from_dict(cls, data):
         display_name = data.get('displayName', data.get('display_name', dict()))
-        data_type = ModelPropertyType.from_dict(data.get('data_type', data.get('dataType')))
+        dt = data.get('data_type', data.get('dataType'))
+        try:
+            if dt.get('items').get('enum') is not None:
+                data_type = ModelPropertyEnumType.from_dict(dt)
+        except Exception:
+            data_type = ModelPropertyType.from_dict(dt)
         locked = data.get('locked', False)
         default = data.get('default', True)
         title = data.get('title', data.get('conceptTitle', False))
@@ -2314,6 +2353,18 @@ class BaseModelProperty(object):
     @property
     def unit(self):
         return self._type.unit
+
+    @property
+    def format(self):
+        return self._type.format
+
+    @property
+    def enum(self):
+        return self._type.enum
+
+    @property
+    def multi_select(self):
+        return self._type.multi_select
 
     def set_type(self, type):
         self._type = wrap_datatype(type)
