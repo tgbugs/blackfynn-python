@@ -3,7 +3,7 @@ import requests
 
 from blackfynn.api.base import APIBase
 from blackfynn.models import (
-    Model, Record, RecordSet, ModelProperty, ProxyInstance,
+    Model, Record, RecordSet, ModelProperty, ModelTemplate, ProxyInstance,
     RelationshipType, Relationship, RelationshipSet, RelationshipProperty,
     DataPackage
 )
@@ -438,3 +438,50 @@ class ModelProxiesAPI(ModelsAPIBase):
         instance = r[0]['relationshipInstance']
         instance['dataset_id'] = instance.get('dataset_id', dataset_id)
         return Relationship.from_dict(instance, api=self.session)
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Model Templates
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+class ModelTemplatesAPI(APIBase):
+
+    base_uri = "/model-schema"
+    name = 'templates'
+
+    def get_all(self):
+        org_id = self._get_int_id(self.session._context)
+        resp = self._get(self._uri('/organizations/{orgId}/templates', orgId=org_id))
+        return map(lambda t: ModelTemplate.from_dict(t), resp)
+
+    def get(self, template_id):
+        org_id = self._get_int_id(self.session._context)
+        resp = self._get(self._uri('/organizations/{orgId}/templates/{templateId}',
+                                   orgId=org_id, templateId=template_id))
+        return ModelTemplate.from_dict(resp)
+
+    def validate(self, template):
+        assert isinstance(template, ModelTemplate), "template must be type Template"
+        response = self._post(self._uri('/validate'), json=template.as_dict())
+        if response == "":
+            return True
+        else:
+            return response
+
+    def create(self, template):
+        assert isinstance(template, ModelTemplate), "template must be type Template"
+        org_id = self._get_int_id(self.session._context)
+        resp = self._post(self._uri('/organizations/{orgId}/templates', orgId=org_id), json=template.as_dict())
+        return ModelTemplate.from_dict(resp)
+
+    def apply(self, dataset, template):
+        org_id = self._get_int_id(self.session._context)
+        dataset_id = self._get_int_id(dataset)
+        template_id = self._get_id(template)
+        resp = self._post(self._uri('/organizations/{orgId}/templates/{templateId}/datasets/{datasetId}',
+                                    orgId=org_id, templateId=template_id, datasetId=dataset_id))
+        return map(lambda t: ModelProperty.from_dict(t), resp)
+
+    def delete(self, template_id):
+        org_id = self._get_int_id(self.session._context)
+        return self._del(self._uri('/organizations/{orgId}/templates/{templateId}',
+                                   orgId=org_id, templateId=template_id))

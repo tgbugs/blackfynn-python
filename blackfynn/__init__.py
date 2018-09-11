@@ -16,6 +16,7 @@ from .models import (
     Collection,
     Model,
     ModelProperty,
+    ModelTemplate,
     Record,
     RecordSet,
     Dataset,

@@ -32,6 +32,17 @@ class APIBase(object):
         else:
             return thing.id
 
+    def _get_int_id(self, thing):
+        """
+        Get internal ID for object.
+        """
+        if isinstance(thing, (basestring, int, long)):
+            return thing
+        elif thing is None:
+            return None
+        else:
+            return thing.int_id
+
     def _get_package_from_data(self, data):
         # parse json
         cls = get_package_class(data)

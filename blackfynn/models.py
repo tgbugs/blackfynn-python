@@ -2047,6 +2047,19 @@ class Dataset(BaseCollection):
                 **kwargs)
         return self._api.concepts.relationships.create(self.id, r)
 
+    def import_model(self, template):
+        """
+        Imports a model based on the given template into the dataset
+
+        Args:
+            template (ModelTemplate): the ModelTemplate to import
+
+        Returns:
+            A list of ModelProperty objects that have been imported into the dataset
+
+        """
+        return self._api.templates.apply(self, template)
+
     @property
     def _get_method(self):
         return self._api.datasets.get
@@ -2667,6 +2680,73 @@ class BaseRecord(BaseNode):
 
     def __repr__(self):
         return u"<BaseRecord type='{}' id='{}'>".format(self.type, self.id)
+
+
+class ModelTemplate(BaseNode):
+    _object_key = None
+
+    def __init__(self, name, category, properties, id=None, display_name=None, schema=None, description=None, required=None,
+                 *args, **kwargs):
+        assert name is not None, "ModelTemplate name must be defined"
+        assert properties is not None, "ModelTemplate properties must be defined"
+        assert category is not None, "ModelTemplate category must be defined"
+
+        self.id           = id
+        self.schema       = schema or 'http://schema.blackfynn.io/model/draft-01/schema'
+        self.name         = name
+        self.display_name = display_name
+        self.description  = description or name
+        self.category     = category
+        self.required     = required or []
+
+        if (isinstance(properties, list) and isinstance(properties[0], tuple)):
+            self.properties = ModelTemplate.properties_from_tuples(properties)
+        else:
+            self.properties = properties
+
+        super(ModelTemplate, self).__init__(*args, **kwargs)
+
+    @classmethod
+    def properties_from_tuples(cls, tuples):
+        d = dict()
+        nested = dict()
+        for tuple in tuples:
+            name = '{}'.format(tuple[0])
+            data_type = tuple[1]
+            nested["type"] = data_type
+            nested["description"] = name
+            d[name] = nested
+        return d
+
+    def as_dict(self):
+        return {
+            "$schema": self.schema,
+            "name": self.name,
+            "description": self.description,
+            "category": self.category,
+            "properties": self.properties,
+            "required": self.required
+        }
+
+    @classmethod
+    def from_dict(cls, data, *args, **kwargs):
+
+        template = cls(
+            schema=data["$schema"],
+            name=data["name"],
+            description=data["description"],
+            category=data["category"],
+            required=data["required"],
+            properties=data["properties"],
+            display_name=data.get("displayName", None)
+        )
+
+        template.id = data.get("$id", None)
+
+        return template
+
+    def __repr__(self):
+        return u"<ModelTemplate name='{}' id='{}'>".format(self.name, self.id)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Models

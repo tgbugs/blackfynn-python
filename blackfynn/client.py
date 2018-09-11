@@ -2,13 +2,13 @@
 
 # blackfynn-specific
 from blackfynn import Settings
-from blackfynn.models import Dataset
+from blackfynn.models import (Dataset, ModelTemplate)
 from blackfynn.api.transfers import IOAPI
 from blackfynn.api.compute import ComputeAPI
 from blackfynn.api.ledger import LedgerAPI
 from blackfynn.api.user import UserAPI
 from blackfynn.api.concepts import (
-    ModelsAPI, RecordsAPI, ModelRelationshipsAPI, ModelRelationshipInstancesAPI
+    ModelsAPI, RecordsAPI, ModelRelationshipsAPI, ModelRelationshipInstancesAPI, ModelTemplatesAPI
 )
 from blackfynn.api.timeseries import TimeSeriesAPI
 from blackfynn.base import ClientSession
@@ -115,7 +115,8 @@ class Blackfynn(object):
             ModelsAPI,
             RecordsAPI,
             ModelRelationshipsAPI,
-            ModelRelationshipInstancesAPI
+            ModelRelationshipInstancesAPI,
+            ModelTemplatesAPI
         )
 
         self._api._context = self._api.organizations.get(self._api._organization)
@@ -294,6 +295,164 @@ class Blackfynn(object):
     def _check_context(self):
         if self.context is None:
             raise Exception('Must set context before executing method.')
+
+
+    def get_model_template(self, template_id):
+        """
+        Get a model template belonging to the current organization.
+
+        Args:
+            template_id (str): The ID of the model template object.
+
+        Returns:
+            Object of type ModelTemplate.
+        """
+        return self._api.templates.get(template_id)
+
+    def get_model_templates(self):
+        """
+        Get all of the model templates belonging to the current organization.
+
+        Returns:
+            A list of objects of type ModelTemplate.
+        """
+        return self._api.templates.get_all()
+
+    def create_model_template(
+        self,
+        name=None,
+        description=None,
+        category=None,
+        required=None,
+        properties=None,
+        template=None
+    ):
+        """
+        Create a new model template belonging to the current organization.
+
+        Args:
+            template (ModelTemplate): A ModelTemplate object.
+            OR
+            name (str): The name of the template
+            description (str, optional): A description of the template
+            category (str): The category of the template
+            required ([str], optional): The names of the required template properties
+            properties (dict OR tuples): The template properties
+
+        Example::
+
+            my_template = ModelTemplate(
+                schema="http://schema.blackfynn.io/model/draft-01/schema",
+                name="Patient",
+                description="This is a patient.",
+                category="Person",
+                properties=dict(
+                    name=dict(
+                        type="string",
+                        description="Name"
+                    ),
+                    DOB=dict(
+                        type="string",
+                        format="date",
+                        description="Date of Birth"
+                    )
+                ),
+                required=["name"]
+            bf.create_model_template(my_template)
+
+        Example::
+
+            bf.create_model_template(
+                name="Patient",
+                description="This is a patient.",
+                category="Person",
+                required=["name"],
+                properties=[("name", "string"), ("DOB", "date")]
+            )
+
+        Returns:
+            The created ModelTemplate object.
+        """
+        if (template is None):
+            template_to_create = ModelTemplate(name=name, description=description, category=category, required=required,
+                                     properties=properties)
+        else:
+            template_to_create = template
+            assert isinstance(template_to_create, ModelTemplate), "template must be type ModelTemplate"
+
+        return self._api.templates.create(template=template_to_create)
+
+    def validate_model_template(
+        self,
+        name=None,
+        description=None,
+        category=None,
+        required=None,
+        properties=None,
+        template=None
+    ):
+        """
+        Validate a model template schema.
+
+        Args:
+            template (ModelTemplate): A ModelTemplate object.
+            OR
+            name (str): The name of the template
+            description (str, optional): A description of the template
+            category (str): The category of the template
+            required ([str], optional): The names of the required template properties
+            properties (dict OR tuples): The template properties
+
+        Example::
+
+            my_template = ModelTemplate(
+                schema="http://schema.blackfynn.io/model/draft-01/schema",
+                name="Patient",
+                description="This is a patient.",
+                category="Person",
+                properties=dict(
+                    name=dict(
+                        type="string",
+                        description="Name"
+                    ),
+                    DOB=dict(
+                        type="string",
+                        format="date",
+                        description="Date of Birth"
+                    )
+                ),
+                required=["name"]
+            bf.validate_model_template(my_template)
+
+        Example::
+
+            bf.validate_model_template(
+                name="Patient",
+                category="Person",
+                properties=[("name", "string"), ("Weight", "number")]
+            )
+
+        Returns:
+            "True" or a list of validation errors
+        """
+        if (template is None):
+            template_to_validate = ModelTemplate(name=name, description=description, category=category, required=required,
+                                               properties=properties)
+        else:
+            template_to_validate = template
+            assert isinstance(template_to_validate, ModelTemplate), "template must be type ModelTemplate"
+
+        return self._api.templates.validate(template=template_to_validate)
+
+    def delete_model_template(self, template_id):
+        """
+        Deletes a model template from the platform.
+
+        Args:
+            template_id (str): The ID of the model template object.
+
+        """
+        return self._api.templates.delete(template_id)
 
     def __repr__(self):
         return "<Blackfynn user='{}' organization='{}'>".format(self.profile.email, self.context.name)
