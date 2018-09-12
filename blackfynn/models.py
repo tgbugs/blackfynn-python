@@ -1032,7 +1032,7 @@ class TimeSeries(DataPackage):
         """
         # flattenened list of segments across all channels
         channel_segments = [
-            segment for channel in self.channels 
+            segment for channel in self.channels
             for segment in channel.segments(start=start, stop=stop, gap_factor=gap_factor)
         ]
         # union all segments
@@ -2211,7 +2211,12 @@ def uncast_value(value):
         if value.tzinfo is None or value.tzinfo.utcoffset(value) is None:
             value = pytz.utc.localize(value)
 
-        v = value.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + value.strftime('%z')
+        v = value.isoformat()
+
+        # isoformat() does not include microseconds if microseconds is
+        # 0, but we always need microseconds in the formatted string
+        if not value.microsecond:
+            v = "{}.000000{}".format(v[:-6], v[-6:])
     else:
         v = value
 

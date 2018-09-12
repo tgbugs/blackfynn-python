@@ -2,7 +2,7 @@ import time
 import pytest
 import datetime
 
-from blackfynn.models import DataPackage, ModelPropertyType, ModelPropertyEnumType, ModelProperty, convert_type_to_datatype, convert_datatype_to_type
+from blackfynn.models import DataPackage, ModelPropertyType, ModelPropertyEnumType, ModelProperty, convert_type_to_datatype, convert_datatype_to_type, uncast_value
 
 def current_ts():
     return int(round(time.time() * 1000))
@@ -61,6 +61,14 @@ def test_model_with_invalid_properties(dataset):
     )
 
     assert not new_model.schema
+
+
+def test_date_formatting():
+    d1 = datetime.datetime(2018, 8, 24, 15, 11, 25)
+    assert uncast_value(d1) == '2018-08-24T15:11:25.000000+00:00'
+
+    d2 = datetime.datetime(2018, 8, 24, 15, 11, 25, 1)
+    assert uncast_value(d2) == '2018-08-24T15:11:25.000001+00:00'
 
 
 def test_models(dataset):
