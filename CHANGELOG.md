@@ -7,8 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 Documentation at http://docs.blackfynn.io
 
 ## [2.4.6]
+### Added
+- Support for model templates
 ### Changed
-- Updated Travis config
+- Cleaned up Travis config
+- Updated to use new date format
 
 ## [2.4.5]
 ### Changed
