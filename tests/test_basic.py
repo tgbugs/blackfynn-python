@@ -21,7 +21,7 @@ def test_update_dataset(client, dataset, session_id):
     assert ds2.int_id == dataset.int_id
     assert ds2.name == ds_name
 
-def test_datasets(dataset):
+def test_datasets(client, dataset):
     ds_items = len(dataset)
 
     # create package locally
@@ -44,6 +44,10 @@ def test_datasets(dataset):
     assert not pkg.exists
     assert pkg not in dataset
     assert len(dataset) == ds_items
+
+    # can't create dataset with same name
+    with pytest.raises(Exception):
+        client.create_dataset(dataset.name)
 
 # def test_dataset_collaborators(client, client2, test_organization, dataset):
 #     # share with user

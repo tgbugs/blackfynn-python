@@ -69,14 +69,11 @@ class DatasetsAPI(APIBase):
         """
         Create a dataset on the platform
         """
-        try:
-            if self.get_by_name_or_id(ds.name) is not None:
-                raise Exception("Dataset with name {} already exists".format(ds.name))
+        if self.get_by_name_or_id(ds.name) is not None:
+            raise Exception("Dataset with name {} already exists".format(ds.name))
 
-            resp = self._post('', json=ds.as_dict())
-            return Dataset.from_dict(resp, api=self.session)
-        except Exception, e:
-            self._logger.error(e)
+        resp = self._post('', json=ds.as_dict())
+        return Dataset.from_dict(resp, api=self.session)
 
     def update(self, ds):
         """
