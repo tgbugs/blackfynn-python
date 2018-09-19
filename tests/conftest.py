@@ -3,6 +3,8 @@ import pytest
 from uuid import uuid4
 from datetime import datetime
 from blackfynn import Blackfynn
+from tests.utils import current_ts, create_test_dataset, get_test_client
+
 
 @pytest.fixture(scope='session')
 def client():
@@ -11,15 +13,7 @@ def client():
     environment variables, so ensure those are set properly before testing. Alternatively,
     to force a particular user, adjust input arguments as necessary.
     """
-    bf = Blackfynn()
-    # get organizations
-    orgs = bf.organizations()
-    print 'organizations =', orgs
-    assert len(orgs) > 0
-
-    # explicitly set context to Blackfyn org
-    assert bf.context is not None
-    return bf
+    return get_test_client()
 
 
 @pytest.fixture(scope='session')
@@ -28,13 +22,8 @@ def client2():
     api_secret = os.environ.get('BLACKFYNN_API_SECRET2')
     assert api_token != "", "Must define BLACKFYNN_API_TOKEN2"
     assert api_secret != "", "Must define BLACKFYNN_API_SECRET2"
-    bf = Blackfynn()
-    # get organizations
-    orgs = bf.organizations()
-    assert len(orgs) > 0
 
-    # explicitly set context to Blackfyn org
-    assert bf.context is not None
+    bf = get_test_client(api_token=api_token, api_secret=api_secret)
     return bf
 
 
@@ -42,23 +31,19 @@ def client2():
 def session_id():
     return "{}-{}".format(str(datetime.now()), str(uuid4())[:4])
 
+
 @pytest.fixture(scope='session')
-def dataset(client, session_id):
+def dataset(client):
     """
     Test Dataset to be used by other tests.
     """
-
-    # collection of all datasets
-    n_ds = len(client.datasets())
-
-    # create test dataset
-    ds = client.create_dataset("test dataset {}".format(session_id))
+    ds = create_test_dataset(client)
     ds_id = ds.id
-    assert ds.exists
     all_dataset_ids = [x.id for x in client.datasets()]
     assert ds_id in all_dataset_ids
 
-    # surface test dataset to other functions
+    # surface test dataset to other functions. Everything after the yield
+    # serves as teardown code for the fixture
     yield ds
 
     # remove

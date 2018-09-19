@@ -1913,6 +1913,16 @@ class Dataset(BaseCollection):
         self._check_exists()
         return self._api.datasets.remove_collaborators(self, *collaborator_ids)
 
+    def get_topology(self):
+        """ Returns the set of Models and Relationships defined for the dataset
+
+        Returns:
+            dict: Keys are either ``models`` or ``relationships``. Values are
+            the list of objects of that type
+
+        """
+        return self._api.concepts.get_topology(self)
+
     def models(self):
         """
         Returns:
@@ -2930,6 +2940,24 @@ class Model(BaseModelNode):
 
         for error in result['errors']:
             self._logger.error("Failed to delete instance {} with error: {}".format(error[0], error[1]))
+
+    def get_related(self):
+        """
+            Returns a list of related model types and counts of those
+            relationships. "Related" indicates that the model could be
+            connected to the current model via some relationship, i.e.
+            B is "related to" A if there exist A -[relationship]-> B. Note that
+            the directionality matters. If B is the queried model, A would not
+            appear in the list of "related" models.
+
+        Returns:
+            List of ``Model``s related via a defined relationship
+
+        Example::
+            related_models = mouse.get_related()
+
+        """
+        return self._api.concepts.get_related(self.dataset_id, self)
 
     def __iter__(self):
         for record in self.get_all():

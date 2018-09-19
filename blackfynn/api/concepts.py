@@ -121,7 +121,7 @@ class ModelsAPI(ModelsAPIBase):
         resp = self._get(self._uri('/{dataset_id}/concepts', dataset_id=dataset_id), stream=True)
         for r in resp:
             r['dataset_id'] = r.get('dataset_id', dataset_id)
-            r['schema']     = self.get_properties(dataset, r['id'])
+            r['schema'] = self.get_properties(dataset, r['id'])
         concepts = [Model.from_dict(r, api=self.session) for r in resp]
         return { c.type: c for c in concepts }
 
@@ -136,8 +136,8 @@ class ModelsAPI(ModelsAPIBase):
         """
         Return list of files (i.e. packages) related to record.
         """
-        dataset_id  = self._get_id(dataset)
-        concept_id  = self._get_id(concept)
+        dataset_id = self._get_id(dataset)
+        concept_id = self._get_id(concept)
         instance_id = self._get_id(instance)
         resp = self._get(
             self._uri('/{dataset_id}/concepts/{concept_id}/instances/{instance_id}/files',
@@ -147,6 +147,40 @@ class ModelsAPI(ModelsAPIBase):
             ))
         return [DataPackage.from_dict(pkg, api=self.session) for r,pkg in resp]
 
+    def get_related(self, dataset, concept):
+        dataset_id = self._get_id(dataset)
+        concept_id = self._get_id(concept)
+        resp = self._get(
+            self._uri('/{dataset_id}/concepts/{concept_id}/topology',
+                      dataset_id=dataset_id, concept_id=concept_id))
+        for r in resp:
+            r['dataset_id'] = r.get('dataset_id', dataset_id)
+            r['schema'] = self.get_properties(dataset, r['id'])
+        concepts = [Model.from_dict(r, api=self.session) for r in resp]
+
+        return concepts
+
+    def get_topology(self, dataset):
+        dataset_id = self._get_id(dataset)
+        resp = self._get(
+            self._uri('/{dataset_id}/concepts/schema/graph',
+                      dataset_id=dataset_id))
+        # What is returned is a list mixing
+        results = {
+            'models': [],
+            'relationships': []
+        }
+        for r in resp:
+            r['dataset_id'] = r.get('dataset_id', dataset_id)
+            if 'from' in r:
+                # This is a relationship
+                results['relationships'].append(
+                    Relationship.from_dict(r, api=self.session))
+            else:
+                # This is a model
+                r['schema'] = self.get_properties(dataset, r['id'])
+                results['models'].append(Model.from_dict(r, api=self.session))
+        return results
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Model Instances

@@ -1,11 +1,14 @@
-import time
 import pytest
 import datetime
+from collections import namedtuple
 
-from blackfynn.models import DataPackage, ModelPropertyType, ModelPropertyEnumType, ModelProperty, convert_type_to_datatype, convert_datatype_to_type, uncast_value
+from blackfynn.models import DataPackage, ModelPropertyType, \
+    ModelPropertyEnumType, ModelProperty, convert_type_to_datatype, \
+    convert_datatype_to_type, uncast_value
+from tests.utils import current_ts, get_test_client, create_test_dataset
 
-def current_ts():
-    return int(round(time.time() * 1000))
+
+
 
 def test_parse_model_datatype(dataset):
     basic_numeric_1 = ModelPropertyType(data_type=long)
@@ -165,7 +168,8 @@ def test_models(dataset):
 
     relationships = dataset.relationships()
 
-    new_relationship = dataset.create_relationship_type('New_Relationship_{}'.format(current_ts()), 'a new relationship')
+    new_relationship = dataset.create_relationship_type('New_Relationship_{}'.format(
+        current_ts()), 'a new relationship')
 
     assert len(dataset.relationships()) == len(relationships) + 1
 
@@ -333,3 +337,61 @@ def test_model_properties_with_enum(dataset):
     assert (array_property.type == unicode)
     assert (array_property.multi_select == True)
     assert (array_property.enum == ['foo', 'bar', 'baz'])
+
+
+
+Graph = namedtuple('TestGraph', ['dataset', 'models', 'model_records',
+                                 'relationships', 'relationship_records'])
+
+
+@pytest.fixture(scope="module")
+def simple_graph(client):
+    """
+        Creates a small test graph in an independent dataset to de-couple
+        from other tests
+    """
+    test_dataset = create_test_dataset(client)
+    model_1 = test_dataset.create_model(
+        'Model_A', description="model a", schema=[
+            ModelProperty("prop1", data_type=ModelPropertyType(data_type=str),
+                          title=True)])
+
+    model_2 = test_dataset.create_model(
+        'Model_B', description="model b",
+        schema=[ModelProperty("prop1",
+                              data_type=ModelPropertyType(data_type=str),
+                              title=True)
+                ])
+
+    relationship = test_dataset.create_relationship_type(
+        'New_Relationship_{}'.format(current_ts()), 'a new relationship')
+
+    model_instance_1 = model_1.create_record({"prop1": "val1"})
+    model_instance_2 = model_2.create_record({"prop1": "val1"})
+    model_instance_1.relate_to(model_instance_2, relationship)
+
+    graph = Graph(test_dataset, models=[model_1, model_2],
+                  model_records=[model_instance_1, model_instance_2],
+                  relationships=[relationship],
+                  relationship_records=None)
+    yield graph
+
+    ds_id = test_dataset.id
+    client._api.datasets.delete(test_dataset)
+    all_dataset_ids = [x.id for x in client.datasets()]
+    assert ds_id not in all_dataset_ids
+    assert not test_dataset.exists
+
+
+def test_get_related_models(simple_graph):
+    related_models = simple_graph.models[0].get_related()
+    assert len(related_models) == 1
+    assert related_models[0].type == simple_graph.models[1].type
+
+
+def test_get_topology(simple_graph):
+    topology = simple_graph.dataset.get_topology()
+    assert 'models' in topology
+    assert len(topology['models']) == 2
+    assert 'relationships' in topology
+    assert len(topology['relationships']) == 1
