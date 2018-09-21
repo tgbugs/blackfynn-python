@@ -2100,46 +2100,6 @@ class Collection(BaseCollection):
         return u"<Collection name='{}' id='{}'>".format(self.name, self.id)
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Data Ledger
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-class LedgerEntry(BaseNode):
-    def __init__(self,
-            reference,
-            userId,
-            organizationId,
-            metric,
-            value,
-            date):
-
-        super(LedgerEntry, self).__init__()
-        self.reference = reference
-        self.userId = userId
-        self.organizationId = organizationId
-        self.metric = metric
-        self.value = value
-        self.date = date
-
-    @classmethod
-    def from_dict(self, data):
-        return LedgerEntry(data["reference"],
-                data["userId"],
-                data["organizationId"],
-                data["metric"],
-                data["value"],
-                dateutil.parser.parse(data["date"]))
-
-    def as_dict(self):
-        return {
-                "reference": self.reference,
-                "userId": self.userId,
-                "organizationId": self.organizationId,
-                "metric": self.metric,
-                "value": self.value,
-                "date": self.date.replace(microsecond=0).isoformat() + 'Z'
-                }
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Models & Relationships
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

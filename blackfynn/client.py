@@ -5,7 +5,6 @@ from blackfynn import Settings
 from blackfynn.models import (Dataset, ModelTemplate)
 from blackfynn.api.transfers import IOAPI
 from blackfynn.api.compute import ComputeAPI
-from blackfynn.api.ledger import LedgerAPI
 from blackfynn.api.user import UserAPI
 from blackfynn.api.concepts import (
     ModelsAPI, RecordsAPI, ModelRelationshipsAPI, ModelRelationshipInstancesAPI, ModelTemplatesAPI
@@ -110,7 +109,6 @@ class Blackfynn(object):
             ComputeAPI,
             SearchAPI,
             IOAPI,
-            LedgerAPI,
             UserAPI,
             ModelsAPI,
             RecordsAPI,

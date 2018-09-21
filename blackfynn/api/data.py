@@ -14,7 +14,6 @@ from blackfynn.models import (
     TabularSchema,
     TabularSchemaColumn,
     User,
-    LedgerEntry,
     BaseDataNode
 )
 import datetime
