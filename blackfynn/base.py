@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
-
 import json
 import base64
 import requests
-from concurrent.futures import TimeoutError
-from requests_futures.sessions import FuturesSession
+from requests import Session
+from requests.exceptions import Timeout
 
 # blackfynn
 import blackfynn.log as log
@@ -20,13 +19,11 @@ class BlackfynnRequest(object):
         self._uri = uri
         self._args = args
         self._kwargs = kwargs
-        self._request = None
+        self._response = None
 
         self._logger = log.get_logger('blackfynn.base.BlackfynnRequest')
 
-        self.call()
-
-    def _handle_response(self, sess, resp):
+    def _handle_response(self, resp):
         self._logger.debug("resp = {}".format(resp))
         self._logger.debug("resp.content = {}".format(resp.content))
         if resp.status_code in [requests.codes.forbidden, requests.codes.unauthorized]:
@@ -41,12 +38,10 @@ class BlackfynnRequest(object):
             # if not json, still return response content
             resp.data = resp.content
 
-    def call(self):
-        self._request = self._func(self._uri, background_callback=self._handle_response, *self._args, **self._kwargs)
-        return self
-
-    def result(self,*args, **kwargs):
-        return self._request.result(*args, **kwargs)
+    def call(self, timeout=None):
+        self._response = self._func(self._uri, *self._args, timeout=timeout, **self._kwargs)
+        self._handle_response(self._response)
+        return self._response
 
 
 class ClientSession(object):
@@ -110,12 +105,12 @@ class ClientSession(object):
         Make requests-futures work within threaded/distributed environment.
         """
         if not hasattr(self._session, 'session'):
-            self._session = FuturesSession(max_workers=4)
+            self._session = Session()
             self._set_auth(self._token)
 
         return self._session
 
-    def _make_call(self, func, uri, *args, **kwargs):
+    def _make_request(self, func, uri, *args, **kwargs):
         self._logger.debug('~'*60)
         self._logger.debug("uri = {} {}".format(func.__func__.func_name, uri))
         self._logger.debug("args = {}".format(args))
@@ -123,7 +118,7 @@ class ClientSession(object):
         self._logger.debug("headers = {}".format(self.session.headers))
         return BlackfynnRequest(func, uri, *args, **kwargs)
 
-    def _call(self, method, endpoint, base='', async=False, *args, **kwargs):
+    def _call(self, method, endpoint, base='', *args, **kwargs):
         if method == 'get':
             func = self.session.get
         elif method == 'put':
@@ -146,49 +141,43 @@ class ClientSession(object):
 
         # call endpoint
         uri = self._uri(endpoint, base=base, host=host)
-        req = self._make_call(func, uri, *args, **kwargs)
+        req = self._make_request(func, uri, *args, **kwargs)
 
-        if async:
-            return req
-        else:
-            return self._get_response(req)
+        return self._get_response(req)
 
     def _uri(self, endpoint, base, host=None):
         if host is None:
             host = self._host
         return '{}{}{}'.format(host, base, endpoint)
 
-    def _get(self, endpoint, async=False, *args, **kwargs):
-        return self._call('get', endpoint, async=async, *args, **kwargs)
+    def _get(self, endpoint, *args, **kwargs):
+        return self._call('get', endpoint, *args, **kwargs)
 
-    def _post(self, endpoint, async=False, *args, **kwargs):
-        return self._call('post', endpoint, async=async, *args, **kwargs)
+    def _post(self, endpoint, *args, **kwargs):
+        return self._call('post', endpoint, *args, **kwargs)
 
-    def _put(self, endpoint, async=False, *args, **kwargs):
-        return self._call('put', endpoint, async=async, *args, **kwargs)
+    def _put(self, endpoint, *args, **kwargs):
+        return self._call('put', endpoint, *args, **kwargs)
 
-    def _del(self, endpoint, async=False, *args, **kwargs):
-        return self._call('delete', endpoint, async=async, *args, **kwargs)
+    def _del(self, endpoint, *args, **kwargs):
+        return self._call('delete', endpoint, *args, **kwargs)
 
-    def _get_result(self, req, count=0):
+    def _get_response(self, req, count=0):
         try:
-            resp = req.result(timeout=self.settings.max_request_time)
-        except TimeoutError as e:
+            resp = req.call(timeout=self.settings.max_request_time)
+        except Timeout as e:
             if count < self.settings.max_request_timeout_retries:
                 # timeout! trying again...
-                resp = self._get_result(req.call(), count=count+1)
+                resp = self._get_response(req, count=count+1)
         except UnauthorizedException as e:
             # try refreshing the session
             if self._token is not None and count==0:
                 self.authenticate(self._organization)
                 # re-request
-                resp = self._get_result(req.call(), count=count+1)
+                resp = self._get_response(req, count=count+1)
             else:
                 raise e
-        return resp
 
-    def _get_response(self, req):
-        resp = self._get_result(req)
         return resp.data
 
     def register(self, *components):

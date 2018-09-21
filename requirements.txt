@@ -1,7 +1,6 @@
 pytz==2018.4
 boto3>=1.4
 requests>=2.18
-requests-futures>=0.9
 numpy>=1.13
 pandas>=0.20
 protobuf==3.2.0

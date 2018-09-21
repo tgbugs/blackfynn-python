@@ -78,26 +78,32 @@ class ChannelPage(object):
         pg_delta = channel._page_delta(page_size)
         self.start = long(self.page  * pg_delta)
         self.stop  = long(self.start + pg_delta)
-        self.cache_exists = False
 
-        # current future/response
-        self.future = None
-        self.data   = None
+        # current response
+        self.data  = None
 
-    def request(self, api):
+    def get(self, api):
+        cache_exists = False
+        update_cache = False
+
         # check if page is cached
-        if self.use_cache and cache.check_page(self.channel, self.page):
-            # we (should) have cache, skip API request
-            self.cache_exists = True
-            return
+        if self.use_cache:
+            cache_exists = cache.check_page(self.channel, self.page)
+            if cache_exists:
+                # we (should) have cache, try to use existing cache entry
+                self.data = cache.get_page_data(self.channel, self.page)
+                if self.data is None:
+                    # cache entry has disappeared, let's update it
+                    update_cache = True
+                else:
+                    return self.data
 
-        # make request: not using cache
+        # make request
         args = dict(
             # Note: uses streaming server
             host     = api._streaming_host,
             endpoint = '/ts/retrieve/continuous',
             base     = '',
-            async    = True,
             params   = dict(
                 channel = self.channel.id,
                 limit   = '', # required by API
@@ -105,42 +111,19 @@ class ChannelPage(object):
                 start   = self.start,
                 end     = self.stop)
         )
-        self.future = api._get(**args)
+        data = api._get(**args)
+        self.data = self._load_data(data)
 
-    def get(self, api, update_cache_if_exists=False):
-        if self.future is not None:
-            # we're handling an API request/response
-            self.data = self._get_response(api)
-
-            # set cache!
-            if self.use_cache and (not self.cache_exists or update_cache_if_exists):
-                cache.set_page_data(self.channel, self.page, self.data, update=update_cache_if_exists)
-
-        elif self.data is not None:
-            # we've already got the result
-            pass
-
-        elif self.use_cache and self.cache_exists:
-            # use existing cache entry
-            self.data = cache.get_page_data(self.channel, self.page)
-
-            if self.data is None:
-                # cache may have disappeared, let's make API call
-                self.use_cache = False
-                self.cache_exists = False
-                self.request(api)
-                self.data = self.get(api, update_cache_if_exists=True)
+        # save page to cache
+        if self.use_cache and (not cache_exists or update_cache):
+            cache.set_page_data(self.channel, self.page, self.data, update=update_cache)
 
         return self.data
 
-    def _get_response(self, api, datetime_index=True):
-        # handle API response, return data series
-        resp  = api._get_response(self.future)
-        self.future = None
-
+    def _load_data(self, data, datetime_index=True):
         # handle data response
-        times = np.array( [t[0] for t in resp] )
-        data  = np.array( [d[1] for d in resp] )
+        times = np.array( [t[0] for t in data] )
+        data  = np.array( [d[1] for d in data] )
         # fix -- sometimes API responds out-of-order
         order = np.argsort(times)
         times = times[order]
@@ -202,7 +185,6 @@ class ChannelIterator(object):
                         channel   = self.channel,
                         page      = p,
                         use_cache = self.use_cache)
-                page.request(self.api)
                 data = page.get(self.api)
                 # no more data
                 if data is None: break
