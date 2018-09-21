@@ -3,6 +3,8 @@ blackfynn-python
 
 .. image:: https://travis-ci.org/Blackfynn/blackfynn-python.svg?branch=master
     :target: https://travis-ci.org/Blackfynn/blackfynn-python
+.. image:: https://codecov.io/gh/Blackfynn/blackfynn-python/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/Blackfynn/blackfynn-python
 
 Python client and command line tool for Blackfynn.
 
