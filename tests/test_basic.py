@@ -20,6 +20,7 @@ def test_update_dataset(client, dataset, session_id):
     assert(isinstance(ds2.int_id, int))
     assert ds2.int_id == dataset.int_id
     assert ds2.name == ds_name
+    assert ds2.owner_id == client.profile.id
 
 def test_datasets(client, dataset):
     ds_items = len(dataset)
@@ -78,6 +79,7 @@ def test_packages_create_delete(client, dataset):
     assert pkg.exists
     assert pkg.id is not None
     assert pkg.name == 'Some MRI'
+    assert pkg.owner_id == client.profile.int_id
 
     # TODO: (once we auto-include in parent)
     assert pkg in dataset
@@ -90,6 +92,7 @@ def test_packages_create_delete(client, dataset):
 
     assert pkg2.name == 'Some Other MRI'
     assert pkg2.id == pkg.id
+    assert pkg2.owner_id == client.profile.int_id
 
     # delete all packages
     client.delete(pkg)
@@ -115,6 +118,7 @@ def test_package_states(client, dataset):
     assert not pkg.exists
     dataset.add(pkg)
     assert pkg.exists
+    assert pkg.owner_id == client.profile.int_id
     assert pkg.state == "UNAVAILABLE"
     pkg.set_ready()
     pkg2 = client.get(pkg.id)
@@ -206,6 +210,7 @@ def test_package_objects(client, client2, dataset):
 
     assert dataset2.id == dataset.id
     assert dataset2.exists
+    assert dataset2.owner_id == client.profile.id
 
     # create package (super-admin user session)
     dataset2.add(pkg)

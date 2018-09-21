@@ -451,6 +451,8 @@ class BaseDataNode(BaseNode):
         except:
             pass
 
+        item.owner_id = data.get('owner', data.get('ownerId', None))
+
         # parse, store parent (ID only)
         parent = data.get('parent', None)
         if parent is not None:
