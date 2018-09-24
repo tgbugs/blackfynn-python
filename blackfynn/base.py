@@ -142,8 +142,9 @@ class ClientSession(object):
         # call endpoint
         uri = self._uri(endpoint, base=base, host=host)
         req = self._make_request(func, uri, *args, **kwargs)
+        resp = self._get_response(req)
 
-        return self._get_response(req)
+        return resp.data
 
     def _uri(self, endpoint, base, host=None):
         if host is None:
@@ -169,6 +170,8 @@ class ClientSession(object):
             if count < self.settings.max_request_timeout_retries:
                 # timeout! trying again...
                 resp = self._get_response(req, count=count+1)
+            else:
+                raise e
         except UnauthorizedException as e:
             # try refreshing the session
             if self._token is not None and count==0:
@@ -178,7 +181,7 @@ class ClientSession(object):
             else:
                 raise e
 
-        return resp.data
+        return resp
 
     def register(self, *components):
         """

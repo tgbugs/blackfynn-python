@@ -8,6 +8,7 @@ from blackfynn.models import (
     DataPackage, Dataset, File
 )
 from blackfynn.base import UnauthorizedException
+from .utils import get_test_client
 
 
 def test_update_dataset(client, dataset, session_id):
@@ -231,3 +232,9 @@ def test_package_objects(client, client2, dataset):
 
     with pytest.raises(UnauthorizedException):
         pkg.set_view(view)
+
+
+def test_timeout():
+    with pytest.raises(requests.exceptions.Timeout):
+        # initial authentication calls should time out
+        client = get_test_client(max_request_time=0.00001)
