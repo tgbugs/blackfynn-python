@@ -6,6 +6,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 Documentation at http://docs.blackfynn.io
 
+## [Unreleased]
+### Added
+- Support for topology endpoints
+
+### Changed
+- Client now raises an exception when creating a dataset with an existing name
+- Removed concurrent requests capabilities
+- Improved timeout and retry handling
+
+### Fixed
+- `owner_id` property on datasets and packages
+- Deadlock caused by importing the client from another module
+
+### Removed
+- Ledger API
+
 ## [2.4.6]
 ### Added
 - Support for model templates
