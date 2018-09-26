@@ -4,6 +4,8 @@ import base64
 import requests
 from requests import Session
 from requests.exceptions import Timeout
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 
 # blackfynn
 import blackfynn.log as log
@@ -104,9 +106,20 @@ class ClientSession(object):
         """
         Make requests-futures work within threaded/distributed environment.
         """
-        if not hasattr(self._session, 'session'):
+        if self._session is None:
             self._session = Session()
             self._set_auth(self._token)
+
+            # Enable retries via urllib
+            adapter = HTTPAdapter(
+                max_retries=Retry(
+                    total=self.settings.max_request_timeout_retries,
+                    backoff_factor=.5,
+                    status_forcelist=[502, 503, 504] # Retriable errors (but not POSTs)
+                )
+            )
+            self._session.mount('http://', adapter)
+            self._session.mount('https://', adapter)
 
         return self._session
 
@@ -163,25 +176,16 @@ class ClientSession(object):
     def _del(self, endpoint, *args, **kwargs):
         return self._call('delete', endpoint, *args, **kwargs)
 
-    def _get_response(self, req, count=0):
+    def _get_response(self, req):
         try:
-            resp = req.call(timeout=self.settings.max_request_time)
-        except Timeout as e:
-            if count < self.settings.max_request_timeout_retries:
-                # timeout! trying again...
-                resp = self._get_response(req, count=count+1)
-            else:
-                raise e
+            return req.call(timeout=self.settings.max_request_time)
         except UnauthorizedException as e:
-            # try refreshing the session
-            if self._token is not None and count==0:
-                self.authenticate(self._organization)
-                # re-request
-                resp = self._get_response(req, count=count+1)
-            else:
+            if self._token is None:
                 raise e
 
-        return resp
+            # try to refresh the session and re-request
+            self.authenticate(self._organization)
+            return req.call(timeout=self.settings.max_request_time)
 
     def register(self, *components):
         """
