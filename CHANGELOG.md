@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 Documentation at http://docs.blackfynn.io
 
-## [Unreleased]
+## [2.5.0]
 ### Added
 - Support for topology endpoints
 
