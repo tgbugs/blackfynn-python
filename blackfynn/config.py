@@ -1,8 +1,15 @@
+from __future__ import (
+    absolute_import,
+    division,
+    print_function
+)
+
+import configparser
 import os
 import sys
-import psutil
 import tempfile
-import configparser
+
+import psutil
 
 BLACKFYNN_DIR_DEFAULT = os.path.join(os.path.expanduser('~'), '.blackfynn')
 CACHE_DIR_DEFAULT = os.path.join(BLACKFYNN_DIR_DEFAULT, 'cache')
@@ -130,7 +137,7 @@ class Settings(object):
 
     # _update safely updates the internal __dict__
     def _update(self, settings):
-        if settings is None or type(settings) != dict:
+        if settings is None or not isinstance(settings, dict):
             return
         for k in DEFAULTS:
             if k in settings:

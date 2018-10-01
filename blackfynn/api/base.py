@@ -1,8 +1,18 @@
-import urllib
+from __future__ import (
+    absolute_import,
+    division,
+    print_function
+)
+from future.utils import integer_types, string_types
 
-# blackfynn
-from blackfynn.models import get_package_class
 import blackfynn.log as log
+from blackfynn.models import get_package_class
+
+# urllib compatibility
+from future import standard_library
+standard_library.install_aliases()
+import urllib.parse
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Base class
@@ -25,7 +35,7 @@ class APIBase(object):
         """
         Get ID for object. Assumes string is already ID.
         """
-        if isinstance(thing, (basestring, int, long)):
+        if isinstance(thing, (string_types, integer_types)):
             return thing
         elif thing is None:
             return None
@@ -36,7 +46,7 @@ class APIBase(object):
         """
         Get internal ID for object.
         """
-        if isinstance(thing, (basestring, int, long)):
+        if isinstance(thing, (string_types, integer_types)):
             return thing
         elif thing is None:
             return None
@@ -51,7 +61,7 @@ class APIBase(object):
         return pkg
 
     def _uri(self, url_str, **kwvars):
-        vals = {k:urllib.quote(str(var)) for k,var in kwvars.items()}
+        vals = {k:urllib.parse.quote(str(var)) for k,var in kwvars.items()}
         return url_str.format(**vals)
 
     def _get(self, endpoint, base=None, host=None, *args, **kwargs):

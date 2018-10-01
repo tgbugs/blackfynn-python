@@ -7,11 +7,19 @@ global options:
   --dataset=<dataset>       Use specified dataset (instead of your current working dataset)
   --profile=<name>          Use specified profile (instead of default)
 '''
+from __future__ import (
+    absolute_import,
+    division,
+    print_function
+)
 
 import os
+
 from docopt import docopt
-from cli_utils import recursively_upload
-from working_dataset import require_working_dataset
+
+from .cli_utils import recursively_upload
+from .working_dataset import require_working_dataset
+
 
 def main(bf):
     args = docopt(__doc__)

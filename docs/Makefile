@@ -7,7 +7,7 @@ SPHINXBUILD = python -msphinx
 SPHINXPROJ  = Blackfynn
 SOURCEDIR   = .
 BUILDDIR    = _build
-BF_VERSION  = $(shell python -c 'import blackfynn; print blackfynn.__version__')
+BF_VERSION  = $(shell python -c 'from __future__ import print_function; import blackfynn; print(blackfynn.__version__)')
 
 # default
 .PHONY: clean html

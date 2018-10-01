@@ -6,12 +6,19 @@ global options:
   -h --help                 Show help
   --profile=<name>          Use specified profile (instead of default)
 '''
+from __future__ import (
+    absolute_import,
+    division,
+    print_function
+)
 
-from docopt import docopt
 import sys
 
-from cli_utils import print_datasets
-from working_dataset import set_working_dataset
+from docopt import docopt
+
+from .cli_utils import print_datasets
+from .working_dataset import set_working_dataset
+
 
 def main(bf):
     args = docopt(__doc__)

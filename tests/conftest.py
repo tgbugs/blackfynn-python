@@ -1,9 +1,17 @@
+from __future__ import (
+    absolute_import,
+    division,
+    print_function
+)
+
 import os
-import pytest
-from uuid import uuid4
 from datetime import datetime
+from uuid import uuid4
+
+import pytest
+
 from blackfynn import Blackfynn
-from tests.utils import current_ts, create_test_dataset, get_test_client
+from tests.utils import create_test_dataset, current_ts, get_test_client
 
 
 @pytest.fixture(scope='session')
@@ -57,4 +65,4 @@ def dataset(client):
 
 @pytest.fixture(scope='session')
 def test_organization(client):
-    return filter(lambda o: o.name == 'Blackfynn', client.organizations())[0]
+    return [o for o in client.organizations() if o.name == 'Blackfynn'][0]

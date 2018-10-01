@@ -1,23 +1,43 @@
 # -*- coding: utf-8 -*-
 
 # blackfynn-specific
-from blackfynn import Settings
-from blackfynn.models import (Dataset, ModelTemplate)
-from blackfynn.api.transfers import IOAPI
-from blackfynn.api.compute import ComputeAPI
-from blackfynn.api.user import UserAPI
-from blackfynn.api.concepts import (
-    ModelsAPI, RecordsAPI, ModelRelationshipsAPI, ModelRelationshipInstancesAPI, ModelTemplatesAPI
+from __future__ import (
+    absolute_import,
+    division,
+    print_function
 )
-from blackfynn.api.timeseries import TimeSeriesAPI
-from blackfynn.base import ClientSession
+from builtins import dict, object
+from future.utils import as_native_str
+
 import blackfynn.log as log
+from blackfynn import Settings
+from blackfynn.api.compute import ComputeAPI
+from blackfynn.api.concepts import (
+    ModelRelationshipInstancesAPI,
+    ModelRelationshipsAPI,
+    ModelsAPI,
+    ModelTemplatesAPI,
+    RecordsAPI
+)
 from blackfynn.api.core import (
-    CoreAPI, SecurityAPI, OrganizationsAPI, SearchAPI
+    CoreAPI,
+    OrganizationsAPI,
+    SearchAPI,
+    SecurityAPI
 )
 from blackfynn.api.data import (
-    DatasetsAPI, PackagesAPI, FilesAPI, DataAPI, TabularAPI
+    DataAPI,
+    DatasetsAPI,
+    FilesAPI,
+    PackagesAPI,
+    TabularAPI
 )
+from blackfynn.api.timeseries import TimeSeriesAPI
+from blackfynn.api.transfers import IOAPI
+from blackfynn.api.user import UserAPI
+from blackfynn.base import ClientSession
+from blackfynn.models import Dataset, ModelTemplate
+
 
 class Blackfynn(object):
     """
@@ -46,11 +66,11 @@ class Blackfynn(object):
 
             # get some dataset
             ds = bf.get_dataset('my dataset')
-            print "Dataset {} has ID={}".format(ds.name, ds.id)
+            print("Dataset {} has ID={}".format(ds.name, ds.id))
 
             # list all first-level items in dataset
             for item in ds:
-                print "Item: {}".format(item)
+                print("Item: {}".format(item))
 
             # grab some data package
             pkg = bf.get("N:package:1234-1234-1234-1234")
@@ -285,7 +305,7 @@ class Blackfynn(object):
 
             # find some items belonging to patient123
             for result in  bf.search('patient123'):
-                print "found:", result
+                print("found:", result)
 
         """
         return self._api.search.query(query, max_results=max_results)
@@ -452,5 +472,6 @@ class Blackfynn(object):
         """
         return self._api.templates.delete(template_id)
 
+    @as_native_str()
     def __repr__(self):
         return "<Blackfynn user='{}' organization='{}'>".format(self.profile.email, self.context.name)

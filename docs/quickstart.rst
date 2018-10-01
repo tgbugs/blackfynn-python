@@ -6,18 +6,15 @@ Python client and command line tool for Blackfynn.
 Installation
 ------------
 
+The Python client is compatible with Python 2.7 and 3.4-3.7.
+
 .. code:: python
 
       pip install -U blackfynn
 
-.. important:: 
+.. important::
 
     In order to connect to Blackfynn using the *any* client, first you must `Generate API token & secret and enable in client <http://help.blackfynn.com/blackfynn-developer-tools/overview/creating-an-api-key-for-the-blackfynn-clients>`_.
-
-.. note::
-
-    We currently only support and test on *Python v2.7*. This will be expanded in the
-    near future.
 
 
 Basic Usage
@@ -25,6 +22,10 @@ Basic Usage
 
 Import and Initialize
 ~~~~~~~~~~~~~~~~~~~~~~
+
+.. note::
+
+   If you are using Python 2.7 it is highly recommended that you add ``from __future__ import print_function, `` to the top of your scripts. This will allow you to easily use Python 3 in the future.
 
 .. code:: python
 
@@ -38,10 +39,10 @@ This will use your *default profile* to establish a connection. Alternatively, y
 
     bf = Blackfynn('my_profile')
 
-Where ``my_profile`` is an existing profile. 
+Where ``my_profile`` is an existing profile.
 
 .. note::
-    See :ref:`Create connection profile` for creating and managing connection profiles.
+    See `Create connection profile <http://help.blackfynn.com/blackfynn-developer-tools/command-line-interface-cli/using-the-command-line-tool>`_ for creating and managing connection profiles.
 
 Basic Operations
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -50,13 +51,13 @@ Get your datasets::
 
     # print your available datasets
     for ds in bf.datasets():
-        print " Found a dataset: ", ds.name
+        print(" Found a dataset: ", ds.name)
 
     # grab some dataset by name
     ds1 = bf.get_dataset('my dataset 1')
 
     # list items inside dataset (first level)
-    print ds1.items
+    print(ds1.items)
 
 Upload some files into your dataset::
 
@@ -96,11 +97,11 @@ You can get first minute of data in 1-second chunks::
 
     for chunk in ts.get_data_iter(chunk_size='1s', length='1m'):
         # do something with data (pandas Dataframe)
-        print "Mean values =", chunk.mean()
+        print("Mean values =", chunk.mean())
 
 You can do the same thing for a single channel::
 
     channel = ts.channels[0]
     for chunk in channel.get_data_iter(chunk_size='5s', length='10m'):
         # do something with data (pandas Series)
-        print "Max value =", chunk.max()
+        print("Max value =", chunk.max())

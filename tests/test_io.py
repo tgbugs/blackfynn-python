@@ -1,12 +1,14 @@
 import os
+
 import pytest
 
 from blackfynn.models import DataPackage, TimeSeries
 
+
 def test_upload(client, dataset):
     """
     Note: ETL will fail since destination will likely be removed
-          before being processed. 
+          before being processed.
     """
     srcdir = os.path.dirname(__file__)
     file1 = os.path.join(srcdir, 'test-upload.txt')

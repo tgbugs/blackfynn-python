@@ -1,15 +1,23 @@
 # -*- coding: utf-8 -*-
-import json
+from __future__ import (
+    absolute_import,
+    division,
+    print_function
+)
+from builtins import dict, object
+
 import base64
+import json
+
 import requests
 from requests import Session
-from requests.exceptions import Timeout
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
 # blackfynn
 import blackfynn.log as log
 from blackfynn.models import User
+
 
 class UnauthorizedException(Exception):
     pass
@@ -26,8 +34,8 @@ class BlackfynnRequest(object):
         self._logger = log.get_logger('blackfynn.base.BlackfynnRequest')
 
     def _handle_response(self, resp):
-        self._logger.debug("resp = {}".format(resp))
-        self._logger.debug("resp.content = {}".format(resp.content))
+        self._logger.debug(u"resp = {}".format(resp))
+        self._logger.debug(u"resp.content = {}".format(resp.text)) # decoded unicode
         if resp.status_code in [requests.codes.forbidden, requests.codes.unauthorized]:
             raise UnauthorizedException()
 
@@ -35,10 +43,10 @@ class BlackfynnRequest(object):
             resp.raise_for_status()
         try:
             # return object from json
-            resp.data = json.loads(resp.content)
+            resp.data = json.loads(resp.text)
         except:
             # if not json, still return response content
-            resp.data = resp.content
+            resp.data = resp.text
 
     def call(self, timeout=None):
         self._response = self._func(self._uri, *self._args, timeout=timeout, **self._kwargs)
@@ -125,7 +133,7 @@ class ClientSession(object):
 
     def _make_request(self, func, uri, *args, **kwargs):
         self._logger.debug('~'*60)
-        self._logger.debug("uri = {} {}".format(func.__func__.func_name, uri))
+        self._logger.debug("uri = {} {}".format(func.__func__.__name__, uri))
         self._logger.debug("args = {}".format(args))
         self._logger.debug("kwargs = {}".format(kwargs))
         self._logger.debug("headers = {}".format(self.session.headers))

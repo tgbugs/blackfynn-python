@@ -7,9 +7,16 @@ global options:
   --dataset=<dataset>       Use specified dataset (instead of your current working dataset)
   --profile=<name>          Use specified profile (instead of default)
 '''
+from __future__ import (
+    absolute_import,
+    division,
+    print_function
+)
+
 from docopt import docopt
 
-from working_dataset import working_dataset_id
+from .working_dataset import working_dataset_id
+
 
 def main(bf):
     args = docopt(__doc__)
@@ -29,11 +36,11 @@ def main(bf):
            valstr = '{}'.format(value)
            # get internal variable
            ivar=''
-           for k,v in bf.settings.__dict__.iteritems():
+           for k,v in bf.settings.__dict__.items():
                 if str(v) == str(evar):
                     ivar = k
            print('  {:{key_len}}    {:{value_len}}    {}'.format(ivar,evar,valstr,key_len=key_len,value_len=value_len))
-        print
+        print()
 
     working_dataset_status = 'Not set.'
     ds = working_dataset_id()
@@ -44,10 +51,10 @@ def main(bf):
         except:
             pass
 
-    print "Blackfynn environment:"
-    print "  User               : {}".format(bf.profile.email)
-    print "  Organization       : {} (id: {})".format(bf.context.name, bf.context.id)
-    print "  Dataset            : {}".format(working_dataset_status)
-    print "  API Location       : {}".format(bf.settings.api_host)
-    print "  Streaming API      : {}".format(bf.settings.streaming_api_host)
-    print "  Models API      : {}".format(bf.settings.concepts_api_host)
+    print("Blackfynn environment:")
+    print("  User               : {}".format(bf.profile.email))
+    print("  Organization       : {} (id: {})".format(bf.context.name, bf.context.id))
+    print("  Dataset            : {}".format(working_dataset_status))
+    print("  API Location       : {}".format(bf.settings.api_host))
+    print("  Streaming API      : {}".format(bf.settings.streaming_api_host))
+    print("  Models API      : {}".format(bf.settings.concepts_api_host))

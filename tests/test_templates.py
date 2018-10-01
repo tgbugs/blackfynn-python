@@ -1,5 +1,7 @@
 import pytest
+
 from blackfynn.models import ModelProperty, ModelTemplate
+
 
 def test_templates(client, dataset):
 

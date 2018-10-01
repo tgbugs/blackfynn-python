@@ -1,20 +1,29 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import (
+    absolute_import,
+    division,
+    print_function
+)
+from builtins import dict, object
+from future.utils import string_types
+
 import io
 import os
 import sys
-import uuid
-import time
-import boto3
 import threading
-from botocore.client import Config
-from boto3.s3.transfer import S3Transfer
+import time
+import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+import boto3
+from boto3.s3.transfer import S3Transfer
+from botocore.client import Config
+
+import blackfynn.log as log
 # blackfynn
 from blackfynn.api.base import APIBase
-from blackfynn.models import TimeSeries, Collection, Dataset, DataPackage
-import blackfynn.log as log
+from blackfynn.models import Collection, DataPackage, Dataset, TimeSeries
 
 # GLOBAL
 UPLOADS = {}
@@ -204,7 +213,7 @@ class IOAPI(APIBase):
             # uploading into timeseries package must be an append
             destination_id = self._get_id(destination)
             dataset_id = self._get_id(destination.dataset)
-        elif isinstance(destination, basestring):
+        elif isinstance(destination, string_types):
             # assume ID is for collection
             if dataset is None:
                 raise Exception("Must also supply dataset when specifying destination by ID")

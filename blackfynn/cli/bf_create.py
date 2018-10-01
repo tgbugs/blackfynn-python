@@ -7,12 +7,19 @@ global options:
   --dataset=<dataset>       Use specified dataset (instead of your current working dataset)
   --profile=<name>          Use specified profile (instead of default)
 '''
+from __future__ import (
+    absolute_import,
+    division,
+    print_function
+)
+
 from docopt import docopt
+
 from blackfynn import Collection
 
-from cli_utils import get_item
+from .cli_utils import get_item
+from .working_dataset import require_working_dataset
 
-from working_dataset import require_working_dataset
 
 def main(bf):
     args = docopt(__doc__)

@@ -1,19 +1,39 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import (
+    absolute_import,
+    division,
+    print_function
+)
+from builtins import object, zip
+from future.utils import as_native_str, string_types, PY2
+
+import datetime
+import io
 import os
 import re
-import pytz
+import sys
+from uuid import uuid4
+
 import dateutil
-import datetime
-import requests
 import numpy as np
 import pandas as pd
+import pytz
+import requests
 
-from uuid import uuid4
 import blackfynn.log as log
 from blackfynn.utils import (
-    infer_epoch, get_data_type, value_as_type, usecs_to_datetime
+    get_data_type,
+    infer_epoch,
+    usecs_to_datetime,
+    value_as_type
 )
+
+try: # Python 3
+    from inspect import getfullargspec
+except ImportError: # Python 2
+    from inspect import getargspec as getfullargspec
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Helpers
@@ -112,6 +132,7 @@ class Property(object):
     def __str__(self):
         return self.__repr__()
 
+    @as_native_str()
     def __repr__(self):
         return u"<Property key='{}' value='{}' type='{}' category='{}'>" \
                     .format(self.key, self.value, self.data_type, self.category)
@@ -122,11 +143,19 @@ def _get_all_class_args(cls):
     if cls == object:
         return set()
     class_args = set()
+
     for base in cls.__bases__:
         # get all base class argument variables
         class_args.update(_get_all_class_args(base))
-    # return this class and all base-class variables
-    class_args.update(cls.__init__.__func__.func_code.co_varnames)
+
+    # get args from this class
+    spec = getfullargspec(cls.__init__)
+    class_args.update(spec[0]) # arguments
+    if spec[1] is not None:
+        class_args.add(spec[1]) # variable arguments
+    if spec[2] is not None:
+        class_args.add(spec[2]) # variable keyword arguments
+
     return class_args
 
 
@@ -161,7 +190,7 @@ class BaseNode(object):
         kwargs = {}
         thing_id = content.pop('id', None)
         thing_int_id = content.pop('intId', None)
-        for k,v in content.iteritems():
+        for k,v in content.items():
             # check lower case var names
             k_lower = k.lower()
             # check camelCase --> camel_case
@@ -236,7 +265,7 @@ class BaseDataNode(BaseNode):
 
         self.name = name
         self._properties = {}
-        if isinstance(parent, basestring) or parent is None:
+        if isinstance(parent, string_types) or parent is None:
             self.parent = parent
         elif isinstance(parent, Collection):
             self.parent = parent.id
@@ -456,7 +485,7 @@ class BaseDataNode(BaseNode):
         # parse, store parent (ID only)
         parent = data.get('parent', None)
         if parent is not None:
-            if isinstance(parent, basestring):
+            if isinstance(parent, string_types):
                 item.parent = parent
             else:
                 pkg_cls = get_package_class(parent)
@@ -543,7 +572,7 @@ class BaseCollection(BaseDataNode):
             You can also iterate over items inside a Dataset/Colleciton without using ``.items``::
 
                 for item in my_dataset:
-                    print "item name = ", item.name
+                    print("item name = ", item.name)
 
         """
         self._check_exists()
@@ -563,12 +592,12 @@ class BaseCollection(BaseDataNode):
         Prints a tree of **all** items inside object.
         """
         self._check_exists()
-        print u'{}{}'.format(' '*indent, self)
+        print(u'{}{}'.format(' '*indent, self))
         for item in self.items:
             if isinstance(item, BaseCollection):
                 item.print_tree(indent=indent+2)
             else:
-                print u'{}{}'.format(' '*(indent+2), item)
+                print(u'{}{}'.format(' '*(indent+2), item))
 
     def get_items_by_name(self, name):
         """
@@ -587,11 +616,11 @@ class BaseCollection(BaseDataNode):
         """
         self._check_exists()
         # note: non-hierarchical
-        return filter(lambda x: x.name==name, self.items)
+        return [x for x in self.items if x.name==name]
 
     def get_items_names(self):
         self._check_exists()
-        return map(lambda x: x.name, self.items)
+        return [x.name for x in self.items]
 
     def upload(self, *files, **kwargs):
         """
@@ -664,7 +693,7 @@ class BaseCollection(BaseDataNode):
         an object's ID (string) or an object's instance.
         """
         self._check_exists()
-        if isinstance(item, basestring):
+        if isinstance(item, string_types):
             some_id = self._api.data._get_id(item)
             item_ids = [x.id for x in self.items]
             contains = some_id in item_ids
@@ -695,6 +724,7 @@ class BaseCollection(BaseDataNode):
 
         return item
 
+    @as_native_str()
     def __repr__(self):
         return u"<BaseCollection name='{}' id='{}'>".format(self.name, self.id)
 
@@ -867,6 +897,7 @@ class DataPackage(BaseDataNode):
     def from_id(cls, id):
         return self._api.packages.get(id)
 
+    @as_native_str()
     def __repr__(self):
         return u"<DataPackage name='{}' id='{}'>".format(self.name, self.id)
 
@@ -950,7 +981,7 @@ class File(BaseDataNode):
             f_local = destination
 
         r = requests.get(self.url, stream=True)
-        with open(f_local, 'wb') as f:
+        with io.open(f_local, 'wb') as f:
             for chunk in r.iter_content(chunk_size=1024):
                 if chunk: f.write(chunk)
 
@@ -959,6 +990,7 @@ class File(BaseDataNode):
 
         return f_local
 
+    @as_native_str()
     def __repr__(self):
         return u"<File name='{}' type='{}' key='{}' bucket='{}' size='{}' id='{}'>" \
                     .format(self.name, self.type, self.s3_key, self.s3_bucket, self.size, self.id)
@@ -1060,12 +1092,12 @@ class TimeSeries(DataPackage):
 
                 channels = ts.channels
                 for ch in channels:
-                    print ch
+                    print(ch)
 
             This will be much slower, as the API request is being made each time.::
 
                 for ch in ts.channels:
-                    print ch
+                    print(ch)
 
         """
         self._check_exists()
@@ -1221,9 +1253,9 @@ class TimeSeries(DataPackage):
         """
         self._check_exists()
         layers = self.layers
-        matches = filter(lambda x: x.id==id_or_name, layers)
+        matches = [x for x in layers if x.id==id_or_name]
         if len(matches) == 0:
-            matches = filter(lambda x: x.name==id_or_name, layers)
+            matches = [x for x in layers if x.name==id_or_name]
 
         if len(matches) == 0:
             raise Exception("No layers match criteria.")
@@ -1318,6 +1350,7 @@ class TimeSeries(DataPackage):
             period=period
         )
 
+    @as_native_str()
     def __repr__(self):
         return u"<TimeSeries name=\'{}\' id=\'{}\'>".format(self.name, self.id)
 
@@ -1389,7 +1422,7 @@ class TimeSeriesChannel(BaseDataNode):
         return usecs_to_datetime(self._end)
 
     def _page_delta(self, page_size):
-        return long((1.0e6/self.rate) * page_size)
+        return int((1.0e6/self.rate) * page_size)
 
     def update(self):
         self._check_exists()
@@ -1502,6 +1535,7 @@ class TimeSeriesChannel(BaseDataNode):
             "properties": [x.as_dict() for x in self.properties]
         }
 
+    @as_native_str()
     def __repr__(self):
         return u"<TimeSeriesChannel name=\'{}\' id=\'{}\'>".format(self.name, self.id)
 
@@ -1617,6 +1651,7 @@ class TimeSeriesAnnotationLayer(BaseNode):
             "description" : self.description
         }
 
+    @as_native_str()
     def __repr__(self):
         return u"<TimeSeriesAnnotationLayer name=\'{}\' id=\'{}\'>".format(self.name, self.id)
 
@@ -1658,7 +1693,7 @@ class TimeSeriesAnnotation(BaseNode):
 
     def as_dict(self):
         channel_ids = self.channel_ids
-        if type(channel_ids) is not list:
+        if not isinstance(channel_ids, list):
             channel_ids = [channel_ids]
         return {
             "name" : self.name,
@@ -1671,6 +1706,7 @@ class TimeSeriesAnnotation(BaseNode):
             "time_series_id" : self.time_series_id,
         }
 
+    @as_native_str()
     def __repr__(self):
         date = datetime.datetime.fromtimestamp(self.start/1e6)
         return u"<TimeSeriesAnnotation label=\'{}\' layer=\'{}\' start=\'{}\'>".format(self.label, self.layer_id, date.isoformat())
@@ -1729,6 +1765,7 @@ class Tabular(DataPackage):
         # TODO: parse response
         return self._api.tabular.get_table_schema(self)
 
+    @as_native_str()
     def __repr__(self):
         return u"<Tabular name=\'{}\' id=\'{}\'>".format(self.name, self.id)
 
@@ -1763,10 +1800,11 @@ class TabularSchema(BaseNode):
         ) for x in self.column_schema]
         return column_schema
 
+    @as_native_str()
     def __repr__(self):
         return u"<TabularSchema name=\'{}\' id=\'{}\'>".format(self.name, self.id)
 
-class TabularSchemaColumn():
+class TabularSchemaColumn(object):
 
     def __init__(self, name, display_name, datatype, primary_key = False, internal = False, **kwargs):
         self.name=name
@@ -1785,6 +1823,7 @@ class TabularSchemaColumn():
             internal = data['internal']
         )
 
+    @as_native_str()
     def __repr__(self):
         return u"<TabularSchemaColumn name='{}' display='{}' is-primary='{}'>".format(self.name, self.display_name, self.primary_key)
 
@@ -1825,6 +1864,7 @@ class User(BaseNode):
         self.accepted_terms = ''
         self.is_super_admin = is_super_admin
 
+    @as_native_str()
     def __repr__(self):
         return u"<User email=\'{}\' id=\'{}\'>".format(self.email, self.id)
 
@@ -1866,6 +1906,7 @@ class Organization(BaseNode):
     def members(self):
         return self._api.organizations.get_members(self)
 
+    @as_native_str()
     def __repr__(self):
         return u"<Organization name=\'{}\' id=\'{}\'>".format(self.name, self.id)
 
@@ -1884,6 +1925,7 @@ class Dataset(BaseCollection):
         for k in ("parent", "type", "set_ready", "set_unavailable", "set_error", "state", "dataset"):
             self.__dict__.pop(k, None)
 
+    @as_native_str()
     def __repr__(self):
         return u"<Dataset name='{}' id='{}'>".format(self.name, self.id)
 
@@ -2096,6 +2138,7 @@ class Collection(BaseCollection):
     def _get_method(self):
         return self._api.packages.get
 
+    @as_native_str()
     def __repr__(self):
         return u"<Collection name='{}' id='{}'>".format(self.name, self.id)
 
@@ -2109,32 +2152,55 @@ class Collection(BaseCollection):
 # Model Helpers
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-model_type_map = {
-    basestring: 'string',
-    unicode: 'string',
-    str: 'string',
-    int: 'long',
-    long: 'long',
-    float: 'double',
-    bool: 'boolean',
-    datetime.date: 'date',
-    datetime.datetime: 'date'
-}
+# Python 2
+if PY2:
+    model_type_map = {
+        str: 'string',
+        unicode: 'string',
+        int: 'long',
+        long: 'long',
+        float: 'double',
+        bool: 'boolean',
+        datetime.date: 'date',
+        datetime.datetime: 'date',
+    }
 
-model_type_reverse_map = {
-    'string': unicode,
-    'long': long,
-    'double': float,
-    'boolean': bool,
-    'date': datetime.datetime
-}
+    model_type_reverse_map = {
+        'string': unicode,
+        'long': int,
+        'double': float,
+        'boolean': bool,
+        'date': datetime.datetime
+    }
+
+# Python 3
+else:
+    model_type_map = {
+        str: 'string',
+        int: 'long',
+        float: 'double',
+        bool: 'boolean',
+        datetime.date: 'date',
+        datetime.datetime: 'date',
+    }
+
+    model_type_reverse_map = {
+        'string': str,
+        'long': int,
+        'double': float,
+        'boolean': bool,
+        'date': datetime.datetime
+    }
+
+valid_types = tuple(model_type_map.keys())
+
 
 def convert_type_to_datatype(model_type):
     if isinstance(model_type, type) and model_type in model_type_map:
         t = model_type_map[model_type]
     elif isinstance(model_type, ModelPropertyType) and model_type.data_type in model_type_map:
         t = model_type_map[model_type.data_type]
-    elif isinstance(model_type, basestring) and model_type.lower() in model_type_reverse_map:
+    elif isinstance(model_type, string_types) and model_type.lower() in model_type_reverse_map:
         t = model_type.lower()
     else:
         raise Exception('type {} not supported'.format(model_type))
@@ -2145,11 +2211,10 @@ def convert_datatype_to_type(data_type):
         t = data_type
     elif isinstance(data_type, ModelPropertyType) and data_type.data_type in model_type_map:
         t = data_type.data_type
-    elif isinstance(data_type, basestring) and data_type.lower() in model_type_reverse_map:
+    elif isinstance(data_type, string_types) and data_type.lower() in model_type_reverse_map:
         t = model_type_reverse_map[data_type.lower()]
     else:
         raise Exception('data_type {} not supported'.format(data_type))
-
     return t
 
 def wrap_datatype(data_type):
@@ -2161,7 +2226,8 @@ def cast_value(value, data_type=None):
     if data_type is None or value is None:
         return value
 
-    assert isinstance(data_type, type) and data_type in model_type_map, "data_type must be None or one of {}".format(model_type_map.keys())
+    if data_type not in valid_types:
+        raise Exception("data_type must be None or one of {}".format(valid_types))
 
     if data_type in (datetime.date, datetime.datetime):
         if isinstance(value, (datetime.date, datetime.datetime)):
@@ -2177,9 +2243,10 @@ def uncast_value(value):
     if value is None:
         return
 
-    assert type(value) in model_type_map, "value's type must be one of {}".format(model_type_map.keys())
+    if not isinstance(value, valid_types):
+        raise Exception("value's type must be one of {}".format(valid_types))
 
-    if type(value) in (datetime.date, datetime.datetime):
+    if isinstance(value, (datetime.date, datetime.datetime)):
         if value.tzinfo is None or value.tzinfo.utcoffset(value) is None:
             value = pytz.utc.localize(value)
 
@@ -2228,6 +2295,7 @@ class ModelPropertyType(object):
 
         return d
 
+    @as_native_str()
     def __repr__(self):
         return u"<ModelPropertyType data_type='{}' format='{}' unit='{}'".format(self.data_type, self.format,
                                                                                            self.unit)
@@ -2263,12 +2331,13 @@ class ModelPropertyEnumType(ModelPropertyType):
             )
         )
 
+    @as_native_str()
     def __repr__(self):
         return u"<ModelPropertyEnumType data_type='{}' format='{}' unit='{}' enum='{}'".format(self.data_type, self.format,
                                                                                            self.unit, self.enum)
 
 class BaseModelProperty(object):
-    def __init__(self, name, display_name=None, data_type=basestring, id=None, locked=False, default=True, title=False, description="", required=False):
+    def __init__(self, name, display_name=None, data_type=str, id=None, locked=False, default=True, title=False, description="", required=False):
         assert ' ' not in name, "name cannot contain spaces, alternative names include {} and {}".format(name.replace(" ", "_"), name.replace(" ", "-"))
 
         self.id = id
@@ -2359,6 +2428,7 @@ class BaseModelProperty(object):
     def set_type(self, type):
         self._type = wrap_datatype(type)
 
+    @as_native_str()
     def __repr__(self):
         return u"<BaseModelProperty name='{}' {}>".format(self.name, self.type)
 
@@ -2392,6 +2462,7 @@ class BaseModelValue(object):
     def as_tuple(self):
         return (self.name, self.value)
 
+    @as_native_str()
     def __repr__(self):
         return u"<BaseModelValue name='{}' value='{}' {}>".format(self.name, self.value, self.type)
 
@@ -2420,7 +2491,7 @@ class BaseModelNode(BaseNode):
 
         self._add_properties(schema)
 
-    def _add_property(self, name, display_name=None, data_type=basestring, title=False):
+    def _add_property(self, name, display_name=None, data_type=str, title=False):
         prop = self._property_cls(name=name, display_name=display_name, data_type=data_type, title=title)
         self.schema[prop.name] = prop
 
@@ -2431,7 +2502,7 @@ class BaseModelNode(BaseNode):
                     prop = self._property_cls.from_dict(p)
                 elif isinstance(p, tuple):
                     prop = self._property_cls.from_tuple(p)
-                elif isinstance(p, basestring):
+                elif isinstance(p, string_types):
                     prop = self._property_cls(name=p)
                 elif isinstance(p, self._property_cls):
                     prop = p
@@ -2455,13 +2526,13 @@ class BaseModelNode(BaseNode):
     def update(self):
         pass
 
-    def add_property(self, name, data_type=basestring, display_name=None, title=False):
+    def add_property(self, name, data_type=str, display_name=None, title=False):
         """
         Appends a property to the object's schema and updates the object on the platform.
 
         Args:
           name (str): Name of the property
-          data_type (type, optional): Python type of the property. Defaults to ``basestring``.
+          data_type (type, optional): Python type of the property. Defaults to ``string_types``.
           display_name (str, optional): Display name for the property.
 
         Example:
@@ -2531,14 +2602,14 @@ class BaseModelNode(BaseNode):
 
         # verify property in schema
         prop_name = None
-        if isinstance(property, basestring):
+        if isinstance(property, string_types):
             # assume property name first, then assume ID
             if property in self.schema:
                 # property is name
                 prop_name = property
             else:
                 # property may be id
-                ids = map(lambda x: x.id, self.schema.values())
+                ids = [x.id for x in self.schema.values()]
                 if property in ids:
                     prop_name = self.schema.value()[ids.index(property)].name
 
@@ -2655,6 +2726,7 @@ class BaseRecord(BaseNode):
     def as_dict(self):
         return {'values': [v.as_dict() for v in self._values.values()] }
 
+    @as_native_str()
     def __repr__(self):
         return u"<BaseRecord type='{}' id='{}'>".format(self.type, self.id)
 
@@ -2722,6 +2794,7 @@ class ModelTemplate(BaseNode):
 
         return template
 
+    @as_native_str()
     def __repr__(self):
         return u"<ModelTemplate name='{}' id='{}'>".format(self.name, self.id)
 
@@ -2730,10 +2803,12 @@ class ModelTemplate(BaseNode):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class ModelProperty(BaseModelProperty):
+    @as_native_str()
     def __repr__(self):
         return u"<ModelProperty name='{}' {}>".format(self.name, self.type)
 
 class ModelValue(BaseModelValue):
+    @as_native_str()
     def __repr__(self):
         return u"<ModelValue name='{}' value='{}' {}>".format(self.name, self.value, self.type)
 
@@ -2925,6 +3000,7 @@ class Model(BaseModelNode):
         for record in self.get_all():
             yield record
 
+    @as_native_str()
     def __repr__(self):
         return u"<Model type='{}' id='{}'>".format(self.type, self.id)
 
@@ -2977,7 +3053,7 @@ class Record(BaseRecord):
             else:
                 if len(related_by_model) == 1:
                     # try to retain RecordSet type
-                    return related_by_model.values()[0]
+                    return list(related_by_model.values())[0]
                 # mixed return types, cannot keep RecordSets
                 related = []
                 for model_name, model_related in related_by_model.items():
@@ -3030,7 +3106,7 @@ class Record(BaseRecord):
         # accept object or list
         if isinstance(destinations, (Record, DataPackage)):
             destinations = [destinations]
-        if isinstance(destinations, (Collection,)):
+        if isinstance(destinations, Collection):
             destinations = destinations.items
 
         if not destinations:
@@ -3050,7 +3126,7 @@ class Record(BaseRecord):
             raise Exception("All destinations must be of object type Record or DataPackage")
 
         # auto-create relationship type
-        if isinstance(relationship_type, basestring):
+        if isinstance(relationship_type, string_types):
             relationships_types = self._api.concepts.relationships.get_all(self.dataset_id)
             if relationship_type not in relationships_types:
                 r = RelationshipType(dataset_id=self.dataset_id, name=relationship_type, description=relationship_type)
@@ -3117,6 +3193,7 @@ class Record(BaseRecord):
         """
         return self._api.concepts.instances.delete(self.dataset_id, self)
 
+    @as_native_str()
     def __repr__(self):
         return u"<Record type='{}' id='{}'>".format(self.type, self.id)
 
@@ -3126,10 +3203,12 @@ class Record(BaseRecord):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class RelationshipProperty(BaseModelProperty):
+    @as_native_str()
     def __repr__(self):
         return u"<RelationshipProperty name='{}' {}>".format(self.name, self.type)
 
 class RelationshipValue(BaseModelValue):
+    @as_native_str()
     def __repr__(self):
         return u"<RelationshipValue name='{}' value='{}' {}>".format(self.name, self.value, self.type)
 
@@ -3151,7 +3230,7 @@ class RelationshipType(BaseModelNode):
         #TODO: _update_self(self, self._api.concepts.relationships.update(self.dataset_id, self))
 
     # TODO: delete when update is supported, handled in super-class
-    def add_property(self, name, display_name=None, data_type=basestring):
+    def add_property(self, name, display_name=None, data_type=str):
         raise Exception("Updating Relationships is not available at this time.")
 
     # TODO: delete when update is supported, handled in super-class
@@ -3272,9 +3351,9 @@ class RelationshipType(BaseModelNode):
                 raise Exception("Expected relationship as tuple or dictionary, found {}".format(type(value)))
 
             # Check sources and destinations
-            if not isinstance(src, (Record, DataPackage, basestring)):
+            if not isinstance(src, (Record, DataPackage, string_types)):
                 raise Exception('source must be object of type Record, DataPackage, or UUID')
-            if not isinstance(dest, (Record, DataPackage, basestring)):
+            if not isinstance(dest, (Record, DataPackage, string_types)):
                 raise Exception('destination must be object of type Record, DataPackage, or UUID')
 
             # create local relationship object
@@ -3303,6 +3382,7 @@ class RelationshipType(BaseModelNode):
 
         return d
 
+    @as_native_str()
     def __repr__(self):
         return u"<RelationshipType type='{}' id='{}'>".format(self.type, self.id)
 
@@ -3314,8 +3394,8 @@ class Relationship(BaseRecord):
     _object_key = ''
 
     def __init__(self, dataset_id, type, source, destination, *args, **kwargs):
-        assert isinstance(source,  (Record, basestring, DataPackage)), "source must be Model, UUID, or DataPackage"
-        assert isinstance(destination, (Record, basestring, DataPackage)), "destination must be Model, UUID, or DataPackage"
+        assert isinstance(source,  (Record, string_types, DataPackage)), "source must be Model, UUID, or DataPackage"
+        assert isinstance(destination, (Record, string_types, DataPackage)), "destination must be Model, UUID, or DataPackage"
 
         if isinstance(source, (Record, DataPackage)):
             source = source.id
@@ -3372,6 +3452,7 @@ class Relationship(BaseRecord):
 
         return d
 
+    @as_native_str()
     def __repr__(self):
         return u"<Relationship type='{}' id='{}' source='{}' destination='{}'>".format(self.type, self.id, self.source, self.destination)
 
@@ -3398,6 +3479,7 @@ class ProxyInstance(BaseRecord):
     def set(self, name, value):
         raise Exception("Updating a ProxyInstance is not available at this time.")
 
+    @as_native_str()
     def __repr__(self):
         return u"<ProxyInstance type='{}' id='{}'>".format(self.type, self.id)
 
@@ -3433,7 +3515,7 @@ class RecordSet(BaseInstanceList):
           pd.DataFrame
 
         """
-        cols = self.type.schema.keys()
+        cols = list(self.type.schema.keys())
 
         if record_id_column_name:
             if record_id_column_name in cols:

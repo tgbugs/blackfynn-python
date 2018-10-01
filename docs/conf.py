@@ -11,12 +11,21 @@
 #
 # All configuration values have a default; values that are commented out
 # serve to show the default.
-
+#
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import os, sys
+from __future__ import (
+    absolute_import,
+    division,
+    print_function
+)
+
+import os
+import sys
+
+import blackfynn
 
 # -- General configuration ------------------------------------------------
 
@@ -25,7 +34,7 @@ import os, sys
 # needs_sphinx = '1.0'
 
 sys.path.insert(0, os.path.abspath('..'))
-import blackfynn
+
 release = version = blackfynn.__version__
 
 # Add any Sphinx extension module names here, as strings. They can be
@@ -127,7 +136,7 @@ html_show_sourcelink = False
 htmlhelp_basename = 'Blackfynndoc'
 
 
-# -- Options for LaTeX output ---------------------------------------------
+# -- Options for LaTeX output -----------------c----------------------------
 
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
@@ -176,7 +185,3 @@ texinfo_documents = [
      author, 'Blackfynn', 'Python client for accessing Blackfynn platform',
      'Utilities'),
 ]
-
-
-
-

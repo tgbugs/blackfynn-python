@@ -1,16 +1,22 @@
 # -*- coding: utf-8 -*-
+from __future__ import (
+    absolute_import,
+    division,
+    print_function
+)
+
 from blackfynn.api.base import APIBase
 from blackfynn.models import (
+    BaseDataNode,
     Collection,
     DataPackage,
     Dataset,
-    BaseDataNode,
-    Organization,
-    User,
     Model,
+    Organization,
     Record,
-    RelationshipType,
     Relationship,
+    RelationshipType,
+    User,
     get_package_class
 )
 
@@ -113,7 +119,7 @@ class CoreAPI(APIBase):
         return self._data_registry.get(id, None)
 
     def get_locals(self):
-        return self._data_registry.values()
+        return list(self._data_registry.values())
 
     def rm_local(self, thing):
         id = self._get_id(thing)

@@ -34,11 +34,20 @@ advanced commands:
   unset (global|<name>) <key>         Unset key/value pair for given profile, or globally
   keys                                List all available keys and their default values
 '''
+from __future__ import (
+    absolute_import,
+    division,
+    print_function
+)
 
+import io
 import os
+from builtins import input
+
 from docopt import docopt
 
-from blackfynn import Settings, DEFAULT_SETTINGS
+from blackfynn import DEFAULT_SETTINGS, Settings
+
 
 def main():
     args = docopt(__doc__)
@@ -64,7 +73,7 @@ def main():
     else:
         invalid_usage()
 
-    with open(settings.config_file,'w') as configfile:
+    with io.open(settings.config_file,'w') as configfile:
         settings.config.write(configfile)
 
 def setup_assistant(settings):
@@ -83,7 +92,7 @@ def setup_assistant(settings):
 #=======================================================
 def create_profile(settings, name=[]):
     if len(name) == 0:
-        name = raw_input('  Profile name [default]: ') or 'default'
+        name = input('  Profile name [default]: ') or 'default'
 
     elif len(name) == 1:
         name = name[0]
@@ -100,15 +109,15 @@ def create_profile(settings, name=[]):
         print("Creating profile '{}'".format(name))
         settings.config[name] = {}
 
-        settings.config[name]['api_token']  = raw_input('  API token: ')
-        settings.config[name]['api_secret'] = raw_input('  API secret: ')
+        settings.config[name]['api_token']  = input('  API token: ')
+        settings.config[name]['api_secret'] = input('  API secret: ')
 
         if settings.config['global']['default_profile'] == 'none':
             settings.config['global']['default_profile'] = name
             print("Default profile: {}".format(name))
 
         else:
-            set_default = raw_input("Would you like to set '{}' as default (Y/n)? ".format(name, settings.config['global']['default_profile'])).lower() in ['y','yes']
+            set_default = input("Would you like to set '{}' as default (Y/n)? ".format(name, settings.config['global']['default_profile'])).lower() in ['y','yes']
             if set_default:
                 settings.config['global']['default_profile'] = name
                 print("Default profile: {}".format(name))
@@ -119,7 +128,7 @@ def delete_profile(settings, name,f):
 
     if valid_name(settings, name):
         if not f:
-            f = raw_input("Delete profile '{}' (Y/n)? ".format(name)).lower() in ['y','yes']
+            f = input("Delete profile '{}' (Y/n)? ".format(name)).lower() in ['y','yes']
 
         if f:
             print("Deleting profile '{}'".format(name))
@@ -185,7 +194,7 @@ def set_key(settings, args,force):
         return
 
     if not force and key in settings.config[name]:
-        force = raw_input("{}: {} already set. Overwrite (Y/n)? ".format(name,key)).lower() in ['y','yes']
+        force = input("{}: {} already set. Overwrite (Y/n)? ".format(name,key)).lower() in ['y','yes']
     else: force = True
 
     if force:
@@ -206,7 +215,7 @@ def unset_key(settings, args,force):
         return
 
     if not force:
-        if key in settings.config[name]: force = raw_input("{}: Unset {} (Y/n)? ".format(name,key)).lower() in ['y','yes']
+        if key in settings.config[name]: force = input("{}: Unset {} (Y/n)? ".format(name,key)).lower() in ['y','yes']
 
     if force:
         print("{}: {} unset".format(name,key))
@@ -215,7 +224,7 @@ def unset_key(settings, args,force):
 def list_keys(settings):
     default = settings.default_profile
     print('Keys and default values:')
-    for key, value in sorted(settings.profiles[default].iteritems()):
+    for key, value in sorted(settings.profiles[default].items()):
         print('  {} : {}'.format(key, value))
 
 
@@ -234,7 +243,8 @@ def valid_name(settings, name):
 def print_profile(settings, name,indent=0,show_all=False):
     if show_all:
         key_len = 0
-        for key in settings.profiles[name].keys(): key_len = max(key_len, len(key))
+        for key in settings.profiles[name].keys():
+            key_len = max(key_len, len(key))
 
         for key, value in sorted(settings.profiles[name].items()):
             if key != 'default_profile':
@@ -247,7 +257,8 @@ def print_profile(settings, name,indent=0,show_all=False):
 
     else:
         key_len = 0
-        for key in settings.config[name].keys(): key_len = max(key_len,len(key))
+        for key in settings.config[name].keys():
+            key_len = max(key_len,len(key))
 
         for key, value in sorted(settings.config[name].items()):
             if key != 'default_profile':

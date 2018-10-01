@@ -1,6 +1,14 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import (
+    absolute_import,
+    division,
+    print_function
+)
+from future.utils import string_types, integer_types
+
 import datetime
+
 import numpy as np
 import pandas as pd
 
@@ -9,7 +17,7 @@ import pandas as pd
 def value_as_type(value, dtype):
     try:
         if dtype == 'string':
-            return unicode(value)
+            return str(value)
         elif dtype == 'integer':
             return int(value)
         elif dtype == 'double':
@@ -32,7 +40,7 @@ def get_data_type(v):
         return ("boolean", str(v).lower())
     elif isinstance(v, float):
         return ("double", v)
-    elif isinstance(v, (int,long)):
+    elif isinstance(v, integer_types):
         return ("integer", v)
     else:
         # infer via casting
@@ -62,21 +70,21 @@ def is_decimal(s):
 def infer_epoch_msecs(thing):
     if isinstance(thing, datetime.datetime):
         return msecs_since_epoch(thing)
-    elif isinstance(thing, (int,long,float)):
+    elif isinstance(thing, (integer_types, float)):
         # assume milliseconds
-        return long(thing)
-    elif isinstance(thing, basestring):
+        return int(thing)
+    elif isinstance(thing, string_types):
         # attempt to convert to msec integer
-        return long(thing)
+        return int(thing)
     else:
         raise Exception("Cannot parse date")
 
 def infer_epoch(thing):
     if isinstance(thing, datetime.datetime):
         return usecs_since_epoch(thing)
-    elif isinstance(thing, (int,long,float)):
+    elif isinstance(thing, (integer_types, float)):
         # assume microseconds
-        return long(thing)
+        return int(thing)
     else:
         raise Exception("Cannot parse date")
 
@@ -87,15 +95,15 @@ def secs_since_epoch(the_time):
 
 def msecs_since_epoch(the_time):
     # milliseconds from epoch (integer)
-    return long(secs_since_epoch(the_time)*1000)
+    return int(secs_since_epoch(the_time)*1000)
 
 def usecs_since_epoch(the_time):
     # microseconds from epoch (integer)
-    return long(secs_since_epoch(the_time)*1e6)
+    return int(secs_since_epoch(the_time)*1e6)
 
 def usecs_to_datetime(us):
     # convert usecs since epoch to proper datetime object
-    return datetime.datetime.utcfromtimestamp(0) + datetime.timedelta(microseconds=long(us))
+    return datetime.datetime.utcfromtimestamp(0) + datetime.timedelta(microseconds=int(us))
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -112,7 +120,7 @@ def generate_data(size, func='walk', scale=5, periods=10):
     elif func=='sin':
         return np.sin(np.linspace(0, np.pi*periods, size))*scale
     elif func=='square':
-        pattern = np.concatenate([np.ones(pattern_length/2)*-1, np.ones(pattern_length/2)])
+        pattern = np.concatenate([np.ones(pattern_length//2)*-1, np.ones(pattern_length//2)])
         return np.concatenate([np.repeat(pattern, periods), pattern[:remainder]])*scale
     elif func=='sawtooth':
         pattern = np.linspace(-scale,scale,pattern_length)
@@ -121,8 +129,6 @@ def generate_data(size, func='walk', scale=5, periods=10):
 def generate_dataframe(minutes=2, freq=100):
     start = datetime.datetime(2017, 1, 1, 0, 0)
     end   = start + datetime.timedelta(minutes=minutes)
-    sample_period = 1e6/freq
-    sample_period_str = '{}u'.format(sample_period)
 
     # index
     ind = pd.date_range(start=start, end=end, freq='10000u', closed='left')

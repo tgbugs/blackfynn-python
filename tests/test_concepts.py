@@ -1,61 +1,46 @@
-import pytest
 import datetime
 from collections import namedtuple
+from past.builtins import unicode  # Alias of str in Python 3
 
-from blackfynn.models import DataPackage, ModelPropertyType, \
-    ModelPropertyEnumType, ModelProperty, convert_type_to_datatype, \
-    convert_datatype_to_type, uncast_value
-from tests.utils import current_ts, get_test_client, create_test_dataset
+import pytest
+
+from blackfynn.models import (
+    DataPackage,
+    ModelProperty,
+    ModelPropertyEnumType,
+    ModelPropertyType,
+    convert_datatype_to_type,
+    convert_type_to_datatype,
+    uncast_value
+)
+from tests.utils import create_test_dataset, current_ts, get_test_client
 
 
+@pytest.mark.parametrize('fromtype,datatype,totype', [
+    (ModelPropertyType(data_type=int), 'long', int),
+    (int, 'long', int),
+    (ModelPropertyType(data_type=unicode), 'string', unicode),
+    (datetime.date, 'date', datetime.datetime),
+    ('date', 'date', datetime.datetime),
+    (ModelPropertyType(data_type=str, format='date'), 'string', unicode),
+])
+def test_model_type_conversion(fromtype, datatype, totype):
+    assert convert_type_to_datatype(fromtype) == datatype
+    assert  convert_datatype_to_type(datatype) == totype
 
 
-def test_parse_model_datatype(dataset):
-    basic_numeric_1 = ModelPropertyType(data_type=long)
-    basic_numeric_2 = long
+@pytest.mark.parametrize('json,data_type,format,unit', [
+    ('string', unicode, None, None),
+    ({'type':'string', 'format':'date'}, unicode, 'date', None),
+    ({'type': 'double', 'unit': 'kg'}, float, None, 'kg'),
+])
+def test_model_type_from_dict(json, data_type, format, unit):
+    decoded = ModelPropertyType.from_dict(json)
+    assert isinstance(decoded, ModelPropertyType)
+    assert decoded.data_type == data_type
+    assert decoded.format == format
+    assert decoded.unit == unit
 
-    basic_string_1 = ModelPropertyType(data_type=unicode)
-    basic_string_2 = 'date'
-    complex_string = ModelPropertyType(data_type=str, format='date')
-
-    numeric_datatype_1 = convert_type_to_datatype(basic_numeric_1)
-    numeric_datatype_2 = convert_type_to_datatype(basic_numeric_2)
-    string_datatype_1 = convert_type_to_datatype(basic_string_1)
-    string_datatype_2 = convert_type_to_datatype(basic_string_2)
-    complex_datatype = convert_type_to_datatype(complex_string)
-
-    assert numeric_datatype_1 == 'long'
-    assert numeric_datatype_2 == 'long'
-    assert string_datatype_1 == 'string'
-    assert string_datatype_2 == 'date'
-    assert complex_datatype == 'string'
-
-    basic_type_1 = convert_datatype_to_type(string_datatype_1)
-    assert basic_type_1 == unicode
-
-    basic_type_2 = convert_datatype_to_type(string_datatype_2)
-    assert basic_type_2 == datetime.datetime
-
-    simple_json = 'string'
-    decoded_simple = ModelPropertyType.from_dict(simple_json)
-    assert (isinstance(decoded_simple, ModelPropertyType))
-    assert (decoded_simple.data_type == unicode)
-    assert (decoded_simple.format == None)
-    assert (decoded_simple.unit == None)
-
-    nested_json_1 = {'type':'string', 'format':'date'}
-    decoded_string = ModelPropertyType.from_dict(nested_json_1)
-    assert(isinstance(decoded_string, ModelPropertyType))
-    assert(decoded_string.data_type == unicode)
-    assert(decoded_string.format == 'date')
-    assert(decoded_string.unit == None)
-
-    nested_json_2 = {'type': 'double', 'unit': 'kg'}
-    decoded_numeric = ModelPropertyType.from_dict(nested_json_2)
-    assert (isinstance( decoded_numeric, ModelPropertyType))
-    assert (decoded_numeric.data_type == float)
-    assert (decoded_numeric.unit == 'kg')
-    assert (decoded_numeric.format == None)
 
 def test_model_with_invalid_properties(dataset):
     invalid_schema = [('an_integer', int, 'An Integer')]
@@ -75,10 +60,10 @@ def test_date_formatting():
 
 
 def test_models(dataset):
-    schema = [('an_integer', int, 'An Integer', True), ('a_long', long), ('a_bool', bool), ('a_string', str), ('a_datetime', datetime.datetime)]
+    schema = [('an_integer', int, 'An Integer', True), ('a_bool', bool), ('a_string', str), ('a_datetime', datetime.datetime)]
     display_name = 'A New Property'
     description = 'a new description'
-    values = {'an_integer': 100, 'a_long': 100000L, 'a_bool': True, 'a_string': 'fnsdlkn#$#42nlfds$3nlds$#@$23fdsnfkls', 'a_datetime': datetime.datetime.now()}
+    values = {'an_integer': 100, 'a_bool': True, 'a_string': 'fnsdlkn#$#42nlfds$3nlds$#@$23fdsnfkls', 'a_datetime': datetime.datetime.now()}
 
     #################################
     ## Models
@@ -104,12 +89,12 @@ def test_models(dataset):
 
     new_model.add_properties([('a_new_float', float), {'name': 'a_new_int', 'data_type': int}, 'a_new_string'])
     assert new_model.get_property('a_new_float').type == float
-    assert new_model.get_property('a_new_int').type == long
+    assert new_model.get_property('a_new_int').type == int
     assert new_model.get_property('a_new_string').type == unicode
 
     nc_one = new_model.create_record(values)
-    nc_two = new_model.create_record({'an_integer': 1, 'a_long': 0L, 'a_bool': False, 'a_string': '', 'a_datetime': datetime.datetime.now()})
-    nc_three = new_model.create_record({'an_integer': 10000, 'a_long': 9349234L, 'a_bool': False, 'a_string': '43132312', 'a_datetime': datetime.datetime.now()})
+    nc_two = new_model.create_record({'an_integer': 1, 'a_bool': False, 'a_string': '', 'a_datetime': datetime.datetime.now()})
+    nc_three = new_model.create_record({'an_integer': 10000, 'a_bool': False, 'a_string': '43132312', 'a_datetime': datetime.datetime.now()})
     nc_four = new_model.create_record({'a_datetime': datetime.datetime.now()})
 
     nc_delete_one = new_model.create_record({'a_datetime': datetime.datetime.now()})
@@ -134,7 +119,7 @@ def test_models(dataset):
         nc_four.set('an_integer', datetime.datetime.now())
 
     assert nc_four.get('an_integer') == None
-    nc_four.set('an_integer', 10L)
+    nc_four.set('an_integer', 10)
     assert nc_four.get('an_integer') == 10
 
     nc_delete_three = new_model.create_record({'a_string': 'delete me'})
@@ -145,7 +130,7 @@ def test_models(dataset):
     # cannot add a record id column using an existing name
     with pytest.raises(ValueError):
         new_model.get_all().as_dataframe(
-            record_id_column_name=new_model.get_all().type.schema.keys()[0]
+            record_id_column_name=list(new_model.get_all().type.schema.keys())[0]
         )
 
     # assert no extra columns are added by default
@@ -213,7 +198,7 @@ def test_simple_model_properties(dataset):
 
      # Define properties as tuples
      model_with_basic_props_1 = dataset.create_model('Basic_Props_1', description='a new description',schema=
-     [('an_integer', int, 'An Integer', True), ('a_long', long), ('a_bool', bool), ('a_string', str), ('a_date', datetime.datetime)])
+     [('an_integer', int, 'An Integer', True), ('a_bool', bool), ('a_string', str), ('a_date', datetime.datetime)])
 
      assert dataset.get_model(model_with_basic_props_1.id) == model_with_basic_props_1
 
@@ -329,9 +314,9 @@ def test_model_properties_with_enum(dataset):
     enum_property = result.get_property('some_enum')
     array_property = result.get_property('some_array')
 
-    assert(enum_property.type == float)
-    assert(enum_property.multi_select == False)
-    assert(enum_property.enum == [1.0, 2.0, 3.0])
+    assert (enum_property.type == float)
+    assert (enum_property.multi_select == False)
+    assert (enum_property.enum == [1.0, 2.0, 3.0])
     assert (enum_property.unit == 'cm')
 
     assert (array_property.type == unicode)

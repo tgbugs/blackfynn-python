@@ -15,25 +15,25 @@ Connect, and print some basic account and dataset information.
 
    # create a client instance
    from blackfynn import Blackfynn
-   
+
    # create a client instance
    bf = Blackfynn()
 
    # print account information
-   print "email =", bf.profile.email
-   
+   print("email =", bf.profile.email)
+
    # print current context (i.e. organization)
-   print "organization = ", bf.context.name
+   print("organization = ", bf.context.name)
 
    # which datasets can we access?
-   print "my datasets: "
+   print("my datasets: ")
    for ds in bf.datasets():
-       print ds
+       print(ds)
 
 Example response:
 
 .. code-block:: console
-		
+
     email = support@blackfynn.com
 
     organization = Demo Organization
@@ -52,20 +52,20 @@ We will create a new dataset, upload a file, then read the uploaded file using t
 
 .. code-block:: python
    :linenos:
-    
+
     # create a dataset in the current organization.
     # The name for our new dataset will be 'New Dataset'
     ds = bf.create_dataset('New Dataset')
 
-    print ds
+    print(ds)
 
 Example response:
 
 .. code-block:: console
-		
+
     <Dataset name='New Dataset' id='N:dataset:ebc05784-e6d0-4c2b-975d-72d3fdd5facc'>
 
-We can see that an ID string ``N:dataset:ebc05784-e6d0-4c2b-975d-72d3fdd5facc`` has 
+We can see that an ID string ``N:dataset:ebc05784-e6d0-4c2b-975d-72d3fdd5facc`` has
 been assigned to our created dataset as an unique identifier for the object.
 
 .. code-block:: python
@@ -74,7 +74,7 @@ been assigned to our created dataset as an unique identifier for the object.
     # get the dataset
     #
     ds = bf.get_dataset('New Dataset')
-    
+
     # add a file to the newly created dataset.
     # this line will upload the timeseries file
     # "test.edf" to out dataset
@@ -96,7 +96,7 @@ change the name of the dataset in the platform.
     new_name = 'BF Tutorial'
     ds.name = new_name
     ds.update()
-    
+
     bf.datasets()
 
 Example Response:
@@ -125,21 +125,21 @@ will be working with.
 
 .. code-block:: python
    :linenos:
-      
+
     # import collections
     from blackfynn import Collection
-    
+
     # create and get a new dataset
     ds=bf.create_dataset("Practice Dataset")
-    
+
     # create new collections
     ds.create_collection("original collection 2")
     ds.create_collection("original collection 1")
     ds.create_collection("final collection")
-    
-    print "Contents for", ds.name
+
+    print("Contents for", ds.name)
     for item in ds:
-        print item
+        print(item)
 
 .. code-block:: console
 
@@ -164,7 +164,7 @@ their corresponding collections.
     col1 = bf.get('N:collection:243062ce-fdbf-4331-8c21-bc2d09b0089e')
     col2 = ds[1]
     col3 = ds[2]
-    
+
     # add data to the collections
     #
     col1.upload('example_data/table1.csv',\
@@ -174,8 +174,8 @@ their corresponding collections.
     col2.upload('example_data/testData.nev',\
                 'example_data/testData.ns2', \
                 'example_data/T2.nii.gz',\
-		'example_data/blackfynn.pdf',\
-		'example_data/small_region.svs')
+        'example_data/blackfynn.pdf',\
+        'example_data/small_region.svs')
 
 .. note::
    We used the ``get()`` method to get col1 for illustrative purposes. However,
@@ -195,14 +195,14 @@ collections. We can see all of the content of the dataset by using the
 
 .. code-block:: python
    :linenos:
-      
+
     # print everything under "Practice Dataset"
     ds.update()
     ds.print_tree()
 
 
 .. code-block:: console
-   :emphasize-lines: 10		
+   :emphasize-lines: 10
 
     <Dataset name='Practice Dataset' id='N:dataset:aaaace74-b27a-4069-8b0b-5a102c4dcecb'>
       <Collection name='original collection 1' id='N:collection:243062ce-fdbf-4331-8c21-bc2d09b0089e'>
@@ -212,7 +212,7 @@ collections. We can see all of the content of the dataset by using the
       <Collection name='original collection 2' id='N:collection:3a242008-5875-4b38-b651-ed6ffdca0e80'>
         <DataPackage name='small_region' id='N:package:25eb1f60-7593-4cc7-9bff-aab3b2859f32'>
         <DataPackage name='T2' id='N:package:cd6784b6-ba5d-4cc5-8a86-93f279b2832b'>
-         <DataPackage name='blackfynn' id='N:package:7548dbd9-0886-4ec5-8262-e7ab6e8f212f'>	
+        <DataPackage name='blackfynn' id='N:package:7548dbd9-0886-4ec5-8262-e7ab6e8f212f'>
         <TimeSeries name='testData' id='N:package:5c7fd669-4333-48c8-ac5a-9f549a3efc4d'>
       <Collection name='final collection' id='N:collection:0975ef4b-c851-417e-bc6f-c2f81a78a627'>
 
@@ -230,16 +230,16 @@ Deleting and moving items
 
 .. code-block:: python
    :linenos:
-      
+
     # move al content to "final collection"
     for item in [col1.items, col2.items]:
         for package in item:
             bf.move(col3, package.id)
-    
+
     # remove empty collections
     col1.delete()
     col2.delete()
-            
+
     # print content of "Practice Dataset"
     ds.update()
     ds.print_tree()
@@ -253,7 +253,7 @@ Deleting and moving items
         <Tabular name='table3' id='N:package:6bdd79d3-1de2-415d-a2b4-dce03c6ba895'>
         <DataPackage name='small_region' id='N:package:25eb1f60-7593-4cc7-9bff-aab3b2859f32'>
         <DataPackage name='T2' id='N:package:cd6784b6-ba5d-4cc5-8a86-93f279b2832b'>
-	<DataPackage name='blackfynn' id='N:package:7548dbd9-0886-4ec5-8262-e7ab6e8f212f'>	
+        <DataPackage name='blackfynn' id='N:package:7548dbd9-0886-4ec5-8262-e7ab6e8f212f'>
         <TimeSeries name='testData' id='N:package:5c7fd669-4333-48c8-ac5a-9f549a3efc4d'>
 
 We have now reviewed the main functions that revolve around interacting

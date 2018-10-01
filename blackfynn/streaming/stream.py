@@ -1,22 +1,30 @@
-import time
-import boto3
+from __future__ import (
+    absolute_import,
+    division,
+    print_function
+)
+from builtins import object, zip
+
 import base64
-import random
-import hashlib
 import datetime
+import hashlib
+import random
+import time
+
+import boto3
 import numpy as np
 import pandas as pd
 
+import blackfynn.log as log
 # blackfynn
 from blackfynn.streaming.segment_pb2 import IngestSegment
 from blackfynn.utils import usecs_since_epoch
-import blackfynn.log as log
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Time Series Stream (upload)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class TimeSeriesStream():
+class TimeSeriesStream(object):
 
     def __init__(self, ts, name, max_segment_size, aws_region):
         self.name = name
@@ -40,7 +48,7 @@ class TimeSeriesStream():
         return description.get('StreamStatus')
 
     def _channel_by_name(self, name):
-        matches = filter(lambda c: c.name==name, self._channels)
+        matches = [c for c in self._channels if c.name==name]
         if len(matches) > 1:
             raise Exception("Too many channels match name '{}'".format(name))
         if len(matches) == 0:
@@ -48,7 +56,7 @@ class TimeSeriesStream():
         return matches[0]
 
     def _channel_by_id(self, id):
-        matches = filter(lambda c: c.id==id, self._channels)
+        matches = [c for c in self._channels if c.id==id]
         if len(matches) == 0:
             raise Exception("No channels match ID '{}'".format(id))
         return matches[0]

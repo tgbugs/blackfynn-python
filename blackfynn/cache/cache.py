@@ -1,18 +1,29 @@
+from __future__ import (
+    absolute_import,
+    division,
+    print_function
+)
+from builtins import filter, object, zip
+
+
+import io
+import multiprocessing as mp
 import os
-import time
-import sqlite3
 import platform
+import sqlite3
+import time
+from datetime import datetime
+from glob import glob
+from itertools import groupby
+
 import numpy as np
 import pandas as pd
-from glob import glob
-import multiprocessing as mp
-from itertools import groupby
-from datetime import datetime
 
-# blackfynn-specific
-from blackfynn.utils import usecs_to_datetime, usecs_since_epoch
-from blackfynn.models import DataPackage, TimeSeriesChannel
 import blackfynn.log as log
+from blackfynn.models import DataPackage, TimeSeriesChannel
+# blackfynn-specific
+from blackfynn.utils import usecs_since_epoch, usecs_to_datetime
+
 from .cache_segment_pb2 import CacheSegment
 
 logger = log.get_logger('blackfynn.cache')
@@ -39,7 +50,7 @@ def remove_old_pages(cache, mbdiff):
     # remove the selected pages
     pages_by_channel = groupby(pages, lambda x: x[0])
     for channel, page_group in pages_by_channel:
-        _,pages,counts,times = zip(*page_group)
+        _,pages,counts,times = list(zip(*page_group))
         # remove page files
         cache.remove_pages(channel, *pages)
 
@@ -79,8 +90,8 @@ def create_segment(channel, series):
 
 def read_segment(channel, bytes):
     segment = CacheSegment.FromString(bytes)
-    index = pd.to_datetime(np.fromstring(segment.index, np.int64))
-    data  = np.fromstring(segment.data, np.double)
+    index = pd.to_datetime(np.frombuffer(segment.index, np.int64))
+    data  = np.frombuffer(segment.data, np.double)
     series = pd.Series(data=data, index=index, name=channel.name)
     return series
 
@@ -168,7 +179,7 @@ class Cache(object):
 
             # 1. check for ts_format field (not there indicating old cache)
             result = con.execute("PRAGMA table_info('settings');").fetchall()
-            fields = zip(*result)[1]
+            fields = list(zip(*result))[1]
             if 'ts_format' not in fields:
                 # this means they used an older client to initalize the cache, and because
                 # we switched the serialization format, we'll need to refresh it.
@@ -203,7 +214,7 @@ class Cache(object):
             # there is data, write it to file
             filename = self.page_file(channel.id, page, make_dir=True)
             segment = create_segment(channel=channel, series=data)
-            with open(filename, 'wb') as f:
+            with io.open(filename, 'wb') as f:
                 f.write(segment.SerializeToString())
             self.page_written()
         try:
@@ -257,7 +268,7 @@ class Cache(object):
         filename = self.page_file(channel.id, page, make_dir=True)
         if os.path.exists(filename):
             # get page data from file
-            with open(filename,'rb') as f:
+            with io.open(filename,'rb') as f:
                 series = read_segment(channel, f.read())
             # update access count
             self.update_page(channel, page, has_data)
@@ -288,8 +299,8 @@ class Cache(object):
             self.write_counter = 0
             self.start_compaction()
 
-    def start_compaction(self, async=True):
-        if async:
+    def start_compaction(self, background=True):
+        if background:
             # spawn cache compact job
             p = mp.Process(target=compact_cache, args=(self, self.settings.cache_max_size))
             p.start()
@@ -313,7 +324,7 @@ class Cache(object):
                 DELETE
                 FROM ts_pages
                 WHERE channel = '{channel}' AND page in ({pages})
-            """.format(channel=channel_id, pages=','.join(map(str, pages)))
+            """.format(channel=channel_id, pages=','.join(str(p) for p in pages))
             con.execute(q)
 
     def page_file(self, channel_id, page, make_dir=False):
@@ -355,13 +366,13 @@ class Cache(object):
         Returns the size of the cache in bytes
         """
         all_files = self.page_files + [self.index_loc]
-        return sum(map(lambda x: os.stat(x).st_size, all_files))
+        return sum(os.stat(x).st_size for x in all_files)
 
 def get_cache(settings, start_compaction=False, init=True):
     cache = Cache(settings)
     if start_compaction:
-        async = platform.system().lower() != 'windows'
-        cache.start_compaction(async=async)
+        background = platform.system().lower() != 'windows'
+        cache.start_compaction(background=background)
     if init:
         cache.init_tables()
     return cache

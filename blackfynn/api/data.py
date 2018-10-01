@@ -1,23 +1,29 @@
 # -*- coding: utf-8 -*-
-import pandas as pd
+from __future__ import (
+    absolute_import,
+    division,
+    print_function
+)
+from future.utils import string_types
+
+import datetime
+import math
 
 import pandas as pd
-import pdb
-from blackfynn.api.base import APIBase
+
 import blackfynn.log as log
+from blackfynn.api.base import APIBase
 from blackfynn.models import (
-    File,
+    BaseDataNode,
     Collection,
     Dataset,
+    File,
     Organization,
     Tabular,
     TabularSchema,
     TabularSchemaColumn,
-    User,
-    BaseDataNode
+    User
 )
-import datetime
-import math
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Dataset
@@ -57,12 +63,12 @@ class DatasetsAPI(APIBase):
         def is_match(ds):
             return (name_key(ds.name) == search_key) or (ds.id == name_or_id)
 
-        matches = filter(is_match, self.get_all())
+        matches = [ds for ds in self.get_all() if is_match(ds)]
         return matches[0] if matches else None
 
     def get_all(self):
         resp = self._get( self._uri('/'))
-        return map(lambda ds: Dataset.from_dict(ds, api=self.session), resp)
+        return [Dataset.from_dict(ds, api=self.session) for ds in resp]
 
     def create(self, ds):
         """
@@ -98,7 +104,7 @@ class DatasetsAPI(APIBase):
         """
         id = self._get_id(ds)
         resp = self._get(self._uri('/{id}/collaborators', id=id))
-        users = map(lambda u: User.from_dict(u, api=self.session), resp['users'])
+        users = [User.from_dict(u, api=self.session) for u in resp['users']]
         organizations = [self.session.organizations.get(g['id']) for g in resp['organizations']]
         return {
             'users': users,
@@ -155,7 +161,7 @@ class DataAPI(APIBase):
         ids = list(set([self._get_id(x) for x in things]))
         r = self._post('/delete', json=dict(things=ids))
         if len(r['success']) != len(ids):
-            failures = map(lambda f: f['id'], r['failures'])
+            failures = [f['id'] for f in r['failures']]
             print("Unable to delete objects: {}".format(failures))
 
         for thing in things:
@@ -213,7 +219,7 @@ class PackagesAPI(APIBase):
 
         params = None
         if include is not None:
-            if isinstance(include, basestring):
+            if isinstance(include, string_types):
                 params = {'include': include}
             if hasattr(include, '__iter__'):
                 params = {'include': ','.join(include)}
@@ -247,7 +253,7 @@ class PackagesAPI(APIBase):
         # Note: PUT returns list of IDs
         resp = self._put(path, json=data, params=kwargs)
 
-        return [File.from_dict(r, api=self.session) for r in resp if not isinstance(r, basestring)]
+        return [File.from_dict(r, api=self.session) for r in resp if not isinstance(r, string_types)]
 
     def get_files(self, pkg):
         """
@@ -272,7 +278,7 @@ class PackagesAPI(APIBase):
         path = self._uri('/{id}/files', id=pkg_id)
         resp = self._put(path, json=data, params=kwargs)
 
-        return [File.from_dict(r, api=self.session) for r in resp if not isinstance(r, basestring)]
+        return [File.from_dict(r, api=self.session) for r in resp if not isinstance(r, string_types)]
 
     def get_view(self, pkg):
         """
@@ -296,7 +302,7 @@ class PackagesAPI(APIBase):
         path = self._uri('/{id}/view', id=pkg_id)
         resp = self._put(path, json=data, params=kwargs)
 
-        return [File.from_dict(r, api=self.session) for r in resp if not isinstance(r, basestring)]
+        return [File.from_dict(r, api=self.session) for r in resp if not isinstance(r, string_types)]
 
     def get_presigned_url_for_file(self, pkg, file):
         args = dict(

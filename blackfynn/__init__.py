@@ -1,6 +1,3 @@
-__title__ = 'blackfynn'
-__version__ = '2.5.0'
-
 from .config import Settings, DEFAULTS as DEFAULT_SETTINGS
 
 # main client
@@ -29,3 +26,6 @@ from .models import (
     TimeSeriesChannel,
     TimeSeriesAnnotation,
 )
+
+__title__ = 'blackfynn'
+__version__ = '2.5.0'

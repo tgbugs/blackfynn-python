@@ -1,14 +1,16 @@
-import os
+from __future__ import (
+    absolute_import,
+    division,
+    print_function
+)
+
+import io
 import re
-from setuptools import setup, find_packages
-# To use a consistent encoding
-from codecs import open
 from os import path
 
-def read(fname):
-    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+from setuptools import find_packages, setup
 
-with open('blackfynn/__init__.py', 'r') as fd:
+with io.open('blackfynn/__init__.py', 'r') as fd:
     version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
                         fd.read(), re.MULTILINE).group(1)
 
@@ -17,11 +19,11 @@ if not version:
 
 here = path.abspath(path.dirname(__file__))
 
-with open(path.join(here, 'requirements.txt'), mode='r', encoding='utf-8') as f:
+with io.open(path.join(here, 'requirements.txt'), mode='r', encoding='utf-8') as f:
     reqs = [line.strip() for line in f if not line.startswith('#')]
 
 # Get the long description from the README file
-with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
+with io.open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
@@ -35,7 +37,7 @@ setup(
     package_dir={'blackfynn': 'blackfynn'},
     setup_requires=['cython'],
     install_requires = reqs,
-    python_requires='<3',
+    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, <4.0',
     entry_points = {
         'console_scripts': [
             'bf=blackfynn.cli.bf:blackfynn_cli',
@@ -48,5 +50,9 @@ setup(
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Topic :: Utilities",
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3.4",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
     ],
 )

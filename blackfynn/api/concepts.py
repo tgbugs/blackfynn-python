@@ -1,11 +1,26 @@
 # -*- coding: utf-8 -*-
+from __future__ import (
+    absolute_import,
+    division,
+    print_function
+)
+from future.utils import string_types
+
 import requests
 
 from blackfynn.api.base import APIBase
 from blackfynn.models import (
-    Model, Record, RecordSet, ModelProperty, ModelTemplate, ProxyInstance,
-    RelationshipType, Relationship, RelationshipSet, RelationshipProperty,
-    DataPackage
+    DataPackage,
+    Model,
+    ModelProperty,
+    ModelTemplate,
+    ProxyInstance,
+    Record,
+    RecordSet,
+    Relationship,
+    RelationshipProperty,
+    RelationshipSet,
+    RelationshipType
 )
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -17,7 +32,7 @@ class ModelsAPIBase(APIBase):
     def _get_concept_type(self, concept, instance = None):
         if isinstance(concept, Model):
             return concept.type
-        elif isinstance(concept, basestring):
+        elif isinstance(concept, string_types):
             return concept
         elif isinstance(instance, Record):
             return instance.type
@@ -27,7 +42,7 @@ class ModelsAPIBase(APIBase):
     def _get_relationship_type(self, relationship, instance = None):
         if isinstance(relationship, RelationshipType):
             return relationship.type
-        elif isinstance(relationship, basestring):
+        elif isinstance(relationship, string_types):
             return relationship
         elif isinstance(instance, Relationship):
             return instance.type
@@ -108,7 +123,7 @@ class ModelsAPI(ModelsAPIBase):
                     self._logger.error(
                         "Model was successfully created, but properties were "
                         "rejected with the following error: {}".format(str(
-                            e.response.content.split('\n')[0]
+                            e.response.text.split('\n')[0]
                         ))
                     )
                 else:
@@ -485,7 +500,7 @@ class ModelTemplatesAPI(APIBase):
     def get_all(self):
         org_id = self._get_int_id(self.session._context)
         resp = self._get(self._uri('/organizations/{orgId}/templates', orgId=org_id))
-        return map(lambda t: ModelTemplate.from_dict(t), resp)
+        return [ModelTemplate.from_dict(t) for t in resp]
 
     def get(self, template_id):
         org_id = self._get_int_id(self.session._context)
@@ -513,7 +528,7 @@ class ModelTemplatesAPI(APIBase):
         template_id = self._get_id(template)
         resp = self._post(self._uri('/organizations/{orgId}/templates/{templateId}/datasets/{datasetId}',
                                     orgId=org_id, templateId=template_id, datasetId=dataset_id))
-        return map(lambda t: ModelProperty.from_dict(t), resp)
+        return [ModelProperty.from_dict(t) for t in resp]
 
     def delete(self, template_id):
         org_id = self._get_int_id(self.session._context)

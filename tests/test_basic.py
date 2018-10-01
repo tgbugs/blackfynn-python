@@ -1,13 +1,13 @@
+import datetime
 import os
+
 import pytest
 import requests
-import datetime
 
-# client library
-from blackfynn.models import (
-    DataPackage, Dataset, File
-)
 from blackfynn.base import UnauthorizedException
+# client library
+from blackfynn.models import DataPackage, Dataset, File
+
 from .utils import get_test_client
 
 
@@ -148,7 +148,7 @@ def test_properties(client, dataset):
 
     pkg.insert_property('my-key','my-value')
     pkg2 = client.get(pkg)
-    print 'properties =', pkg2.properties
+    print('properties =', pkg2.properties)
     assert pkg2.id == pkg.id
     assert pkg2.get_property('my-key').data_type == 'string'
     assert pkg2.get_property('my-key').value == 'my-value'

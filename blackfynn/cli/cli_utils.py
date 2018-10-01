@@ -1,6 +1,15 @@
+from __future__ import (
+    absolute_import,
+    division,
+    print_function
+)
+
 import os
 
-from working_dataset import working_dataset_id
+from functools import reduce
+
+from .working_dataset import working_dataset_id
+
 
 def get_item_path(bf, item):
     if item.parent is not None:
@@ -32,10 +41,10 @@ def merge(a, b, path=None):
     return a
 
 def print_tree(tree, objects, indent=0):
-    for key, value in tree.iteritems():
+    for key, value in tree.items():
         is_dict = isinstance(value, dict)
         char = '-' if is_dict else '*'
-        print ' '*indent+char, objects[key]
+        print(' '*indent+char, objects[key])
         if is_dict:
             print_tree(value, objects, indent=indent+2)
 
@@ -58,7 +67,7 @@ def recursively_upload(bf, destination, files):
 
     for d in dirs:
         name = os.path.basename(os.path.normpath(d))
-        print 'Uploading to {}'.format(name)
+        print('Uploading to {}'.format(name))
 
         new_collection = Collection(name)
         destination.add(new_collection)
@@ -70,13 +79,12 @@ def print_datasets(bf):
     wd = working_dataset_id()
     for dataset in bf.datasets():
         if dataset.id == wd:
-            print "\033[32m* {} (id: {})\033[0m".format(dataset.name, dataset.id)
+            print("\033[32m* {} (id: {})\033[0m".format(dataset.name, dataset.id))
         else:
-            print "  {} (id: {})".format(dataset.name, dataset.id)
+            print("  {} (id: {})".format(dataset.name, dataset.id))
 
 def get_item(identifier, bf):
     try:
         return bf.get(identifier)
     except:
         exit("{} does not exist.".format(identifier))
-

@@ -33,14 +33,21 @@ global options:
   --dataset=<dataset>       Use specified dataset (instead of your current working dataset)
   --profile=<name>          Use specified profile (instead of default)
 '''
+from __future__ import (
+    absolute_import,
+    division,
+    print_function
+)
+
+import os
 
 from docopt import docopt
-import os
 
 import blackfynn
 from blackfynn import Blackfynn, Settings
 
-from working_dataset import set_working_dataset
+from .working_dataset import set_working_dataset
+
 
 def blackfynn_cli():
     args = docopt(__doc__,
@@ -54,7 +61,7 @@ def blackfynn_cli():
         return
 
     if args['<command>'] == 'profile':
-        import bf_profile
+        from . import bf_profile
         bf_profile.main()
         return
 
@@ -66,7 +73,7 @@ def blackfynn_cli():
     # Try to use profile specified by --profile, exit if invalid
     try:
         bf = Blackfynn(args['--profile'])
-    except Exception, e:
+    except Exception as e:
         exit(e)
 
     #Try to use dataset specified by --dataset, exit if invalid
@@ -74,59 +81,59 @@ def blackfynn_cli():
         if args['--dataset'] is not None:
             dataset = bf.get_dataset(args['--dataset'])
             set_working_dataset(dataset.id)
-    except Exception, e:
+    except Exception as e:
         exit(e)
 
     if args['<command>'] == 'status':
-        import bf_status
+        from . import bf_status
         bf_status.main(bf)
     elif args['<command>'] == 'use':
-        import bf_use
+        from . import bf_use
         bf_use.main(bf)
     elif args['<command>'] == 'init':
-        import bf_init
+        from . import bf_init
         bf_init.main(bf)
     elif args['<command>'] in ['datasets', 'ds']:
-        import bf_datasets
+        from . import bf_datasets
         bf_datasets.main(bf)
     elif args['<command>'] in ['organizations', 'orgs']:
-        import bf_organizations
+        from . import bf_organizations
         bf_organizations.main(bf)
     elif args['<command>'] in ['share', 'unshare', 'collaborators']:
-        import bf_share
+        from . import bf_share
         bf_share.main(bf)
     elif args['<command>'] == 'cache':
-        import bf_cache
+        from . import bf_cache
         bf_cache.main(bf)
     elif args['<command>'] == 'create':
-        import bf_create
+        from . import bf_create
         bf_create.main(bf)
     elif args['<command>'] == 'delete':
-        import bf_delete
+        from . import bf_delete
         bf_delete.main(bf)
     elif args['<command>'] == 'move':
-        import bf_move
+        from . import bf_move
         bf_move.main(bf)
     elif args['<command>'] == 'rename':
-        import bf_rename
+        from . import bf_rename
         bf_rename.main(bf)
     elif args['<command>'] == 'props':
-        import bf_props
+        from . import bf_props
         bf_props.main(bf)
     elif args['<command>'] == 'get':
-        import bf_get
+        from . import bf_get
         bf_get.main(bf)
     elif args['<command>'] == 'where':
-        import bf_where
+        from . import bf_where
         bf_where.main(bf)
     elif args['<command>'] == 'upload':
-        import bf_upload
+        from . import bf_upload
         bf_upload.main(bf)
     elif args['<command>'] == 'append':
-        import bf_append
+        from . import bf_append
         bf_append.main(bf)
     elif args['<command>'] == 'search':
-        import bf_search
+        from . import bf_search
         bf_search.main(bf)
     else:
         exit("Invalid command: '{}'\nSee 'bf help' for available commands".format(args['<command>']))

@@ -1,5 +1,12 @@
 """ Utility functions for generating test fixtures """
+from __future__ import (
+    absolute_import,
+    division,
+    print_function
+)
+
 import time
+
 from blackfynn import Blackfynn
 
 

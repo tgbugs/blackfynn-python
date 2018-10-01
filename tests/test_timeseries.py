@@ -1,8 +1,11 @@
-import pytest
-import pdb
-from blackfynn import TimeSeries, TimeSeriesChannel
-from blackfynn.models import TimeSeriesAnnotationLayer, TimeSeriesAnnotation
 import datetime
+import pdb
+
+import pytest
+
+from blackfynn import TimeSeries, TimeSeriesChannel
+from blackfynn.models import TimeSeriesAnnotation, TimeSeriesAnnotationLayer
+
 
 @pytest.fixture()
 def timeseries(client, dataset):
@@ -63,7 +66,7 @@ def test_timeseries_channels(client, timeseries):
 
         # use separate request to get channel
         ch.insert_property('key','value')
-        ch2 = filter(lambda x: x.id==ch.id, ts2.channels)[0]
+        ch2 = [x for x in ts2.channels if x.id==ch.id][0]
         assert ch2.get_property('key') is not None
         assert ch2.name == ch.name
         assert ch2.type == ch.type
@@ -77,7 +80,7 @@ def test_timeseries_channels(client, timeseries):
         ch.update()
 
         # use separate request to confirm name change
-        ch2 = filter(lambda x: x.id==ch.id, ts2.channels)[0]
+        ch2 = [x for x in ts2.channels if x.id==ch.id][0]
         assert ch2.name == ch.name
         assert ch2.rate == ch.rate
 
@@ -109,7 +112,7 @@ def test_timeseries_channels(client, timeseries):
 
 def test_timeseries_annotations(client, timeseries):
     assert timeseries.exists
-    print 'layers = ', timeseries.layers
+    print('layers = ', timeseries.layers)
 
     #Create Layer
     layer1 = TimeSeriesAnnotationLayer(name="test_layer", time_series_id = timeseries.id, description="test_description")
@@ -201,9 +204,9 @@ def test_timeseries_annotations(client, timeseries):
     assert annot2.exists
 
     annot_gen = layer1.iter_annotations(1)
-    annot = annot_gen.next()
+    annot = next(annot_gen)
     assert annot[0].label == 'test_label'
-    next_annot= annot_gen.next()
+    next_annot= next(annot_gen)
     assert next_annot[0].label == 'test_label2'
 
     ### TEST ANNOTATION COUNTS
@@ -218,14 +221,18 @@ def test_timeseries_annotations(client, timeseries):
         {'start': 1750000, 'end': 2000000, 'value': 1.0},
         {'start': 2000000, 'end': 2000001, 'value': 1.0}
     ]
-    assert sorted(
+
+    def _sort_counts(counts):
+        return sorted(counts, key=lambda c: c['start'])
+
+    assert _sort_counts(
         timeseries.annotation_counts(
             start = timeseries.channels[0].start * 1e6,
             end = timeseries.channels[0].start + 2 * 1e6,
             layers=[layer1], period="0.25s"
         )[str(layer1.id)]
     ) == layer1_expected_counts
-    assert sorted(
+    assert _sort_counts(
         layer1.annotation_counts(
             start = timeseries.channels[0].start * 1e6,
             end = timeseries.channels[0].start + 2 * 1e6,
@@ -308,7 +315,7 @@ def test_timeseries_segments(client, timeseries):
 
     # TODO: API should soon error when value is non-numeric.
     #       Uncomment below when API is changed.
-    
+
     with pytest.raises(Exception):
         timeseries.segments(gap_factor="should be int")
 

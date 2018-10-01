@@ -68,10 +68,10 @@ Data Catalog Basics
 
 Note:
    A useful special method for the following classes is ``__contains__``, which enables you to do::
-      
+
       if my_pkg in my_collection:
-         print "the package", pkg, "is in the collection"
-         
+         print("the package", pkg, "is in the collection")
+
 Dataset
 ^^^^^^^^
 Datasets are core entities on the Blackfynn platform. All data must be placed in a Dataset, whether directly or nested. Datasets can be thought of as similar to "repositories" in GitHub; they exist directly underneath a user/organization, and all sharing is controlled from their level.
@@ -83,7 +83,7 @@ Datasets are core entities on the Blackfynn platform. All data must be placed in
 
 Collection
 ^^^^^^^^^^^^
-Collections are collections of data that exist inside of a Dataset. These can be thought of as simililar to a folder or directory. 
+Collections are collections of data that exist inside of a Dataset. These can be thought of as simililar to a folder or directory.
 
 .. autoclass:: Collection
    :members:

@@ -1,5 +1,5 @@
-import os
 import logging
+import os
 
 
 def test_default_log_level():
