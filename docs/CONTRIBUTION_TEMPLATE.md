@@ -12,6 +12,7 @@ Please do not use the issue tracker for support questions. Please refer to the `
 This includes not just how to communicate with others (being respectful, considerate, etc) but also technical responsibilities (importance of testing, project dependencies, etc).
 
 * Ensure cross-platform compatibility for every change that's accepted. Windows, Mac, Debian & Ubuntu Linux.
+* Ensure compatibility with all supported Python versions. See [Supporting Python 2 and 3](#supporting-python-2-and-3) for more information.
 * Create issues for any major changes and enhancements that you wish to make. Discuss things transparently and get community feedback.
 * Don't add any classes to the codebase unless absolutely needed. Err on the side of using functions.
 * Keep feature versions as small as possible, preferably one new feature per version.
@@ -31,3 +32,32 @@ At this point, you're ready to make your changes! Feel free to ask for help; eve
 
 # Code review process
 The core team looks at Pull Requests on a regular basis in a weekly triage meeting. After feedback has been given we expect responses within the month. After one month, we may close the pull request if it isn't showing any activity.
+
+# Supporting Python 2 and 3
+We currently support Python 2.7 and 3.4-3.6. In general, we try and write Python 3 code that will run on Python 2.7 using backports provided by [future](http://python-future.org). Keep the following in mind as you code:
+
+* All modules must include the following import statement:
+
+        from __future__ import absolute_import, division, print_function
+
+* Import the following from `builtins` as needed:
+
+   * `map`, `zip`, `range`, `filter` (return Python 3 style iterators instead of lists)
+   * `dict` (`.keys()`, `.values()`, and `.items()` all return iterators)
+   * `object` (new-style classes)
+
+   See [python-future.org](http://python-future.org) for a complete list of other builtins backported from Python 3.
+
+* When performing type checks, use the following conventions:
+
+        from future.utils import string_types, integer_types
+        if isinstance(x, string_types):
+            print('x is a string')
+        elif isinstance(x, integer_types):
+            print('x is an integer')
+
+* Explicitly mark all unicode strings with `u"..."` prefixes.
+
+Note that you should *not* import anything from `builtins` or `__future__` in test modules. Test code should emulate in-the-wild usage as much as possible.
+
+If you use PyCharm you can enable code inspections to automatically check compatibility with all supported Python versions.
