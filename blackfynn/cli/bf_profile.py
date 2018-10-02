@@ -34,11 +34,7 @@ advanced commands:
   unset (global|<name>) <key>         Unset key/value pair for given profile, or globally
   keys                                List all available keys and their default values
 '''
-from __future__ import (
-    absolute_import,
-    division,
-    print_function
-)
+from __future__ import absolute_import, division, print_function
 
 import io
 import os

@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import (
-    absolute_import,
-    division,
-    print_function
-)
+from __future__ import absolute_import, division, print_function
 from builtins import object, zip
 from future.utils import as_native_str, string_types, PY2
 

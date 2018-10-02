@@ -1,11 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # blackfynn-specific
-from __future__ import (
-    absolute_import,
-    division,
-    print_function
-)
+from __future__ import absolute_import, division, print_function
 from builtins import dict, object
 from future.utils import as_native_str
 

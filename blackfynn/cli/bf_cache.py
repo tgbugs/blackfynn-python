@@ -8,11 +8,7 @@ global options:
   --dataset=<dataset>       Use specified dataset (instead of your current working dataset)
   --profile=<name>          Use specified profile (instead of default)
 '''
-from __future__ import (
-    absolute_import,
-    division,
-    print_function
-)
+from __future__ import absolute_import, division, print_function
 
 from docopt import docopt
 

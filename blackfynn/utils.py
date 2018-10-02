@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import (
-    absolute_import,
-    division,
-    print_function
-)
+from __future__ import absolute_import, division, print_function
 from future.utils import string_types, integer_types
 
 import datetime
