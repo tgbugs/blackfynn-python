@@ -65,6 +65,27 @@ def _update_self(self, updated):
 
     return self
 
+
+def _flatten_file_args(files):
+    """
+    Flatten file arguments so that upload methods can be called either as
+
+        dataset.upload(file1, file2)
+
+    or as
+
+        dataset.upload([file1, file2])
+    """
+    if len(files) == 1 and not isinstance(files[0], string_types):
+        # single argument - is it iterable and not a string?
+        try:
+            files = list(files[0])
+        except Exception:
+            pass
+
+    return files
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Basics
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -631,6 +652,7 @@ class BaseCollection(BaseDataNode):
 
         """
         self._check_exists()
+        files = _flatten_file_args(files)
         return self._api.io.upload_files(self, files, append=False, **kwargs)
 
     def create_collection(self, name):
@@ -782,14 +804,14 @@ class DataPackage(BaseDataNode):
         Append to file list of a DataPackage
         """
         self._check_exists()
-        files = self._api.packages.set_files(self, *files, append=True)
+        return self._api.packages.set_files(self, *files, append=True)
 
     def append_to_sources(self, *files):
         """
         Appends to source list of a DataPackage.
         """
         self._check_exists()
-        files = self._api.packages.set_sources(self, *files, append=True)
+        return self._api.packages.set_sources(self, *files, append=True)
 
     @property
     def sources(self):
@@ -1221,6 +1243,7 @@ class TimeSeries(DataPackage):
 
     def append_files(self, *files, **kwargs):
         self._check_exists()
+        files = _flatten_file_args(files)
         return self._api.io.upload_files(self, files, append=True, **kwargs)
 
     def stream_data(self, data):
