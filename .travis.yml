@@ -34,7 +34,7 @@ deploy:
       branch: master
     access_key_id: "$AWS_ACCESS_KEY_ID"
     secret_access_key: "$AWS_SECRET_ACCESS_KEY"
-    bucket: "docs.blackfynn.io"
+    bucket: "prod-developer-use1.blackfynn.io"
     skip_cleanup: true
     region: us-east-1
     local_dir: docs/_build/html
