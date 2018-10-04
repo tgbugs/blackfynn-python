@@ -97,8 +97,8 @@ def create_profile(settings, name=[]):
         invalid_usage()
 
     if name in settings.config:
-        if name == 'global':
-            print("Profile name 'global' reserved for system. Please try a different name")
+        if name in ['global', 'agent']:
+            print("Profile name '{}' reserved for system. Please try a different name".format(name))
         else:
             print("Profile '{}' already exists".format(name))
     else:
