@@ -13,7 +13,8 @@ from blackfynn.api.concepts import (
     ModelRelationshipsAPI,
     ModelsAPI,
     ModelTemplatesAPI,
-    RecordsAPI
+    RecordsAPI,
+    ViewsAPI
 )
 from blackfynn.api.core import (
     CoreAPI,

@@ -2133,6 +2133,27 @@ class Dataset(BaseCollection):
         """
         return self._api.templates.apply(self, template)
 
+    def create_graph_view(self, name, root, include):
+        """
+        Create a graph view rooted at the given model
+
+        Args:
+            name (str): name of the view
+            root (str or Model): model that roots the view
+            include (list): list of related models to include in the view
+        """
+        return self._api.concepts.views.create(name, root, include)
+
+    def get_graph_view(self, name):
+        """
+        Retrive a dataframe of the given graph view.
+
+        Args:
+            name (str): Name of the view
+
+        """
+        return self._api.concepts.views.get(name)
+
     @property
     def _get_method(self):
         return self._api.datasets.get
@@ -3588,3 +3609,15 @@ class RelationshipSet(BaseInstanceList):
 
         df = pd.DataFrame(data=data, columns=cols)
         return df
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Graph Views & Analytics
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+class GraphView(BaseNode):
+
+    @as_native_str
+    def __repr__(self):
+        return u"<GraphView>"

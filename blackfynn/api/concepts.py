@@ -530,3 +530,22 @@ class ModelTemplatesAPI(APIBase):
         org_id = self._get_int_id(self.session._context)
         return self._del(self._uri('/organizations/{orgId}/templates/{templateId}',
                                    orgId=org_id, templateId=template_id))
+
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Graph Views
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+class GraphViewsAPI(APIBase):
+    base_uri = '???'
+    name = 'concepts.views'
+
+    def create(self, name, root, include):
+        pass
+
+    def get(self, name):
+        pass
+
+    def get_all(self):
+        pass
