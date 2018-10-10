@@ -1,10 +1,13 @@
 import os
 from datetime import datetime
 from uuid import uuid4
+from collections import namedtuple
 
 import pytest
 
 from blackfynn import Blackfynn
+from blackfynn.models import ModelProperty, ModelPropertyType
+
 from tests.utils import create_test_dataset, current_ts, get_test_client
 
 
@@ -60,3 +63,46 @@ def dataset(client):
 @pytest.fixture(scope='session')
 def test_organization(client):
     return [o for o in client.organizations() if o.name == 'Blackfynn'][0]
+
+
+Graph = namedtuple('TestGraph', ['dataset', 'models', 'model_records',
+                                 'relationships', 'relationship_records'])
+
+
+@pytest.fixture(scope="module")
+def simple_graph(client):
+    """
+        Creates a small test graph in an independent dataset to de-couple
+        from other tests
+    """
+    test_dataset = create_test_dataset(client)
+    model_1 = test_dataset.create_model(
+        'Model_A', description="model a", schema=[
+            ModelProperty("prop1", data_type=ModelPropertyType(data_type=str),
+                          title=True)])
+
+    model_2 = test_dataset.create_model(
+        'Model_B', description="model b",
+        schema=[ModelProperty("prop1",
+                              data_type=ModelPropertyType(data_type=str),
+                              title=True)
+                ])
+
+    relationship = test_dataset.create_relationship_type(
+        'New_Relationship_{}'.format(current_ts()), 'a new relationship')
+
+    model_instance_1 = model_1.create_record({"prop1": "val1"})
+    model_instance_2 = model_2.create_record({"prop1": "val1"})
+    model_instance_1.relate_to(model_instance_2, relationship)
+
+    graph = Graph(test_dataset, models=[model_1, model_2],
+                  model_records=[model_instance_1, model_instance_2],
+                  relationships=[relationship],
+                  relationship_records=None)
+    yield graph
+
+    ds_id = test_dataset.id
+    client._api.datasets.delete(test_dataset)
+    all_dataset_ids = [x.id for x in client.datasets()]
+    assert ds_id not in all_dataset_ids
+    assert not test_dataset.exists
