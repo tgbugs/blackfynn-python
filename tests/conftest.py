@@ -72,33 +72,34 @@ Graph = namedtuple('TestGraph', ['dataset', 'models', 'model_records',
 @pytest.fixture(scope="module")
 def simple_graph(client):
     """
-        Creates a small test graph in an independent dataset to de-couple
-        from other tests
+    Creates a small test graph in an independent dataset to de-couple
+    from other tests
     """
     test_dataset = create_test_dataset(client)
-    model_1 = test_dataset.create_model(
-        'Model_A', description="model a", schema=[
-            ModelProperty("prop1", data_type=ModelPropertyType(data_type=str),
+    patient_model = test_dataset.create_model(
+        'Patient', description="a patient", schema=[
+            ModelProperty("name",
+                          data_type=ModelPropertyType(data_type=str),
                           title=True)])
 
-    model_2 = test_dataset.create_model(
-        'Model_B', description="model b",
-        schema=[ModelProperty("prop1",
-                              data_type=ModelPropertyType(data_type=str),
-                              title=True)
-                ])
+    medication_model = test_dataset.create_model(
+        'Medication', description="a medication", schema=[
+            ModelProperty("name",
+                          data_type=ModelPropertyType(data_type=str),
+                          title=True)])
 
-    relationship = test_dataset.create_relationship_type(
-        'New_Relationship_{}'.format(current_ts()), 'a new relationship')
+    takes_relationship = test_dataset.create_relationship_type(
+        'takes_{}'.format(current_ts()), 'describes meds a patient takes')
 
-    model_instance_1 = model_1.create_record({"prop1": "val1"})
-    model_instance_2 = model_2.create_record({"prop1": "val1"})
-    model_instance_1.relate_to(model_instance_2, relationship)
+    patient1 = patient_model.create_record({"name": "Alice"})
+    patient2 = patient_model.create_record({"name": "Bob"})
+    ibuprofen = medication_model.create_record({"name": "Ibuprofen"})
+    patient1_takes_ibuprofen = patient1.relate_to(ibuprofen, takes_relationship)
 
-    graph = Graph(test_dataset, models=[model_1, model_2],
-                  model_records=[model_instance_1, model_instance_2],
-                  relationships=[relationship],
-                  relationship_records=None)
+    graph = Graph(test_dataset, models=[patient_model, medication_model],
+                  model_records=[patient1, patient2, ibuprofen],
+                  relationships=[takes_relationship],
+                  relationship_records=[patient1_takes_ibuprofen])
     yield graph
 
     ds_id = test_dataset.id
