@@ -9,12 +9,12 @@ import blackfynn.log as log
 from blackfynn import Settings
 from blackfynn.api.compute import ComputeAPI
 from blackfynn.api.concepts import (
+    AnalyticsAPI,
     ModelRelationshipInstancesAPI,
     ModelRelationshipsAPI,
     ModelsAPI,
     ModelTemplatesAPI,
     RecordsAPI,
-    ViewsAPI
 )
 from blackfynn.api.core import (
     CoreAPI,
@@ -114,6 +114,7 @@ class Blackfynn(object):
             raise e
 
         self._api.register(
+            AnalyticsAPI,
             CoreAPI,
             OrganizationsAPI,
             DatasetsAPI,

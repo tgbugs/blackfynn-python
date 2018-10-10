@@ -537,12 +537,12 @@ class ModelTemplatesAPI(APIBase):
 # Graph Views
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class GraphViewsAPI(APIBase):
-    base_uri = '???'
-    name = 'concepts.views'
+class AnalyticsAPI(APIBase):
+    base_uri = '/analytics'
+    name = 'analytics'
 
     def create(self, name, root, include):
-        pass
+        return self._post(self._uri('/view'))
 
     def get(self, name):
         pass

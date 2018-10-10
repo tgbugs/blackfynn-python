@@ -77,13 +77,13 @@ def simple_graph(client):
     """
     test_dataset = create_test_dataset(client)
     patient_model = test_dataset.create_model(
-        'Patient', description="a patient", schema=[
+        'patient', description="a patient", schema=[
             ModelProperty("name",
                           data_type=ModelPropertyType(data_type=str),
                           title=True)])
 
     medication_model = test_dataset.create_model(
-        'Medication', description="a medication", schema=[
+        'medication', description="a medication", schema=[
             ModelProperty("name",
                           data_type=ModelPropertyType(data_type=str),
                           title=True)])

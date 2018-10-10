@@ -2142,7 +2142,7 @@ class Dataset(BaseCollection):
             root (str or Model): model that roots the view
             include (list): list of related models to include in the view
         """
-        return self._api.concepts.views.create(name, root, include)
+        return self._api.analytics.create(name, root, include)
 
     def get_graph_view(self, name):
         """
@@ -2152,7 +2152,7 @@ class Dataset(BaseCollection):
             name (str): Name of the view
 
         """
-        return self._api.concepts.views.get(name)
+        return self._api.analytics.get(name)
 
     @property
     def _get_method(self):
