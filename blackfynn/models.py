@@ -2142,7 +2142,7 @@ class Dataset(BaseCollection):
             root (str or Model): model that roots the view
             include (list): list of related models to include in the view
         """
-        return self._api.analytics.create(name, root, include)
+        return self._api.analytics.create_view(name, root, include)
 
     def get_graph_view(self, name):
         """
@@ -2152,7 +2152,7 @@ class Dataset(BaseCollection):
             name (str): Name of the view
 
         """
-        return self._api.analytics.get(name)
+        return self._api.analytics.get_view(name)
 
     @property
     def _get_method(self):
@@ -3618,6 +3618,35 @@ class RelationshipSet(BaseInstanceList):
 
 class GraphView(BaseNode):
 
+    def __init__(self, name, root, include, *args, **kwargs):
+        self.name = name
+        self.root = root
+        self.include = include
+
+        super(GraphView, self).__init__(*args, **kwargs)
+
+    def snapshot(self):
+        """
+        Create a new instance of the view
+        """
+        self._api.analytics.create_view_instance()
+
     @as_native_str
     def __repr__(self):
         return u"<GraphView>"
+
+
+class GraphViewSnapshot(BaseNode):
+
+    # TODO: do we need a notion of the status of a snapshot? eg READY?
+    # or just fail if the snapshot is not ready?
+
+    def get_data(self):
+        """
+        Download parquet file -> dataframe
+        """
+        pass
+
+    @as_native_str
+    def __repr__(self):
+        return u"<GraphViewSnapshot>"

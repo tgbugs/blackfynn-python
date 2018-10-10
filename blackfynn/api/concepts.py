@@ -7,6 +7,8 @@ import requests
 from blackfynn.api.base import APIBase
 from blackfynn.models import (
     DataPackage,
+    GraphView,
+    GraphViewSnapshot,
     Model,
     ModelProperty,
     ModelTemplate,
@@ -541,11 +543,20 @@ class AnalyticsAPI(APIBase):
     base_uri = '/analytics'
     name = 'analytics'
 
-    def create(self, name, root, include):
-        return self._post(self._uri('/view'))
+    def create_view(self, name, root, include):
+        resp = self._post(self._uri('/view'), json={
+            'name': name,
+            'root': root,
+            'include': include
+        })
+        return GraphView.from_dict(resp)
 
-    def get(self, name):
+    def get_view(self, name):
         pass
 
-    def get_all(self):
+    def create_view_instance(self, view):
+        resp = self._post(self._uri('/view/instance'))
+        return GraphViewSnapshot.from_dict(resp)
+
+    def get_view_instance(self):
         pass
