@@ -2142,7 +2142,7 @@ class Dataset(BaseCollection):
             root (str or Model): model that roots the view
             include (list): list of related models to include in the view
         """
-        return self._api.analytics.create_view(name, root, include)
+        return self._api.analytics.create_view(self, name, root, include)
 
     def get_graph_view(self, name):
         """

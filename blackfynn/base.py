@@ -33,8 +33,8 @@ class BlackfynnRequest(object):
         self._logger.debug(u"resp = {}".format(resp))
         self._logger.debug(u"resp.content = {}".format(resp.text)) # decoded unicode
         if resp.status_code in [requests.codes.forbidden, requests.codes.unauthorized]:
+            print(resp)
             raise UnauthorizedException()
-
         if not resp.status_code in [requests.codes.ok, requests.codes.created]:
             resp.raise_for_status()
         try:

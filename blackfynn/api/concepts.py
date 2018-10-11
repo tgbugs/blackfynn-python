@@ -543,19 +543,24 @@ class AnalyticsAPI(APIBase):
     base_uri = '/analytics'
     name = 'analytics'
 
-    def create_view(self, name, root, include):
-        resp = self._post(self._uri('/view'), json={
+    def create_view(self, dataset, name, root, include):
+        org_id = self._get_int_id(self.session._context)
+        dataset_id = self._get_int_id(dataset)
+        uri = self._uri('/organizations/{orgId}/view?datasetId={datasetId}', orgId=org_id, datasetId=dataset_id)
+        json = {
             'name': name,
-            'root': root,
-            'include': include
-        })
+            'rootModel': root,
+            'includedModels': include,
+        }
+        print(json)
+        resp = self._post(uri, json=json)
+        import pdb; pdb.set_trace()
         return GraphView.from_dict(resp)
 
     def get_view(self, name):
         pass
 
     def create_view_instance(self, view):
-        resp = self._post(self._uri('/view/instance'))
         return GraphViewSnapshot.from_dict(resp)
 
     def get_view_instance(self):
