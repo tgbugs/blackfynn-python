@@ -3637,7 +3637,7 @@ class GraphView(BaseRecord):
 
     @as_native_str()
     def __repr__(self):
-        return u"<GraphView>"
+        return u"<GraphView name='{}' id='{}'>".format(self.name, self.id)
 
 
 class GraphViewSnapshot(BaseRecord):
