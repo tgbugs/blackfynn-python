@@ -2152,7 +2152,7 @@ class Dataset(BaseCollection):
             name (str): Name of the view
 
         """
-        return self._api.analytics.get_view(name)
+        return self._api.analytics.get_view(self, name)
 
     @property
     def _get_method(self):
@@ -3616,12 +3616,16 @@ class RelationshipSet(BaseInstanceList):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-class GraphView(BaseNode):
+class GraphView(BaseRecord):
 
-    def __init__(self, name, root, include, *args, **kwargs):
+    _object_key = None
+
+    def __init__(self, name, root_model, included_models, *args, **kwargs):
         self.name = name
-        self.root = root
-        self.include = include
+        self.root_model = root_model
+        self.included_models = included_models
+
+        kwargs['type'] = 'GraphView'
 
         super(GraphView, self).__init__(*args, **kwargs)
 
@@ -3631,12 +3635,12 @@ class GraphView(BaseNode):
         """
         self._api.analytics.create_view_instance()
 
-    @as_native_str
+    @as_native_str()
     def __repr__(self):
         return u"<GraphView>"
 
 
-class GraphViewSnapshot(BaseNode):
+class GraphViewSnapshot(BaseRecord):
 
     # TODO: do we need a notion of the status of a snapshot? eg READY?
     # or just fail if the snapshot is not ready?
@@ -3647,6 +3651,6 @@ class GraphViewSnapshot(BaseNode):
         """
         pass
 
-    @as_native_str
+    @as_native_str()
     def __repr__(self):
         return u"<GraphViewSnapshot>"
