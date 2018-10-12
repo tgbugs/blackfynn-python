@@ -3648,11 +3648,17 @@ class GraphView(BaseRecord):
         """
         return self._api.analytics.create_view_instance(self)
 
+    def all_snapshots(self):
+        """
+        All snapshots.
+        """
+        return self._api.analytics.get_all_view_instances(self)
+
     def latest(self):
         """
         Return most recent snapshot.
         """
-        pass
+        return max(self.all_snapshots(), key=lambda x: x.created_at)
 
     @as_native_str()
     def __repr__(self):

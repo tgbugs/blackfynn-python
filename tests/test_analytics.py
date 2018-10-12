@@ -32,4 +32,8 @@ def test_all_graph_views(simple_graph, graph_view):
 
 
 def test_graph_view_instances(simple_graph, graph_view):
-    snapshot = graph_view.snapshot()
+    snapshot1 = graph_view.snapshot()
+    snapshot2 = graph_view.snapshot()
+
+    assert graph_view.all_snapshots() == [snapshot1, snapshot2]
+    assert graph_view.latest() == snapshot2

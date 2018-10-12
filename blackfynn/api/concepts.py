@@ -583,14 +583,17 @@ class AnalyticsAPI(APIBase):
         uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views',
                         **self._kwargs(dataset))
         resp = self._get(uri)
-        return [GraphView.from_dict(_with_dataset(r, dataset)) for r in resp]
+        return [GraphView.from_dict(_with_dataset(r, dataset), api=self.session) for r in resp]
 
     def create_view_instance(self, view):
         uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/{graphViewId}/instances',
                         **self._kwargs(view.dataset, view))
         resp = self._post(uri)
-        resp['dataset_id'] = view.dataset_id
+        resp = _with_dataset(resp, view.dataset)
         return GraphViewSnapshot.from_dict(resp, api=self.session)
 
-    # def get_view_instance(self):
-    #     pass
+    def get_all_view_instances(self, view):
+        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/{graphViewId}/instances',
+                        **self._kwargs(view.dataset, view))
+        resp = self._get(uri)
+        return [GraphViewSnapshot.from_dict(_with_dataset(r, view.dataset), api=self.session) for r in resp]
