@@ -3634,7 +3634,7 @@ class GraphView(BaseRecord):
         """
         Create a new instance of the view
         """
-        self._api.analytics.create_view_instance(self)
+        return self._api.analytics.create_view_instance(self)
 
     @as_native_str()
     def __repr__(self):
@@ -3658,4 +3658,4 @@ class GraphViewSnapshot(BaseRecord):
 
     @as_native_str()
     def __repr__(self):
-        return u"<GraphViewSnapshot>"
+        return u"<GraphViewSnapshot created='{}' id='{}'>".format(self.created_at, self.id)

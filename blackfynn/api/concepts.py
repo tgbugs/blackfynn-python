@@ -577,10 +577,7 @@ class AnalyticsAPI(APIBase):
     def create_view_instance(self, view):
         uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/{graphViewId}/instances',
                         **self._kwargs(view.dataset, view))
-        print(uri)
         resp = self._post(uri)
-
-        print(view.dataset_id)
         resp['dataset_id'] = view.dataset_id
         return GraphViewSnapshot.from_dict(resp, api=self.session)
 
