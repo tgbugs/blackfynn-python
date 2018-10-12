@@ -543,12 +543,15 @@ class AnalyticsAPI(APIBase):
     base_uri = '/analytics'
     name = 'analytics'
 
-    def _kwargs(self, dataset, **kwargs):
-        # Base URI keywords
+    def _kwargs(self, dataset, view=None, **kwargs):
         kwargs.update({
             'orgId': self._get_int_id(self.session._context),
             'datasetId': self._get_int_id(dataset)
         })
+
+        if view is not None:
+            kwargs['graphViewId'] = self._get_id(view)
+
         return kwargs
 
     def create_view(self, dataset, name, root, include):
@@ -559,18 +562,27 @@ class AnalyticsAPI(APIBase):
             'rootModel': root,
             'includedModels': include,
         })
+        resp['dataset'] = dataset
         resp['dataset_id'] = dataset.id
-        return GraphView.from_dict(resp)
+        return GraphView.from_dict(resp, api=self.session)
 
-    def get_view(self, dataset, view_id):
+    def get_view(self, dataset, view):
         uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/{graphViewId}',
-                        **self._kwargs(dataset, graphViewId=view_id))
+                        **self._kwargs(dataset, view))
         resp = self._get(uri)
+        resp['dataset'] = dataset
         resp['dataset_id'] = dataset.id
-        return GraphView.from_dict(resp)
+        return GraphView.from_dict(resp, api=self.session)
 
-    # def create_view_instance(self, view):
-    #     return GraphViewSnapshot.from_dict(resp)
+    def create_view_instance(self, view):
+        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/{graphViewId}/instances',
+                        **self._kwargs(view.dataset, view))
+        print(uri)
+        resp = self._post(uri)
+
+        print(view.dataset_id)
+        resp['dataset_id'] = view.dataset_id
+        return GraphViewSnapshot.from_dict(resp, api=self.session)
 
     # def get_view_instance(self):
     #     pass

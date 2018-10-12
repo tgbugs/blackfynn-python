@@ -3620,10 +3620,11 @@ class GraphView(BaseRecord):
 
     _object_key = None
 
-    def __init__(self, name, root_model, included_models, *args, **kwargs):
+    def __init__(self, name, root_model, included_models, dataset, *args, **kwargs):
         self.name = name
         self.root_model = root_model
         self.included_models = included_models
+        self.dataset = dataset
 
         kwargs['type'] = 'GraphView'
 
@@ -3633,7 +3634,7 @@ class GraphView(BaseRecord):
         """
         Create a new instance of the view
         """
-        self._api.analytics.create_view_instance()
+        self._api.analytics.create_view_instance(self)
 
     @as_native_str()
     def __repr__(self):
@@ -3644,6 +3645,10 @@ class GraphViewSnapshot(BaseRecord):
 
     # TODO: do we need a notion of the status of a snapshot? eg READY?
     # or just fail if the snapshot is not ready?
+
+    def __init__(self, *args, **kwargs):
+        kwargs['type'] = 'GraphViewSnapshot'
+        super(GraphViewSnapshot, self).__init__(*args, **kwargs)
 
     def get_data(self):
         """
