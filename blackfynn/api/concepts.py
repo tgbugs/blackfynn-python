@@ -539,6 +539,13 @@ class ModelTemplatesAPI(APIBase):
 # Graph Views
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
+def _with_dataset(resp, dataset):
+    resp['dataset'] = dataset
+    resp['dataset_id'] = dataset.id
+    return resp
+
+
 class AnalyticsAPI(APIBase):
     base_uri = '/analytics'
     name = 'analytics'
@@ -562,17 +569,21 @@ class AnalyticsAPI(APIBase):
             'rootModel': root,
             'includedModels': include,
         })
-        resp['dataset'] = dataset
-        resp['dataset_id'] = dataset.id
+        resp = _with_dataset(resp, dataset)
         return GraphView.from_dict(resp, api=self.session)
 
     def get_view(self, dataset, view):
         uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/{graphViewId}',
                         **self._kwargs(dataset, view))
         resp = self._get(uri)
-        resp['dataset'] = dataset
-        resp['dataset_id'] = dataset.id
+        resp = _with_dataset(resp, dataset)
         return GraphView.from_dict(resp, api=self.session)
+
+    def get_all_views(self, dataset):
+        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views',
+                        **self._kwargs(dataset))
+        resp = self._get(uri)
+        return [GraphView.from_dict(_with_dataset(r, dataset)) for r in resp]
 
     def create_view_instance(self, view):
         uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/{graphViewId}/instances',

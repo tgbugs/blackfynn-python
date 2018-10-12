@@ -26,6 +26,10 @@ def test_get_graph_view(simple_graph, graph_view):
     assert got_view.included_models == ['medication']
 
 
-def test_graph_view_instances(simple_graph, graph_view):
+def test_all_graph_views(simple_graph, graph_view):
+    dataset = simple_graph.dataset
+    assert dataset.graph_views() == [graph_view]
 
-    graph_view.snapshot()
+
+def test_graph_view_instances(simple_graph, graph_view):
+    snapshot = graph_view.snapshot()

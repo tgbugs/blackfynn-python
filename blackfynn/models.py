@@ -2141,18 +2141,30 @@ class Dataset(BaseCollection):
             name (str): name of the view
             root (str or Model): model that roots the view
             include (list): list of related models to include in the view
+
+        Returns:
+            GraphView
         """
         return self._api.analytics.create_view(self, name, root, include)
 
     def get_graph_view(self, name):
         """
-        Retrive a dataframe of the given graph view.
+        Get a graph view with the given name
 
         Args:
             name (str): Name of the view
 
+        Returns:
+            GraphView
         """
         return self._api.analytics.get_view(self, name)
+
+    def graph_views(self):
+        """
+        Returns:
+            List of all graph views defined on the dataset
+        """
+        return self._api.analytics.get_all_views(self)
 
     @property
     def _get_method(self):
@@ -3635,6 +3647,12 @@ class GraphView(BaseRecord):
         Create a new instance of the view
         """
         return self._api.analytics.create_view_instance(self)
+
+    def latest(self):
+        """
+        Return most recent snapshot.
+        """
+        pass
 
     @as_native_str()
     def __repr__(self):
