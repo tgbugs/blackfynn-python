@@ -10,8 +10,8 @@ def test_create_graph_view(simple_graph):
     assert view.root_model == 'patient'
     assert view.included_models == ['medication']
 
-    # # TODO: update this to retrieve by name
-    # view = dataset.get_graph_view(view.id)
-    # assert view.name == name
-    # assert view.root_model == 'patient'
-    # assert view.included_models == ['medication']
+    # TODO: update this to retrieve by name
+    view = dataset.get_graph_view(view.id)
+    assert view.name == name
+    assert view.root_model == 'patient'
+    assert view.included_models == ['medication']
