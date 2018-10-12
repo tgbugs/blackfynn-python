@@ -107,10 +107,7 @@ class Blackfynn(object):
         self._api = ClientSession(self.settings)
 
         # account
-        try:
-            self._api.authenticate()
-        except Exception as e:
-            raise e
+        self._api.authenticate()
 
         self._api.register(
             CoreAPI,
