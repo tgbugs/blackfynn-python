@@ -767,52 +767,6 @@ class DataPackage(BaseDataNode):
         # local-only attribute
         self.session = None
 
-    def set_view(self, *files):
-        """
-        Set the object(s) used to view the package, if not the file(s) or source(s).
-        """
-        self._check_exists()
-        ids = self._api.packages.set_view(self, *files)
-        # update IDs of file objects
-        for i,f in enumerate(files):
-            f.id = ids[i]
-
-    def set_files(self, *files):
-        """
-        Sets the files of a DataPackage. Files are typically modified
-        source files (e.g. converted to a different format).
-        """
-        self._check_exists()
-        ids = self._api.packages.set_files(self, *files)
-        # update IDs of file objects
-        for i,f in enumerate(files):
-            f.id = ids[i]
-
-    def set_sources(self, *files):
-        """
-        Sets the sources of a DataPackage. Sources are the raw, unmodified
-        files (if they exist) that contains the package's data.
-        """
-        self._check_exists()
-        ids = self._api.packages.set_sources(self, *files)
-        # update IDs of file objects
-        for i,f in enumerate(files):
-            f.id = ids[i]
-
-    def append_to_files(self, *files):
-        """
-        Append to file list of a DataPackage
-        """
-        self._check_exists()
-        return self._api.packages.set_files(self, *files, append=True)
-
-    def append_to_sources(self, *files):
-        """
-        Appends to source list of a DataPackage.
-        """
-        self._check_exists()
-        return self._api.packages.set_sources(self, *files, append=True)
-
     @property
     def sources(self):
         """

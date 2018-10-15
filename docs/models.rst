@@ -96,7 +96,7 @@ The ``DataPackage`` class is used for all non-specific data classes (i.e. classe
 
 .. autoclass:: DataPackage
    :members:
-   :exclude-members: set_sources, set_files, set_view, append_to_sources, append_to_files, set_ready, set_error, set_unavailable
+   :exclude-members: set_ready, set_error, set_unavailable
 
 
 Data-Specific Classes

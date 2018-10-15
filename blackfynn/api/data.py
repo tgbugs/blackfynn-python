@@ -238,19 +238,6 @@ class PackagesAPI(APIBase):
 
         return [File.from_dict(r, api=self.session) for r in resp]
 
-    def set_sources(self, pkg, *files, **kwargs):
-        """
-        Sets the sources of a DataPackage. Sources are the raw, unmodified
-        files (if they exist) that contains the package's data.
-        """
-        pkg_id = self._get_id(pkg)
-        data = [x.as_dict() for x in files]
-        path = self._uri('/{id}/sources', id=pkg_id)
-        # Note: PUT returns list of IDs
-        resp = self._put(path, json=data, params=kwargs)
-
-        return [File.from_dict(r, api=self.session) for r in resp if not isinstance(r, string_types)]
-
     def get_files(self, pkg):
         """
         Returns the files of a DataPackage. Files are the possibly modified
@@ -264,18 +251,6 @@ class PackagesAPI(APIBase):
 
         return [File.from_dict(r, api=self.session) for r in resp]
 
-    def set_files(self, pkg, *files, **kwargs):
-        """
-        Sets the files of a DataPackage. Files are typically modified
-        source files (e.g. converted to a different format).
-        """
-        pkg_id = self._get_id(pkg)
-        data = [x.as_dict() for x in files]
-        path = self._uri('/{id}/files', id=pkg_id)
-        resp = self._put(path, json=data, params=kwargs)
-
-        return [File.from_dict(r, api=self.session) for r in resp if not isinstance(r, string_types)]
-
     def get_view(self, pkg):
         """
         Returns the object(s) used to view the package. This is typically a set of
@@ -288,17 +263,6 @@ class PackagesAPI(APIBase):
             r['content'].update(dict(pkg_id=pkg_id))
 
         return [File.from_dict(r, api=self.session) for r in resp]
-
-    def set_view(self, pkg, *files, **kwargs):
-        """
-        Set the object(s) used to view the package, if not the file(s) or source(s).
-        """
-        pkg_id = self._get_id(pkg)
-        data = [x.as_dict() for x in files]
-        path = self._uri('/{id}/view', id=pkg_id)
-        resp = self._put(path, json=data, params=kwargs)
-
-        return [File.from_dict(r, api=self.session) for r in resp if not isinstance(r, string_types)]
 
     def get_presigned_url_for_file(self, pkg, file):
         args = dict(
