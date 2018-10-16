@@ -41,8 +41,16 @@ setup(
     },
     license = "",
     keywords = "blackfynn client rest api",
-    url = "http://www.blackfynn.com",
     download_url = "",
+    url = "https://github.com/Blackfynn/blackfynn-python",
+    project_urls = {
+        "Blackfynn": "https://www.blackfynn.com",
+        # Do not remove or rename this "Documentation" URL: it is used by
+        # the Sphinx theme to generate links to previous doc versions.
+        # However, you can change the URL with no issues.
+        "Documentation": "https://developer.blackfynn.io/python",
+        "Bug Reports": "https://github.com/Blackfynn/blackfynn-python/issues"
+    },
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Topic :: Utilities",
