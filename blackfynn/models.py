@@ -2133,7 +2133,7 @@ class Dataset(BaseCollection):
         """
         return self._api.templates.apply(self, template)
 
-    def create_graph_view(self, name, root, include):
+    def create_view(self, name, root, include):
         """
         Create a graph view rooted at the given model
 
@@ -2147,7 +2147,7 @@ class Dataset(BaseCollection):
         """
         return self._api.analytics.create_view(self, name, root, include)
 
-    def get_graph_view(self, name):
+    def get_view(self, name):
         """
         Get a graph view with the given name
 
@@ -2159,7 +2159,7 @@ class Dataset(BaseCollection):
         """
         return self._api.analytics.get_view(self, name)
 
-    def graph_views(self):
+    def views(self):
         """
         Returns:
             List of all graph views defined on the dataset
