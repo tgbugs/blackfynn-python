@@ -21,11 +21,6 @@ DEFAULTS = {
     'api_token'                   : None,
     'api_secret'                  : None,
 
-    # streaming
-    'stream_name'                 : 'prod-stream-blackfynn',
-    'stream_aws_region'           : 'us-east-1',
-    'stream_max_segment_size'     : 5000,
-
     # all requests
     'max_request_time'            : 120, # two minutes
     'max_request_timeout_retries' : 2,
@@ -58,7 +53,6 @@ ENVIRONMENT_VARIABLES = {
     'concepts_api_host'      : ('BLACKFYNN_CONCEPTS_API_LOC', str),
     'api_token'              : ('BLACKFYNN_API_TOKEN', str),
     'api_secret'             : ('BLACKFYNN_API_SECRET', str),
-    'stream_name'            : ('BLACKFYNN_STREAM_NAME', str),
 
     'blackfynn_dir'          : ('BLACKFYNN_LOCAL_DIR', str),
     'cache_dir'              : ('BLACKFYNN_CACHE_LOC', str),

@@ -26,7 +26,6 @@ from blackfynn.models import (
     TimeSeriesChannel,
     get_package_class
 )
-from blackfynn.streaming import TimeSeriesStream
 from blackfynn.utils import infer_epoch, usecs_since_epoch, usecs_to_datetime
 
 cache = None
@@ -345,19 +344,6 @@ class TimeSeriesAPI(APIBase):
         path = self._uri('/{pkg_id}/channels/{id}', pkg_id=pkg_id, id=channel_id)
         return self._del(path)
 
-    def get_streaming_credentials(self, ts):
-        """
-        Get the streaming credentials for the given time series package.
-
-        NOTE: this does not currently returns credentials but is still needed
-        to make sure the package is registered in the system as a streaming
-        time series package.
-        """
-
-        pkg_id = self._get_id(ts)
-
-        return self._get(self._uri('/{pkg_id}/streaming_credentials', pkg_id=pkg_id))
-
     # ~~~~~~~~~~~~~~~~~~~
     # Data
     # ~~~~~~~~~~~~~~~~~~~
@@ -453,24 +439,6 @@ class TimeSeriesAPI(APIBase):
         for tmp_df in ts_iter:
             df = df.append(tmp_df)
         return df
-
-    def stream_data(self, ts, dataframe):
-        """
-        Stream timeseries data
-        """
-        stream = TimeSeriesStream(
-            ts,
-            self.session.settings.stream_name,
-            self.session.settings.stream_max_segment_size,
-            self.session.settings.stream_aws_region,
-        )
-        return stream.send_data(dataframe)
-
-    def stream_channel_data(self, channel, series):
-        """
-        Stream channel data
-        """
-        raise NotImplementedError
 
     def get_segments(self, ts, channel, start, stop, gap_factor):
         """

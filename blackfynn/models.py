@@ -986,11 +986,6 @@ class TimeSeries(DataPackage):
         kwargs.pop('package_type', None)
         super(TimeSeries,self).__init__(name=name, package_type="TimeSeries", **kwargs)
 
-
-    def streaming_credentials(self):
-        self._check_exists()
-        return self._api.timeseries.get_streaming_credentials(self)
-
     @property
     def start(self):
         """
