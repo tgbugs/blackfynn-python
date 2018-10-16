@@ -95,8 +95,8 @@ class Blackfynn(object):
             'api_token': api_token,
             'api_secret': api_secret,
             'api_host': host,
-            'api_streaming_host': streaming_host,
-            'api_concepts_host': concepts_host,
+            'streaming_api_host': streaming_host,
+            'concepts_api_host': concepts_host,
             }.items() if v != None })
         self.settings = Settings(profile, overrides, env_override)
 
