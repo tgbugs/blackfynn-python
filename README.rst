@@ -5,19 +5,23 @@ blackfynn-python
     :target: https://travis-ci.org/Blackfynn/blackfynn-python
 .. image:: https://codecov.io/gh/Blackfynn/blackfynn-python/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/Blackfynn/blackfynn-python
+.. image:: https://img.shields.io/pypi/pyversions/blackfynn.svg
+    :target: https://pypi.org/project/blackfynn/
 
 Python client and command line tool for Blackfynn.
 
 Installation
 ------------
 
-To install, simply
+To install, run
 
 .. code:: bash
 
     pip install -U blackfynn
 
-See `install notes <INSTALL.rst>`_ for more details.
+See the `installation notes`_ for more details.
+
+.. _installation notes: https://github.com/Blackfynn/blackfynn-python/blob/master/INSTALL.rst
 
 Documentation
 -------------
@@ -25,7 +29,7 @@ Documentation
 Client and command line documentation can be found on `Blackfynn’s
 documentation website`_.
 
-.. _Blackfynn’s documentation website: http://docs.blackfynn.io/python/latest
+.. _Blackfynn’s documentation website: http://developer.blackfynn.io/python
 
 You can also `contribute`_ to Blackfynn's documentation to improve this project and help others learn.
 
@@ -33,7 +37,7 @@ You can also `contribute`_ to Blackfynn's documentation to improve this project 
 
 Tests
 -------------
-To run tests, make sure you install the requirements before running `pytest`_.
+Install the test requirements before running `pytest`_:
 
 .. _pytest: https://docs.pytest.org/en/latest/usage.html
 
