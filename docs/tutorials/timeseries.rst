@@ -1,3 +1,5 @@
+.. _Blackfynn annotation file (.bfannot): http://help.blackfynn.com/blackfynn-time-series-file-format-bfts
+
 Working with Timeseries Data
 ===============================
 
@@ -23,23 +25,21 @@ catalog operations, please look into the :ref:`working with the data catalog <Wo
     # create a dataset
     ds = bf.create_dataset('Timeseries Dataset')
 
-We will now upload timeseries files to our dataset from the tutorial's data directory.
+We will now upload timeseries files to our dataset from the tutorial's data directory:
 
 .. code-block:: python
    :linenos:
 
-    # upload timeseries files to our dataset
-    ds.upload('example_data/test.edf', 'example_data/testData.nev', 'example_data/testData.ns2');
-    ds.update();
+    ds.upload('example_data/test.edf', 'example_data/testData.nev', 'example_data/testData.ns2')
 
-We have now updated two different tiemseries files into the Blackfynn
+We have now uploaded two different tiemseries files into the Blackfynn
 platform. Even though these two files are in two different formats (one
-is an EDF file, while the other one a NEV/NSx file) the blackfynn importer
+is an EDF file, while the other one is a NEV/NSx file) the Blackfynn importer
 stores them in a general :ref:`Timeseries BF Package <Timeseries>`
 with the same attributes and properties.
 
 We will now explore some of the different things that we can do with
-timeseries data through the python client.
+timeseries data through the Python client.
 
 First, we will get our timeseries packages from the platform, and then,
 we will check some of the channel information in each of the files.
@@ -47,7 +47,7 @@ we will check some of the channel information in each of the files.
 .. code-block:: python
    :linenos:
 
-    # show the items that are stored under our dataset
+    ds.update()
     ds.items
 
 .. code-block:: console
@@ -56,7 +56,8 @@ we will check some of the channel information in each of the files.
      <TimeSeries name='testData' id='N:package:1e2e616b-4c40-4eda-9e62-5114ce462ba1'>]
 
 As it was mentioned before, we can see that the files have been imported
-as *Blackfynn Timeseries* files.
+as *Blackfynn Timeseries* files. Note that you need to call `update()` in order
+to synchronize uploaded items with the client.
 
 .. code-block:: python
    :linenos:
@@ -88,7 +89,7 @@ timeseries packages are associated with a name and a unique ID.
 .. code-block:: python
    :linenos:
 
-    # show general channel informatio for our first file
+    # show general channel information for our first file
     print("---------------- Information for File: {} ----------------\n".format(str(ts1.name)))
 
     # nicely print the names and IDs of the channels for the first timeseries file
@@ -270,30 +271,25 @@ We can see that we used the downloaded channel data in order to compute
 the FFT of the signal. This only shows one example of something that can
 be done with the timeseries data. As it was shown, the ``get_data()``
 method organizes the downloaded data into a Pandas dataframe, which is
-flexible and allows to easily find more information about the data,
+flexible and allows us to easily find more information about the data,
 derive different representations and generally operate on the data.
 
 Adding Annotation Layers to Timeseries Packages
 -----------------------------------------------
 
-Besides manipulating the already existing data, the client allows the
-users to add new channels and even create annotation layers for a given
-package. In this part of the tutorial, we will explore the addition
-annotations to a timeseries package.
-
-the BF platform allows the users to easily add annotation layers and
-annotation events for each layer. Annotations can be added to a specific
+Besides manipulating the already existing data, the client allows
+users to add new channels and create annotation layers and annotation events
+for a given package. In this part of the tutorial, we will explore the addition
+annotations to a timeseries package. Annotations can be added to a specific
 channel (or group of channels) for focal events or to all the channels
 for generalized observations.
 
-Through the python client, there are two ways to add annotations to a
-timeseries package. The first way is through the ``insert_annotation()``
-method, which is very simple and convenient when adding a small number
-of annotations to a file. The second way is through a :ref:`Blackfynn
-annotation file (.bfannot) <Blackfynn Annotation (.bfannot)>`, which is a simple CSV
-based format that facilitates the attatchment of a large number of
-annotations to one or several timeseries files. In this section, we show
-how to add annotations to a timeseries file in both ways.
+Through the python client, there are two ways to add annotations to a timeseries
+package. The first way is through the ``insert_annotation()`` method, which is
+convenient when adding a small number of annotations to a file. The second way
+is through a `Blackfynn annotation file (.bfannot)`_ which is a simple CSV based
+format that facilitates the attachment of a large number of annotations to one
+or several timeseries files.
 
 Adding Annotations Individually
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -305,23 +301,21 @@ First, we will show how to add annotation layers to a file through the
    :linenos:
 
     # insert annotations
-    ts1.insert_annotation('new_layer_1', 'sample_event_1', start=ts1.start, end=(ts1.start+20000000), channel_ids='N:channel:f972434b-e2ce-401d-b4ec-aa105cf83ab5');
-    ts1.insert_annotation('new_layer_1', 'sample_event_2', start=ts1.start, end=(ts1.start+60000000), channel_ids='N:channel:bfdfaa97-6b56-4c48-9809-4cacd17e8211');
-    ts1.insert_annotation('new_layer_2', 'sample_event', start=ts1.start, end=(ts1.start+4000000));
+    ts1.insert_annotation('new_layer_1', 'sample_event_1', start=ts1.start, end=(ts1.start+20000000), channel_ids=ts1.channels[0].id)
+    ts1.insert_annotation('new_layer_1', 'sample_event_2', start=ts1.start, end=(ts1.start+60000000), channel_ids=ts1.channels[1].id)
+    ts1.insert_annotation('new_layer_2', 'sample_event', start=ts1.start, end=(ts1.start+4000000))
     ts1.update()
 
-    # print current layers
     print("\nCurrent Layers:")
-    for layer in ts1.layers:
-        print(layer)
+    print(ts1.layers)
 
     # get entire annotation layer
     annot_layer1 = ts1.get_layer('new_layer_1')
 
     # print annotation information for first layer
-    print("\n---------------- Information for Layer: {} ----------------\n".format(str(annot_layer1.name)))
+    print("\nInformation for Layer:", annot_layer1.name)
     for annotation in annot_layer1.annotations():
-        print("label:", annotation.label, "channels: ", annotation.channel_ids, "start: ", annotation.start, "end: ", annotation.end)
+        print("label:", annotation.label, "channels:", annotation.channel_ids, "start:", annotation.start, "end:", annotation.end)
 
 
 .. code-block:: console
@@ -331,13 +325,12 @@ First, we will show how to add annotation layers to a file through the
     Returning existing layer [<TimeSeriesAnnotationLayer name='new_layer_2' id='307'>]
 
     Current Layers:
-    <TimeSeriesAnnotationLayer name='new_layer_2' id='307'>
-    <TimeSeriesAnnotationLayer name='new_layer_1' id='306'>
+    [<TimeSeriesAnnotationLayer name='new_layer_1' id='306'>
+     <TimeSeriesAnnotationLayer name='new_layer_2' id='307'>]
 
-    ---------------- Information for Layer: new_layer_1 ----------------
-
-    label: sample_event_1 channels:  [u'N:channel:f972434b-e2ce-401d-b4ec-aa105cf83ab5'] start:  1301921822000000 end:  1301921842000000
-    label: sample_event_2 channels:  [u'N:channel:bfdfaa97-6b56-4c48-9809-4cacd17e8211'] start: 1301921822000000 end:  1301921882000000
+    Information for Layer: new_layer_1
+    label: sample_event_1 channels: [u'N:channel:33525e64-03c0-4241-9ecf-52e0ec380040'] start: 1301921822000000 end: 1301921842000000
+    label: sample_event_2 channels: [u'N:channel:1ba73070-b6ad-4cdf-b45e-995237760528'] start: 1301921822000000 end: 1301921882000000
 
 
 We can see that we have created two new annotation layers. If the
@@ -352,15 +345,13 @@ annotations for events in different channels  (``sample_event_1`` and ``sample_e
 In addition, we created a second annotation layer called ``new_layer_2`` with a generalized event
 called ``sample_event``.
 
-.. note:: The ``start`` and ``end`` times for the annotation events must be specified in microseconds.
 
 Adding Annotations from a File
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The previous section showed how to add annotatios individually. However,
-if there is a large dataset with several annotations, it is much more
-convenient to add the annotations from a file. The :ref:`BF annotation file format <Blackfynn Annotation (.bfannot)>` allows to do this in a straightforward way.
-In this section, we demonstrate how to do this.
+If you have a large dataset with several annotations, it is much more convenient
+to add the annotations from a file. The `Blackfynn annotation file (.bfannot)`_
+format allows you to do this in a straightforward way.
 
 We will add and get a new timeseries file that does not contain any
 annotations.
@@ -437,7 +428,7 @@ annotations.
 
 
 We see that the new file does not currently have any annotation layer.
-We will now show the ``bfannot`` file that we will be appending to the
+We will now show the ``.bfannot`` file that we will be appending to the
 file.
 
 .. code-block:: python
@@ -446,7 +437,7 @@ file.
     # read .bfannot file to pandas dataframe
     import pandas as pd
 
-    bf_annot=pd.DataFrame.from_csv('example_data/test.bfannot')
+    bf_annot = pd.DataFrame.from_csv('example_data/test.bfannot')
     bf_annot
 
 .. csv-table:: test.bfannot
@@ -492,7 +483,7 @@ to our timeseries package. We can now see the added events individually.
     layer1 = ts.get_layer('layer1')
 
     # print annotation information for first layer
-    print("\n---------------- Information for Layer: {} ----------------\n".format(str(layer1.name)))
+    print("Information for Layer:", layer1.name)
     for annotation in layer1.annotations():
         print("label:", annotation.label, "channels: ", annotation.channel_ids, "start: ", annotation.start, "end: ", annotation.end)
 
@@ -500,14 +491,13 @@ to our timeseries package. We can now see the added events individually.
     layer2 = ts.get_layer('layer2')
 
     # print annotation information for first layer
-    print("\n---------------- Information for Layer: {} ----------------\n".format(str(layer2.name)))
+    print("\nInformation for Layer:", layer2.name)
     for annotation in layer2.annotations():
         print("label:", annotation.label, "channels: ", annotation.channel_ids, "start: ", annotation.start, "end: ", annotation.end)
 
 .. code-block:: console
 
-    ---------------- Information for Layer: layer1 ----------------
-
+    Information for Layer: layer1
     label: 'event8' channels:  [u'N:channel:4d935925-7c20-42b5-b6bf-ee403295ffa9'] start:  0 end:  8000000
     label: 'event2' channels:  [u'N:channel:285621c9-e011-41bc-b182-9fa2d5d55707'] start:  0 end:  4000000
     label: 'event7' channels:  [u'N:channel:b376333b-f6fd-45c4-b6b6-d058f4ec14af'] start:  0 end:  7000000
@@ -517,8 +507,7 @@ to our timeseries package. We can now see the added events individually.
     label: 'event4' channels:  [u'N:channel:b18f17c5-ff4b-430a-a852-5c14c0d01047'] start:  1000000 end:  15000000
     label: 'event3' channels:  [u'N:channel:7a5231ba-1caf-4dd7-8486-93ac31b20ca3'] start:  5000000 end:  10000000
 
-    ---------------- Information for Layer: layer2 ----------------
-
+    Information for Layer: layer2
     label: 'Newevent1' channels:  [u'N:channel:5a505ec2-93b3-4d07-a0dc-eaa9ac7f4661'] start:  0 end:  4000000
     label: 'Newevent2' channels:  [u'N:channel:38ccd079-7ee6-4d76-815c-1db54ad3ce4a'] start:  3000000 end:  6000000
 

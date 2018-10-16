@@ -798,7 +798,7 @@ class DataPackage(BaseDataNode):
 
     def relate_to(self, *records):
         """
-        Relate current ``DataPackage`` to one or more ``Record``s
+        Relate current ``DataPackage`` to one or more ``Record`` objects.
 
         Args:
             records (list of Records): Records to relate to data package
@@ -2888,7 +2888,7 @@ class Model(BaseModelNode):
             values_list (list): array of dictionaries corresponding to record values.
 
         Returns:
-            Array of newly created ``Record``s.
+            List of newly created ``Record`` objects.
 
         Example::
 
@@ -2939,11 +2939,11 @@ class Model(BaseModelNode):
         Returns:
             ``None``
 
-            Logs the list of records that failed to delete.
+        Logs the list of records that failed to delete.
 
         Example::
 
-          mouse.delete(mouse_002, 123456789, mouse_003.id)
+            mouse.delete(mouse_002, 123456789, mouse_003.id)
 
         """
         result = self._api.concepts.delete_instances(self.dataset_id, self, *records)
@@ -2953,17 +2953,20 @@ class Model(BaseModelNode):
 
     def get_related(self):
         """
-            Returns a list of related model types and counts of those
-            relationships. "Related" indicates that the model could be
-            connected to the current model via some relationship, i.e.
-            B is "related to" A if there exist A -[relationship]-> B. Note that
-            the directionality matters. If B is the queried model, A would not
-            appear in the list of "related" models.
+        Returns a list of related model types and counts of those
+        relationships.
+
+        "Related" indicates that the model could be connected to the current
+        model via some relationship, i.e.  ``B`` is "related to" ``A`` if there
+        exist ``A -[relationship]-> B``. Note that the directionality
+        matters. If ``B`` is the queried model, ``A`` would not appear in the
+        list of "related" models.
 
         Returns:
-            List of ``Model``s related via a defined relationship
+            List of ``Model`` objects related via a defined relationship
 
         Example::
+
             related_models = mouse.get_related()
 
         """
@@ -3005,9 +3008,8 @@ class Record(BaseRecord):
             group (bool, optional):               If true, group results by model type (dict)
 
         Returns:
-            List of ``Record``s
-
-            If ``group``, then result is dictionary of ``RecordSet``s where keys are model names.
+            List of ``Record`` objects. If ``group`` is ``True``, then the result
+            is a dictionary of ``RecordSet`` objects keyed by model names.
 
         Example:
             Get all connected records of type ``disease`` with relationship ``has``::
@@ -3051,26 +3053,31 @@ class Record(BaseRecord):
 
     def relate_to(self, destinations, relationship_type='related_to', values=None, direction='to'):
         """
-        Relate record to one or more ``Record``s or ``DataPackage``s.
+        Relate record to one or more ``Record`` or ``DataPackage`` objects.
 
         Args:
-            destinations (list of Record or DataPackage, optional): A list containing the ``Record``s and/or ``DataPackage``s to relate to current record
-            relationship_type (RelationshipType, str, optional):    Type of relationship to create, default: 'related_to'
-            values (list of dictionaries, options):                 A list of dictionaries corresponding to relationship values
-            direction (str, optional):                              Relationship direction. Valid values ['to', 'from'], default 'to'.
+            destinations (list of Record or DataPackage):
+                A list containing the ``Record`` or ``DataPackage`` objects to relate to current record
+            relationship_type (RelationshipType, str, optional):
+                Type of relationship to create
+            values (list of dictionaries, optional):
+                A list of dictionaries corresponding to relationship values
+            direction (str, optional):
+                Relationship direction. Valid values are ``'to'`` and ``'from'``
 
         Returns:
-            List of ``Relationship``s created.
+            List of created ``Relationship`` objects.
 
-        Notes:
-            Destinations must all be of type ``DataPackage`` or ``Record``, you cannot mix destination types.
+        .. note::
+
+            Destinations must all be of type ``DataPackage`` or ``Record``; you cannot mix destination types.
 
         Example:
             Relate to a single ``Record``, define relationship type::
 
                 mouse_001.relate_to(lab_009, 'located_at')
 
-            Relate to multiple ``DataPackage``s::
+            Relate to multiple ``DataPackage`` objects::
 
                 mouse_001.relate_to([eeg, mri1, mri2])
         """
@@ -3274,19 +3281,19 @@ class RelationshipType(BaseModelNode):
 
         Args:
             items (list): List of relationships to be created.
-                            Each relationship should be either a dictionary or tuple.
+                Each relationship should be either a dictionary or tuple.
 
-                            If relationships are dictionaries, they are required to have
-                            ``from``/``to`` or ``source``/``destination`` keys.
-                            There is an optional ``values`` key which can be used
-                            to attach metadata to the relationship;
-                            ``values`` should be a dictionary with key/value pairs.
+                If relationships are dictionaries, they are required to have
+                ``from``/``to`` or ``source``/``destination`` keys.
+                There is an optional ``values`` key which can be used
+                to attach metadata to the relationship;
+                ``values`` should be a dictionary with key/value pairs.
 
-                            If relationships are tuples, they must be in the form
-                            ``(source, dest)``.
+                If relationships are tuples, they must be in the form
+                ``(source, dest)``.
 
         Returns:
-            Array of newly created ``Relationships``s
+            Array of newly created ``Relationships`` objects
 
         Example:
 
@@ -3478,14 +3485,14 @@ class RecordSet(BaseInstanceList):
 
     def as_dataframe(self, record_id_column_name=None):
         """
-        Converts the list of ``Record``s to a pandas DataFrame
+        Convert the list of ``Record`` objects to a pandas DataFrame
 
         Args:
-          record_id_column_name (string): If set, a column with the desired name will be
-                                          prepended to this dataframe that contains record ids.
+            record_id_column_name (string): If set, a column with the desired
+                name will be prepended to this dataframe that contains record ids.
 
         Returns:
-          pd.DataFrame
+            pd.DataFrame
 
         """
         cols = list(self.type.schema.keys())
@@ -3513,17 +3520,19 @@ class RelationshipSet(BaseInstanceList):
 
     def as_dataframe(self):
         """
-        Converts the list of ``Relationship`` to a pandas DataFrame
+        Converts the list of ``Relationship`` objects to a pandas DataFrame
 
         Returns:
-          pd.DataFrame
+            pd.DataFrame
 
-        Note:
+        .. note::
+
           In addition to the values in each relationship instance, the DataFrame
           contains three columns that describe each instance:
-            ``__source__``: ID of the instance's source
-            ``__destination__``: ID of the instance's destination
-            ``__type__``: Type of relationship that the instance is
+
+            - ``__source__``: ID of the instance's source
+            - ``__destination__``: ID of the instance's destination
+            - ``__type__``: Type of relationship that the instance is
         """
         cols = ['__source__', '__destination__', '__type__']
         cols.extend(self.type.schema.keys())

@@ -129,27 +129,47 @@ Tabular
    :show-inheritance:
 
 
-.. Concepts and Relationships Classes
-.. ----------------------------------
+Concepts and Relationships
+--------------------------
 
-.. Concepts
-.. ^^^^^^^^^^^^
+Models
+^^^^^^^
 
-.. .. autoclass:: Concept
-..    :members:
-..    :show-inheritance:
+.. autoclass:: Model
+   :members:
+   :show-inheritance:
 
-.. .. autoclass:: ConceptInstance
-..    :members:
-..    :show-inheritance:
+.. autoclass:: ModelProperty
+   :members:
+   :show-inheritance:
 
-.. Relationships
-.. ^^^^^^^^^^^^^^^
+.. autoclass:: ModelPropertyType
+   :members:
+   :show-inheritance:
 
-.. .. autoclass:: Relationship
-..    :members:
-..    :show-inheritance:
+.. autoclass:: ModelPropertyEnumType
+   :members:
+   :show-inheritance:
 
-.. .. autoclass:: Relationship
-..    :members:
-..    :show-inheritance:
+.. autoclass:: Record
+   :members:
+   :show-inheritance:
+
+.. autoclass:: RecordSet
+   :members:
+   :show-inheritance:
+
+Relationships
+^^^^^^^^^^^^^^^
+
+.. autoclass:: RelationshipType
+   :members:
+   :show-inheritance:
+
+.. autoclass:: Relationship
+   :members:
+   :show-inheritance:
+
+.. autoclass:: RelationshipSet
+   :members:
+   :show-inheritance:

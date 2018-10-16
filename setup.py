@@ -41,7 +41,6 @@ setup(
     },
     license = "",
     keywords = "blackfynn client rest api",
-    download_url = "",
     url = "https://github.com/Blackfynn/blackfynn-python",
     project_urls = {
         "Blackfynn": "https://www.blackfynn.com",
@@ -58,5 +57,5 @@ setup(
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
-    ],
+    ]
 )

@@ -1,14 +1,13 @@
 Working with Tabular Data
 ===============================
 
-In this section of the tutorial, we will show how to work with tabular data using the Blackfynn
-Python client. We recommend you that, in order to get the most out of this tutorial, you
-look into the :ref:`Working with the data catalog` tutorial first.
-
-Through this tutorial, we will show some examples that will show some of
-the methods that the Blackfynn python client offers for working with
-tabular data. You can find the details about the supported file formants
-in the :ref:`file formats <Supported File Formats>` section.
+In this section of the tutorial, we will show how to work with tabular data
+using the Blackfynn Python client. We recommend that, in order to get the
+most out of this tutorial, you look into the :ref:`Working with the data
+catalog` tutorial first. You can find the details about supported file formats
+in the `Supported File Formats
+<http://help.blackfynn.com/general-information/supported-file-formats>`_
+section.
 
 We will be using the demographics and disease severity information file
 for the Gait in Parkinson's Disease database. We have included this
@@ -35,14 +34,18 @@ the download parameters.
     # create a dataset in the platform to save our tabular data and get dataset object
     ds = bf.create_dataset('Tabular Dataset')
 
-.. code-block:: python
+    # upload file to platform
+    ds.upload('example_data/gait.csv')
+
+    print(ds.items)
+
+.. code-block:: console
    :linenos:
 
-    # upload file to platform
-    ds.upload('example_data/gait.csv');
+   [<Tabular name='gait' id='N:package:35716bd1-dde0-4c09-b7ab-04a63b0ac29f']
 
-    for item in ds:
-        print("Type:", item.type, "|", "Name:", item.name, "|" , "ID:", item.id)
+We see that our package has been successfully uploaded to the Blackfynn
+platform and that it has been assigned the type ``Tabular``.
 
 .. note::
      If you are uploading large files, you might not see all of your
@@ -51,15 +54,6 @@ the download parameters.
      through the ``state`` attribute of the package's object. If the
      package is done uploading and ready, ``pkg.state`` should return
      ``READY``.
-
-.. code-block:: console
-   :linenos:
-
-    Type: Tabular | Name: gait | ID: N:package:35716bd1-dde0-4c09-b7ab-04a63b0ac29f
-
-
-We see that our package has been successfully uploaded to the Blackfynn
-platform and that it has been assigned the type ``Tabular``.
 
 Downloading Tabular Data
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -73,62 +67,66 @@ First, we will obtain the entire dataset.
 .. code-block:: python
    :linenos:
 
-    # get the package object through its ID
-    tb = bf.get('N:package:35716bd1-dde0-4c09-b7ab-04a63b0ac29f')
+    # get the tabular package from the dataset
+    tb = ds.items[0]
 
     # get all the data
     data = tb.get_data()
 
-    # print rows and column information for the data
-    print("Data has {} rows and {} columns".format(len(data.index),len(data.columns)))
-    print("First Index: {}".format(data.index[0]))
-    print("Last Index: {}".format(data.index[len(data.index)-1]))
+    print('Columns in the data:')
+    print(list(data.columns))
 
-    # print the column names for the data
-    print("\nColumns in the data:")
-    print(" | ".join(data.columns))
-
-    data
+    print(data)
 
 .. code-block:: console
 
-    Data has 166 rows and 16 columns
-    First Index: 0
-    Last Index: 165
-
     Columns in the data:
-    id | subject_type | speed_01 | speed_10 | reference | v_lastmodified_epoch | v_status | v_uuid | gender | age | height | weight | hoehnyahr | updrs | updrsm | tuag
+    ['id', 'subject_type', 'speed_01', 'speed_10', 'reference', 'v_lastmodified_epoch', 'v_status', 'v_uuid', 'gender', 'age', 'height', 'weight', 'hoehnyahr', 'updrs', 'updrsm', 'tuag']
 
-.. csv-table:: data
-   :header-rows: 1
-   :widths: 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
-   :file: ../static/files/gaitParkinsons_full.csv
+    id                             subject_type  ...    updrsm   tuag
+    0    GaPt03  Parkinsons Patient, Gait study  ...      10.0  36.34
+    1    GaPt04  Parkinsons Patient, Gait study  ...       8.0  11.00
+    2    GaPt05  Parkinsons Patient, Gait study  ...       5.0  14.50
+    3    GaPt06  Parkinsons Patient, Gait study  ...      13.0  10.47
+    4    GaPt07  Parkinsons Patient, Gait study  ...      22.0  18.34
+    5    GaPt08  Parkinsons Patient, Gait study  ...       8.0  10.11
+    6    GaPt09  Parkinsons Patient, Gait study  ...      17.0  12.70
+    7    GaPt12  Parkinsons Patient, Gait study  ...       7.0   8.37
+    8    GaPt13  Parkinsons Patient, Gait study  ...      21.0  15.51
+    9    GaPt14  Parkinsons Patient, Gait study  ...      19.0    NaN
+    ...
+    159  SiCo24     Control Patient, Gait study  ...       NaN  11.05
+    160  SiCo25     Control Patient, Gait study  ...       NaN   9.16
+    161  SiCo26     Control Patient, Gait study  ...       NaN   9.20
+    162  SiCo27     Control Patient, Gait study  ...       NaN  12.52
+    163  SiCo28     Control Patient, Gait study  ...       NaN  12.65
+    164  SiCo29     Control Patient, Gait study  ...       NaN  11.41
+    165  SiCo30     Control Patient, Gait study  ...       NaN   8.68
+
+    [166 rows x 16 columns]
 
 
-We see that the data was read into a dataframe, and that we read all the
+We see that ``get_data()`` returns a dataframe, and that we read all the
 166 rows and 16 columns of data. However, it is also possible to read
-the data partially, which is useful in the prescence of large datasets.
+the data partially, which is useful in the presence of large datasets.
 
 .. code-block:: python
    :linenos:
 
     # get only the first 5 rows
     data = tb.get_data(limit=5)
-
-    # print rows and column information for the data
-    print("Data has {} rows and {} columns".format(len(data.index),len(data.columns)))
-
-    data
-
+    print(data)
 
 .. code-block:: console
 
-    Data has 5 rows and 16 columns
+    id                           subject_type  ...    updrsm   tuag
+    0  GaPt03  Parkinsons Patient, Gait study  ...      10.0  36.34
+    1  GaPt04  Parkinsons Patient, Gait study  ...       8.0  11.00
+    2  GaPt05  Parkinsons Patient, Gait study  ...       5.0  14.50
+    3  GaPt06  Parkinsons Patient, Gait study  ...      13.0  10.47
+    4  GaPt07  Parkinsons Patient, Gait study  ...      22.0  18.34
 
-.. csv-table:: data
-   :header-rows: 1
-   :widths: 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
-   :file: ../static/files/gaitParkinsons_0_to_4.csv
+    [5 rows x 16 columns]
 
 We see that in this case we only got the first 5 rows of data, because
 we specified that number of rows using the ``limit`` parameter for
@@ -142,22 +140,25 @@ demonstrated as follows.
 .. code-block:: python
    :linenos:
 
-    # get only the first 5 rows
+    # get rows 20-30
     data = tb.get_data(limit=10, offset=20)
-
-    # print rows and column information for the data
-    print("Data has {} rows and {} columns".format(len(data.index),len(data.columns)))
-
-    data
+    print(data)
 
 .. code-block:: console
 
-    Data has 10 rows and 16 columns
+    id                           subject_type  ...    updrsm   tuag
+    0  GaPt24  Parkinsons Patient, Gait study  ...      15.0  11.42
+    1  GaPt25  Parkinsons Patient, Gait study  ...      18.0  15.22
+    2  GaPt26  Parkinsons Patient, Gait study  ...       5.0   7.27
+    3  GaPt27  Parkinsons Patient, Gait study  ...      10.0   7.88
+    4  GaPt28  Parkinsons Patient, Gait study  ...      29.0  13.02
+    5  GaPt29  Parkinsons Patient, Gait study  ...      16.0  10.16
+    6  GaPt30  Parkinsons Patient, Gait study  ...      12.0   9.91
+    7  GaPt31  Parkinsons Patient, Gait study  ...      13.0  12.60
+    8  GaPt32  Parkinsons Patient, Gait study  ...      24.0  11.22
+    9  GaPt33  Parkinsons Patient, Gait study  ...      31.0  11.97
 
-.. csv-table:: data
-   :header-rows: 1
-   :widths: 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
-   :file: ../static/files/gaitParkinsons_20_to_30.csv
+    [10 rows x 16 columns]
 
 .. note::
    The maximum default value for ``limit`` is 1000. In order to get larger chunks of data we
@@ -186,22 +187,23 @@ plotting the data that we already have.
     data = tb.get_data()
 
     # give the index a name (ind)
-    data['ind']= data.index
+    data['ind'] = data.index
 
     # define x and y variables (and get rid of undefined entries)
-    x=data['updrs'].fillna(0)
-    y=data['updrsm'].fillna(0)
-    plt.scatter(x,y, color='c')
+    x = data['updrs'].fillna(0)
+    y = data['updrsm'].fillna(0)
+    plt.scatter(x, y, color='c')
 
     z = np.polyfit(x, y, 1)
     p = np.poly1d(z)
 
-    plt.plot(x,p(x),"r--")
+    plt.plot(x, p(x), "r--")
 
     # adjust axes of plot and add labels
     axes = plt.gca()
     axes.set_title('UPDRSM vs. UPDRS')
-    axes.set_xlabel('UPDRS'); axes.set_ylabel('UPDRSM')
+    axes.set_xlabel('UPDRS')
+    axes.set_ylabel('UPDRSM')
 
     plt.show()
 
@@ -210,5 +212,5 @@ plotting the data that we already have.
 .. note::
    The reason for presenting the example above is to illustrate how simple
    it can be to work with the downloaded dataframe. This is just
-   a very easy example to get you stated in the analysis and exploration of
+   a very easy example to get you started in the analysis and exploration of
    your tabular datasets.
