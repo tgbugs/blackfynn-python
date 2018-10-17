@@ -42,9 +42,9 @@ def test_get_view(simple_graph, graph_view):
     assert got_view.included_models == ['medication']
 
 
-# def test_all_views(simple_graph, graph_view):
-#     dataset = simple_graph.dataset
-#     assert dataset.views() == [graph_view]
+def test_all_views(simple_graph, graph_view):
+    dataset = simple_graph.dataset
+    assert dataset.views() == [graph_view]
 
 
 # def test_graph_view_instances(simple_graph, graph_view):

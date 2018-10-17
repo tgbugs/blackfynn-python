@@ -2166,7 +2166,9 @@ class Dataset(BaseCollection):
         Returns:
             List of all graph views defined on the dataset
         """
-        return self._api.analytics.get_all_views(self)
+        views = self._api.analytics.get_all_views(self)
+        # TODO: this is inefficient. Can we batch this call?
+        return [view.latest() for view in views]
 
     @property
     def _get_method(self):
