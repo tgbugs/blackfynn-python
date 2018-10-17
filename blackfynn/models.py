@@ -2159,7 +2159,7 @@ class Dataset(BaseCollection):
         Returns:
             GraphView
         """
-        return self._api.analytics.get_view(self, name)
+        return self._api.analytics.get_view(self, name).latest()
 
     def views(self):
         """
@@ -3669,7 +3669,7 @@ class GraphView(BaseRecord):
 
     def latest(self):
         """
-        Return most recent snapshot.
+        Return most recent version of the view.
         """
         return self.versions()[-1]
 
@@ -3681,14 +3681,14 @@ class GraphView(BaseRecord):
         return super(GraphView, self).__eq__(other) and self.instance == other.instance
 
 
-class GraphViewSnapshot(BaseRecord):
+class GraphViewInstance(BaseRecord):
 
     # TODO: do we need a notion of the status of a snapshot? eg READY?
     # or just fail if the snapshot is not ready?
 
     def __init__(self, *args, **kwargs):
-        kwargs['type'] = 'GraphViewSnapshot'
-        super(GraphViewSnapshot, self).__init__(*args, **kwargs)
+        kwargs['type'] = 'GraphViewInstance'
+        super(GraphViewInstance, self).__init__(*args, **kwargs)
 
     def get_data(self):
         """
@@ -3698,4 +3698,4 @@ class GraphViewSnapshot(BaseRecord):
 
     @as_native_str()
     def __repr__(self):
-        return u"<GraphViewSnapshot created='{}' id='{}'>".format(self.created_at, self.id)
+        return u"<GraphViewInstance created='{}' id='{}'>".format(self.created_at, self.id)

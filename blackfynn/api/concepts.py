@@ -8,7 +8,7 @@ from blackfynn.api.base import APIBase
 from blackfynn.models import (
     DataPackage,
     GraphView,
-    GraphViewSnapshot,
+    GraphViewInstance,
     Model,
     ModelProperty,
     ModelTemplate,
@@ -590,10 +590,10 @@ class AnalyticsAPI(APIBase):
                         **self._kwargs(view.dataset, view))
         resp = self._post(uri)
         resp = _with_dataset(resp, view.dataset)
-        return GraphViewSnapshot.from_dict(resp, api=self.session)
+        return GraphViewInstance.from_dict(resp, api=self.session)
 
     def get_all_view_instances(self, view):
         uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/{graphViewId}/instances',
                         **self._kwargs(view.dataset, view))
         resp = self._get(uri)
-        return [GraphViewSnapshot.from_dict(_with_dataset(r, view.dataset), api=self.session) for r in resp]
+        return [GraphViewInstance.from_dict(_with_dataset(r, view.dataset), api=self.session) for r in resp]
