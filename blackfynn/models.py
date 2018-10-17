@@ -15,6 +15,7 @@ from uuid import uuid4
 import dateutil
 import numpy as np
 import pandas as pd
+import pyarrow
 import pytz
 import requests
 
@@ -3682,12 +3683,20 @@ class GraphView(BaseRecord):
 
         # TODO: check that response is ready
         # TODO: refactor - read from stream directly
+        fname = 'temp.out.pq'
         with requests.get(url, stream=True) as r:
-            with io.open('temp.out.pq', 'wb') as f:
+            with io.open(fname, 'wb') as f:
                 for chunk in r.iter_content(chunk_size=1024):
                     if chunk:
                         f.write(chunk)
-        return pd.read_parquet('temp.out.pq')
+        try:
+            return pd.read_parquet(fname)
+        except pyarrow.ArrowIOError:
+            with open(fname) as f:
+                if '<Code>NoSuchKey</Code><Message>The specified key does not exist.</Message>' in f.read():
+                    raise Exception("View has not finished processing. Try again soon.")
+                else:
+                    raise
 
     @as_native_str()
     def __repr__(self):
