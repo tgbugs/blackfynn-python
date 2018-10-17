@@ -564,11 +564,19 @@ class AnalyticsAPI(APIBase):
     def create_view(self, dataset, name, root, include):
         uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views',
                         **self._kwargs(dataset))
-        resp = self._post(uri, json={
-            'name': name,
-            'rootModel': root,
-            'includedModels': include,
-        })
+
+        try:
+            resp = self._post(uri, json={
+                'name': name,
+                'rootModel': root,
+                'includedModels': include,
+            })
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 400:
+                raise Exception(e.response.text)
+            else:
+                raise
+
         resp = _with_dataset(resp, dataset)
         return GraphView.from_dict(resp, api=self.session)
 

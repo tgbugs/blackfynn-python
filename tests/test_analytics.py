@@ -53,3 +53,12 @@ def test_view_versions(graph_view):
     assert versions[-1] == v3
 
     assert graph_view.latest() == v3
+
+
+def test_cant_create_duplicate_views(graph_view):
+    dataset = graph_view.dataset
+    with pytest.raises(Exception):
+        dataset.create_view(graph_view.name, 'medication', ['patient'])
+
+    with pytest.raises(Exception):
+        dataset.create_view('different-name-same-models', graph_view.root_model, graph_view.included_models)
