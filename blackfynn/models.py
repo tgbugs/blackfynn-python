@@ -4,6 +4,7 @@ from __future__ import absolute_import, division, print_function
 from builtins import object, zip
 from future.utils import as_native_str, string_types, PY2
 
+import copy
 import datetime
 import io
 import os
@@ -3641,6 +3642,14 @@ class GraphView(BaseRecord):
         kwargs['type'] = 'GraphView'
 
         super(GraphView, self).__init__(*args, **kwargs)
+
+    def refresh(self):
+        """
+        Update this view with the latest version of the data.
+        """
+        new_view = copy.copy(self)
+        self.instance = self._api.analytics.create_view_instance(new_view)
+        return new_view
 
     def snapshot(self):
         """
