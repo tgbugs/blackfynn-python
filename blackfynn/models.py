@@ -2146,7 +2146,8 @@ class Dataset(BaseCollection):
         Returns:
             GraphView
         """
-        return self._api.analytics.create_view(self, name, root, include)
+        view = self._api.analytics.create_view(self, name, root, include)
+        return view.refresh()
 
     def get_view(self, name):
         """
@@ -3638,24 +3639,24 @@ class GraphView(BaseRecord):
         self.root_model = root_model
         self.included_models = included_models
         self.dataset = dataset
+        self.instance = None
 
         kwargs['type'] = 'GraphView'
 
-        super(GraphView, self).__init__(*args, **kwargs)
+        super(GraphView, self).__init__(*args, **kwargs)\
+
+    def _pin(self, snapshot):
+        # Attach a specific snapshot (instance) of the data to the view,
+        # returning a new view object
+        new_view = copy.copy(self)
+        new_view.instance = snapshot
+        return new_view
 
     def refresh(self):
         """
         Update this view with the latest version of the data.
         """
-        new_view = copy.copy(self)
-        self.instance = self._api.analytics.create_view_instance(new_view)
-        return new_view
-
-    def snapshot(self):
-        """
-        Create a new instance of the view
-        """
-        return self._api.analytics.create_view_instance(self)
+        return self._pin(self._api.analytics.create_view_instance(self))
 
     def all_snapshots(self):
         """
@@ -3667,11 +3668,15 @@ class GraphView(BaseRecord):
         """
         Return most recent snapshot.
         """
-        return max(self.all_snapshots(), key=lambda x: x.created_at)
+        instances = self._api.analytics.get_all_view_instances(self)
+        return self._pin(max(instances, key=lambda x: x.created_at))
 
     @as_native_str()
     def __repr__(self):
         return u"<GraphView name='{}' id='{}'>".format(self.name, self.id)
+
+    def __eq__(self, other):
+        return super(GraphView, self).__eq__(other) and self.instance == other.instance
 
 
 class GraphViewSnapshot(BaseRecord):
