@@ -4,6 +4,7 @@ requests>=2.18
 numpy>=1.13
 pandas>=0.20
 protobuf==3.2.0
+pyarrow>=0.10.0
 configparser>=3.5
 future>=0.15.0
 # CLI

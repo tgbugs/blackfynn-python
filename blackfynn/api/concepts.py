@@ -550,7 +550,7 @@ class AnalyticsAPI(APIBase):
     base_uri = '/analytics'
     name = 'analytics'
 
-    def _kwargs(self, dataset, view=None, **kwargs):
+    def _kwargs(self, dataset, view=None, instance=None, **kwargs):
         kwargs.update({
             'orgId': self._get_int_id(self.session._context),
             'datasetId': self._get_int_id(dataset)
@@ -558,6 +558,9 @@ class AnalyticsAPI(APIBase):
 
         if view is not None:
             kwargs['graphViewId'] = self._get_id(view)
+
+        if instance is not None:
+            kwargs['graphViewInstanceId'] = self._get_id(instance)
 
         return kwargs
 
@@ -605,3 +608,8 @@ class AnalyticsAPI(APIBase):
                         **self._kwargs(view.dataset, view))
         resp = self._get(uri)
         return [GraphViewInstance.from_dict(_with_dataset(r, view.dataset), api=self.session) for r in resp]
+
+    def get_parquet_url(self, view):
+        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/instances/{graphViewInstanceId}/url',
+                        **self._kwargs(view.dataset, instance=view.instance))
+        return self._get(uri)

@@ -3673,6 +3673,22 @@ class GraphView(BaseRecord):
         """
         return self.versions()[-1]
 
+    def as_dataframe(self):
+        """
+        Returns:
+            pd.DataFrame:
+        """
+        url = self._api.analytics.get_parquet_url(self)
+
+        # TODO: check that response is ready
+        # TODO: refactor - read from stream directly
+        with requests.get(url, stream=True) as r:
+            with io.open('temp.out.pq', 'wb') as f:
+                for chunk in r.iter_content(chunk_size=1024):
+                    if chunk:
+                        f.write(chunk)
+        return pd.read_parquet('temp.out.pq')
+
     @as_native_str()
     def __repr__(self):
         return u"<GraphView name='{}' id='{}'>".format(self.name, self.id)
@@ -3689,12 +3705,6 @@ class GraphViewInstance(BaseRecord):
     def __init__(self, *args, **kwargs):
         kwargs['type'] = 'GraphViewInstance'
         super(GraphViewInstance, self).__init__(*args, **kwargs)
-
-    def get_data(self):
-        """
-        Download parquet file -> dataframe
-        """
-        pass
 
     @as_native_str()
     def __repr__(self):

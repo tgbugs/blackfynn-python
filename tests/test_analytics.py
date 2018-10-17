@@ -62,3 +62,8 @@ def test_cant_create_duplicate_views(graph_view):
 
     with pytest.raises(Exception):
         dataset.create_view('different-name-same-models', graph_view.root_model, graph_view.included_models)
+
+
+def test_as_dataframe(graph_view):
+    df = graph_view.as_dataframe()
+    assert set(df.columns) == set(['patient', 'patient.name', 'medication', 'medication.name'])
