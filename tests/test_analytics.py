@@ -2,11 +2,12 @@ import uuid
 import pytest
 
 
+# This must be a module level fixture because views with duplicate
+# root/included models are not allowed.
 @pytest.fixture(scope='module')
 def graph_view(simple_graph):
     dataset = simple_graph.dataset
     name = 'patient-view-{}'.format(uuid.uuid4())
-
     view = dataset.create_view(name, 'patient', ['medication'])
 
     assert view.name == name
@@ -15,10 +16,6 @@ def graph_view(simple_graph):
     assert view.instance is not None
 
     return view
-
-
-def test_latest(graph_view):
-    assert graph_view.latest() == graph_view
 
 
 def test_refresh(graph_view):
@@ -32,8 +29,8 @@ def test_refresh(graph_view):
     assert fresh.included_models == graph_view.included_models
 
 
-def test_get_view(simple_graph, graph_view):
-    dataset = simple_graph.dataset
+def test_get_view(graph_view):
+    dataset = graph_view.dataset
 
     # TODO: update this to retrieve by name
     got_view = dataset.get_view(graph_view.id)
@@ -42,14 +39,20 @@ def test_get_view(simple_graph, graph_view):
     assert got_view.included_models == ['medication']
 
 
-def test_all_views(simple_graph, graph_view):
-    dataset = simple_graph.dataset
-    assert dataset.views() == [graph_view]
+def test_all_views(graph_view):
+    dataset = graph_view.dataset
+    assert dataset.views() == [graph_view.latest()]
 
 
-# def test_graph_view_instances(simple_graph, graph_view):
-#     snapshot1 = graph_view.refresh()
-#     snapshot2 = graph_view.refresh()
+def test_view_versions(graph_view):
+    v2 = graph_view.refresh()
+    v3 = graph_view.refresh()
 
-#     assert graph_view.all_snapshots() == [snapshot1, snapshot2]
-#     assert graph_view.latest() == snapshot2
+    versions = graph_view.versions()
+    # Can't compare lists of versions  because other instances
+    # are created by other tests
+    assert versions[0] == graph_view
+    assert versions[-2] == v2
+    assert versions[-1] == v3
+
+    assert graph_view.latest() == v3

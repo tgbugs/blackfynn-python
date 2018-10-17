@@ -3645,9 +3645,9 @@ class GraphView(BaseRecord):
 
         kwargs['type'] = 'GraphView'
 
-        super(GraphView, self).__init__(*args, **kwargs)\
+        super(GraphView, self).__init__(*args, **kwargs)
 
-    def _pin(self, snapshot):
+    def _with_instance(self, snapshot):
         # Attach a specific snapshot (instance) of the data to the view,
         # returning a new view object
         new_view = copy.copy(self)
@@ -3658,20 +3658,20 @@ class GraphView(BaseRecord):
         """
         Update this view with the latest version of the data.
         """
-        return self._pin(self._api.analytics.create_view_instance(self))
+        return self._with_instance(self._api.analytics.create_view_instance(self))
 
-    def all_snapshots(self):
+    def versions(self):
         """
-        All snapshots.
+        All versions of this view.
         """
-        return self._api.analytics.get_all_view_instances(self)
+        instances = self._api.analytics.get_all_view_instances(self)
+        return [self._with_instance(x) for x in sorted(instances, key=lambda x: x.created_at)]
 
     def latest(self):
         """
         Return most recent snapshot.
         """
-        instances = self._api.analytics.get_all_view_instances(self)
-        return self._pin(max(instances, key=lambda x: x.created_at))
+        return self.versions()[-1]
 
     @as_native_str()
     def __repr__(self):
