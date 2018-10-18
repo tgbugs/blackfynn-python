@@ -3672,7 +3672,12 @@ class GraphView(BaseRecord):
         """
         Return most recent version of the view.
         """
-        return self.versions()[-1]
+        versions = self.versions()
+        if not versions:
+            # no instance? Create one!
+            return self.refresh()
+
+        return versions[-1]
 
     def as_dataframe(self):
         """

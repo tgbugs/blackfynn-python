@@ -55,6 +55,18 @@ def test_view_versions(graph_view):
     assert graph_view.latest() == v3
 
 
+def test_latest_with_no_instances_creates_one(simple_graph):
+    dataset = simple_graph.dataset
+
+    # Create a view with no instances
+    view = dataset._api.analytics.create_view(
+        dataset, 'patient-view-{}'.format(uuid.uuid4()), 'patient', [])
+    assert view.instance is None
+
+    view = view.latest()
+    assert view.instance is not None
+
+
 def test_cant_create_duplicate_views(graph_view):
     dataset = graph_view.dataset
     with pytest.raises(Exception):
