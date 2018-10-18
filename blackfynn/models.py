@@ -3700,7 +3700,8 @@ class GraphView(BaseRecord):
 
     @as_native_str()
     def __repr__(self):
-        return u"<GraphView name='{}' id='{}'>".format(self.name, self.id)
+        return u"<GraphView name='{}' id='{}' version='{}'>".format(
+            self.name, self.id, self.instance.created_at)
 
     def __eq__(self, other):
         return super(GraphView, self).__eq__(other) and self.instance == other.instance
