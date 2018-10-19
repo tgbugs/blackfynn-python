@@ -4,6 +4,7 @@ import os
 import pytest
 import requests
 
+from blackfynn import Blackfynn
 from blackfynn.base import UnauthorizedException
 # client library
 from blackfynn.models import DataPackage, Dataset, File
@@ -194,47 +195,21 @@ def test_properties(client, dataset):
     with pytest.raises(Exception):
         assert pkg2.get_property('my-key')
 
-def test_package_objects(client, client2, dataset):
-    """
-    Only super-users are allowed to create/modify package sources/files.
-    """
-    pkg = DataPackage('Some Video', package_type='Video')
-    assert not pkg.exists
-
-    # some files (local for now)
-    source = File(name='My Source File', s3_key='s3/source', s3_bucket='my-bucket', file_type="JSON", size=1000)
-    file   = File(name='My File', s3_key='s3/file', s3_bucket='my-bucket', file_type="CSV", size=1000)
-    view   = File(name='My View File', s3_key='s3/view', s3_bucket='my-bucket', file_type="NIFTI", size=1000)
-
-    # get dataset (but as different client)
-    dataset2 = client2._api.datasets.get(dataset.id)
-
-    assert dataset2.id == dataset.id
-    assert dataset2.exists
-    assert dataset2.owner_id == client.profile.id
-
-    # create package (super-admin user session)
-    dataset2.add(pkg)
-    assert pkg.exists
-
-    # create package (normal user owns)
-    pkg = DataPackage('Some Video', package_type='Video')
-    assert not pkg.exists
-    dataset.add(pkg)
-    assert pkg.exists
-
-    # try doing as normal user - should error
-    with pytest.raises(UnauthorizedException):
-        pkg.set_sources(source)
-
-    with pytest.raises(UnauthorizedException):
-        pkg.set_files(file)
-
-    with pytest.raises(UnauthorizedException):
-        pkg.set_view(view)
-
 
 def test_timeout():
     with pytest.raises(requests.exceptions.Timeout):
         # initial authentication calls should time out
-        client = get_test_client(max_request_time=0.00001)
+        get_test_client(max_request_time=0.00001)
+
+
+def test_client_host_overrides():
+    host = 'http://localhost'
+    # fails authentication in Blackfynn.__init__
+    with pytest.raises(requests.exceptions.RequestException):
+        bf = Blackfynn(host=host)
+
+    bf = Blackfynn(streaming_host=host)
+    assert bf.settings.streaming_api_host == host
+
+    bf = Blackfynn(concepts_host=host)
+    assert bf.settings.concepts_api_host == host

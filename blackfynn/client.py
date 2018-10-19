@@ -96,8 +96,8 @@ class Blackfynn(object):
             'api_token': api_token,
             'api_secret': api_secret,
             'api_host': host,
-            'api_streaming_host': streaming_host,
-            'api_concepts_host': concepts_host,
+            'streaming_api_host': streaming_host,
+            'concepts_api_host': concepts_host,
             }.items() if v != None })
         self.settings = Settings(profile, overrides, env_override)
 
@@ -108,10 +108,7 @@ class Blackfynn(object):
         self._api = ClientSession(self.settings)
 
         # account
-        try:
-            self._api.authenticate()
-        except Exception as e:
-            raise e
+        self._api.authenticate()
 
         self._api.register(
             AnalyticsAPI,

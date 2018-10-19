@@ -4,7 +4,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-Documentation at http://docs.blackfynn.io
+Documentation at https://developer.blackfynn.io/python/
+
+## [2.6.0]
+### Added
+- Support for Python 3!
+
+### Changed
+- The `upload()` methods of `Dataset` and `Collection` objects and the
+  `append_files()` method of `TimeSeries` can now be passed a list of files or
+  separate file arguments.
+- Updated documentation and documentation URLs.
+- Unpinned version of the `pytz` dependency.
+
+### Fixed
+- Fixed overrides of concept and streaming API hosts.
+
+### Removed
+- `TimeSeries` streaming upload API.
+- Deprecated `set` and `append` methods.
 
 ## [2.5.0]
 ### Added

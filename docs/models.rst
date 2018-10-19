@@ -96,7 +96,7 @@ The ``DataPackage`` class is used for all non-specific data classes (i.e. classe
 
 .. autoclass:: DataPackage
    :members:
-   :exclude-members: set_sources, set_files, set_view, append_to_sources, append_to_files, set_ready, set_error, set_unavailable
+   :exclude-members: set_ready, set_error, set_unavailable
 
 
 Data-Specific Classes
@@ -129,27 +129,47 @@ Tabular
    :show-inheritance:
 
 
-.. Concepts and Relationships Classes
-.. ----------------------------------
+Concepts and Relationships
+--------------------------
 
-.. Concepts
-.. ^^^^^^^^^^^^
+Models
+^^^^^^^
 
-.. .. autoclass:: Concept
-..    :members:
-..    :show-inheritance:
+.. autoclass:: Model
+   :members:
+   :show-inheritance:
 
-.. .. autoclass:: ConceptInstance
-..    :members:
-..    :show-inheritance:
+.. autoclass:: ModelProperty
+   :members:
+   :show-inheritance:
 
-.. Relationships
-.. ^^^^^^^^^^^^^^^
+.. autoclass:: ModelPropertyType
+   :members:
+   :show-inheritance:
 
-.. .. autoclass:: Relationship
-..    :members:
-..    :show-inheritance:
+.. autoclass:: ModelPropertyEnumType
+   :members:
+   :show-inheritance:
 
-.. .. autoclass:: Relationship
-..    :members:
-..    :show-inheritance:
+.. autoclass:: Record
+   :members:
+   :show-inheritance:
+
+.. autoclass:: RecordSet
+   :members:
+   :show-inheritance:
+
+Relationships
+^^^^^^^^^^^^^^^
+
+.. autoclass:: RelationshipType
+   :members:
+   :show-inheritance:
+
+.. autoclass:: Relationship
+   :members:
+   :show-inheritance:
+
+.. autoclass:: RelationshipSet
+   :members:
+   :show-inheritance:

@@ -13,7 +13,6 @@ Connect, and print some basic account and dataset information.
 .. code-block:: python
    :linenos:
 
-   # create a client instance
    from blackfynn import Blackfynn
 
    # create a client instance
@@ -56,7 +55,6 @@ We will create a new dataset, upload a file, then read the uploaded file using t
     # create a dataset in the current organization.
     # The name for our new dataset will be 'New Dataset'
     ds = bf.create_dataset('New Dataset')
-
     print(ds)
 
 Example response:
@@ -72,13 +70,11 @@ been assigned to our created dataset as an unique identifier for the object.
    :linenos:
 
     # get the dataset
-    #
     ds = bf.get_dataset('New Dataset')
 
     # add a file to the newly created dataset.
     # this line will upload the timeseries file
     # "test.edf" to out dataset
-    #
     ds.upload('example_data/test.edf');
 
 When we upload a file to a dataset, a package with the same name of
@@ -126,11 +122,8 @@ will be working with.
 .. code-block:: python
    :linenos:
 
-    # import collections
-    from blackfynn import Collection
-
     # create and get a new dataset
-    ds=bf.create_dataset("Practice Dataset")
+    ds = bf.create_dataset("Practice Dataset")
 
     # create new collections
     ds.create_collection("original collection 2")
@@ -178,9 +171,9 @@ their corresponding collections.
         'example_data/small_region.svs')
 
 .. note::
-   We used the ``get()`` method to get col1 for illustrative purposes. However,
-   since we already got the dataset, we can just accesss the package objects throguh
-   indices. For more information about the ``get()`` method you can visit the
+   We used the ``get()`` method to retrieve ``col1`` for illustrative purposes. However,
+   since we already have the dataset, we can accesss the package objects directly
+   through indices. For more information about the ``get()`` method you can visit the
    :ref:`client interface page <Blackfynn Client Interface>`.
 
 At this point, we have uploaded the data to their respective
@@ -216,14 +209,16 @@ collections. We can see all of the content of the dataset by using the
         <TimeSeries name='testData' id='N:package:5c7fd669-4333-48c8-ac5a-9f549a3efc4d'>
       <Collection name='final collection' id='N:collection:0975ef4b-c851-417e-bc6f-c2f81a78a627'>
 
-The output shows that the uploaded packages have been created in our
-"Other DS" dataset. Note that the ``testData.*`` (highlighted) files were uploaded
-as one package. This happens because, since the files belong to the same
-session (with the NEV file containing extracellular spike information,
-stimulation waveformas and input events, and the NSx file containing
-continuously sampled analog data) Blackynn associates both files as one
-package. See the :ref:`Client Interface` ``upload()`` section for more information about data
-formats that rely on multiple files.
+The output shows that the uploaded packages have been created in our "Other DS"
+dataset. Note that the ``testData.nev`` and ``testData.ns2`` files were
+uploaded as one package called ``testData`` (highlighted). This happens because, since the
+files belong to the same session (with the NEV file containing extracellular
+spike information, stimulation waveforms and input events, and the NSx file
+containing continuously sampled analog data) Blackynn associates both files as
+one package.
+
+See the :ref:`Client Interface` ``upload()`` section for more
+information about data formats that rely on multiple files.
 
 Deleting and moving items
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -260,9 +255,8 @@ We have now reviewed the main functions that revolve around interacting
 with the Blackfynn data catalog.
 
 .. note::
-    It is important to note that, for safety,
-    Datasets cannot be deleted from the clients. In this sense, if you would
-    like to delete a Dataset, you can go to the web UI of the Blackfynn
-    platform, go into the Dataset that you wish to delete, click on the
-    information icon in the top right corner, click on ``Edit Settings`` and
-    select ``Delete this dataset``.
+    For safety, Datasets cannot be deleted from the clients. If you would like
+    to delete a Dataset, you can go to the web UI of the Blackfynn platform, go
+    into the Dataset that you wish to delete, click on the information icon in
+    the top right corner, click on ``Edit Settings`` and select ``Delete this
+    dataset``.
