@@ -78,7 +78,7 @@ def test_cant_create_duplicate_views(graph_view):
 
 def test_as_dataframe(graph_view):
     df = graph_view.as_dataframe()
-    assert set(df.columns) == set([b'patient.name', b'medication.name'])
+    assert set(df.columns) == set(['patient.name', 'medication.name'])
 
 
 def test_as_json(graph_view):

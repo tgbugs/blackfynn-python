@@ -3655,11 +3655,14 @@ class GraphView(BaseRecord):
                         f.write(chunk)
 
         try:
-            return pd.read_parquet(fname)
+            df = pd.read_parquet(fname)
         except pyarrow.ArrowIOError:
             with open(fname) as f:
                 self._check_response(f.read())
             raise
+
+        df.columns = df.columns.astype(str)
+        return df
 
     def as_json(self):
         """
