@@ -3701,7 +3701,7 @@ class GraphView(BaseRecord):
         except pyarrow.ArrowIOError:
             with open(fname) as f:
                 self._check_response(f.read())
-                raise
+            raise
 
     def as_json(self):
         """
