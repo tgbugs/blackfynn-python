@@ -609,7 +609,7 @@ class AnalyticsAPI(APIBase):
         resp = self._get(uri)
         return [GraphViewInstance.from_dict(_with_dataset(r, view.dataset), api=self.session) for r in resp]
 
-    def get_parquet_url(self, view):
-        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/instances/{graphViewInstanceId}/url',
-                        **self._kwargs(view.dataset, instance=view.instance))
+    def get_presigned_url(self, view, format='parquet'):
+        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/instances/{graphViewInstanceId}/url?format={format}',
+                        **self._kwargs(view.dataset, instance=view.instance), format=format)
         return self._get(uri)

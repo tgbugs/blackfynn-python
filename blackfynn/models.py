@@ -7,6 +7,7 @@ from future.utils import as_native_str, string_types, PY2
 import copy
 import datetime
 import io
+import json
 import os
 import re
 import sys
@@ -3684,7 +3685,7 @@ class GraphView(BaseRecord):
         Returns:
             pd.DataFrame:
         """
-        url = self._api.analytics.get_parquet_url(self)
+        url = self._api.analytics.get_presigned_url(self, format='parquet')
 
         # TODO: check that response is ready
         # TODO: refactor - read from stream directly
@@ -3694,14 +3695,30 @@ class GraphView(BaseRecord):
                 for chunk in r.iter_content(chunk_size=1024):
                     if chunk:
                         f.write(chunk)
+
         try:
             return pd.read_parquet(fname)
         except pyarrow.ArrowIOError:
             with open(fname) as f:
-                if '<Code>NoSuchKey</Code><Message>The specified key does not exist.</Message>' in f.read():
-                    raise Exception("View has not finished processing. Try again soon.")
-                else:
-                    raise
+                self._check_response(f.read())
+                raise
+
+    def as_json(self):
+        """
+        Returns:
+            Data as a JSON structure
+        """
+        url = self._api.analytics.get_presigned_url(self, format='json')
+        resp = requests.get(url)
+
+        try:
+            return resp.json()
+        except json.JSONDecodeError:
+            self._check_response(resp.text)
+
+    def _check_response(self, content):
+        if '<Code>NoSuchKey</Code>' in content:
+            raise Exception("View has not finished processing. Try again soon.")
 
     @as_native_str()
     def __repr__(self):
