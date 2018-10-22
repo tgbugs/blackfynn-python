@@ -3692,9 +3692,6 @@ class GraphView(BaseRecord):
 
 class GraphViewInstance(BaseRecord):
 
-    # TODO: do we need a notion of the status of a snapshot? eg READY?
-    # or just fail if the snapshot is not ready?
-
     def __init__(self, *args, **kwargs):
         kwargs['type'] = 'GraphViewInstance'
         super(GraphViewInstance, self).__init__(*args, **kwargs)
