@@ -2130,7 +2130,7 @@ class Dataset(BaseCollection):
         """
         views = self._api.analytics.get_all_views(self)
         # TODO: this is inefficient. Can we batch this call?
-        return [view.latest() for view in views]
+        return [view.latest(ignore_errors=True) for view in views]
 
     @property
     def _get_method(self):
@@ -3638,14 +3638,20 @@ class GraphView(BaseRecord):
         instances = self._api.analytics.get_all_view_instances(self)
         return [self._with_instance(x) for x in sorted(instances, key=lambda x: x.created_at)]
 
-    def latest(self):
+    def latest(self, ignore_errors=False):
         """
         Return most recent version of the view.
         """
         versions = self.versions()
         if not versions:
             # no instance? Create one!
-            return self.refresh()
+            try:
+                return self.refresh()
+            except:
+                if ignore_errors:
+                    return self
+                else:
+                    raise
 
         return versions[-1]
 
@@ -3694,8 +3700,9 @@ class GraphView(BaseRecord):
 
     @as_native_str()
     def __repr__(self):
+        version = self.instance.created_at if self.instance else None
         return u"<GraphView name='{}' id='{}' version='{}'>".format(
-            self.name, self.id, self.instance.created_at)
+            self.name, self.id, version)
 
     def __eq__(self, other):
         return super(GraphView, self).__eq__(other) and self.instance == other.instance
