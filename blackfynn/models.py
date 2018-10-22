@@ -2100,17 +2100,28 @@ class Dataset(BaseCollection):
         view = self._api.analytics.create_view(self, name, root, include)
         return view.refresh()
 
-    def get_view(self, name):
+    def get_view(self, name_or_id):
         """
         Get a graph view with the given name
 
         Args:
-            name (str): Name of the view
+            name_or_id (str): Name or ID of the view
 
         Returns:
             GraphView
         """
-        return self._api.analytics.get_view(self, name).latest()
+        try:
+            # by id
+            view = self._api.analytics.get_view(self, name_or_id)
+        except:
+            # by name
+            views = [v for v in self._api.analytics.get_all_views(self)
+                     if v.name == name_or_id]
+            if not views:
+                raise Exception("View '{}' not found".format(name_or_id))
+            view = views[0]
+
+        return view.latest()
 
     def views(self):
         """

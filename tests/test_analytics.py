@@ -31,9 +31,8 @@ def test_refresh(graph_view):
 
 def test_get_view(graph_view):
     dataset = graph_view.dataset
-    # TODO: update this to retrieve by name
-    got_view = dataset.get_view(graph_view.id)
-    assert got_view == graph_view.latest()
+    assert dataset.get_view(graph_view.id) == graph_view.latest()
+    assert dataset.get_view(graph_view.name) == graph_view.latest()
 
 
 def test_all_views(graph_view):
