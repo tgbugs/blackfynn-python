@@ -246,11 +246,11 @@ class RecordsAPI(ModelsAPIBase):
 
         return relations
 
-    def get_all(self, dataset, concept, limit=100):
+    def get_all(self, dataset, concept, limit=100, offset=0):
         dataset_id = self._get_id(dataset)
         concept_type = self._get_concept_type(concept)
 
-        resp = self._get(self._uri('/{dataset_id}/concepts/{concept_type}/instances', dataset_id=dataset_id, concept_type=concept_type), params=dict(limit=limit), stream=True)
+        resp = self._get(self._uri('/{dataset_id}/concepts/{concept_type}/instances', dataset_id=dataset_id, concept_type=concept_type), params=dict(limit=limit, offset=offset), stream=True)
         for r in resp:
           r['dataset_id'] = r.get('dataset_id', dataset_id)
         instances = [Record.from_dict(r, api=self.session) for r in resp]

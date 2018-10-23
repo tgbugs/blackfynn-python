@@ -77,12 +77,11 @@ def test_models(dataset):
     assert dataset.get_model(new_model.id) == new_model
     assert dataset.get_model(new_model.type) == new_model
 
+    # Check that local changes get propagated
     new_model.add_property('a_new_property', str, display_name)
     new_model.description = description
     new_model.update()
-
     new_model = dataset.get_model(new_model.id)
-
     assert new_model.description == description
     assert new_model.get_property('a_new_property').display_name == display_name
 
@@ -103,6 +102,9 @@ def test_models(dataset):
         new_model.create_record()
 
     new_models_old = new_model.get_all()
+    assert new_model.get_all(limit=1) == new_models_old[:1]
+    assert new_model.get_all(limit=2, offset=2) == new_models_old[2:4]
+
     new_model.delete_records(nc_delete_one, nc_delete_two.id)
     new_models = new_model.get_all()
 
@@ -168,7 +170,6 @@ def test_models(dataset):
     nr_three = nc_three.relate_to(nc_four, new_relationship)
     nr_six = nc_four.relate_to(nc_three, new_relationship)
 
-    nc_four.update()
     assert len(nc_four.get_related(new_model.type)) == 4
 
     new_relationships = new_relationship.get_all()
@@ -190,7 +191,6 @@ def test_models(dataset):
     nc_three.relate_to(p, new_relationship)
     new_relationship.relate(nc_four, p)
 
-    nc_four.update()
     assert len(nc_four.get_related(new_model.type)) == 4
 
 def test_simple_model_properties(dataset):
@@ -201,13 +201,14 @@ def test_simple_model_properties(dataset):
 
      assert dataset.get_model(model_with_basic_props_1.id) == model_with_basic_props_1
 
-     # Add a property
-     model_with_basic_props_1.add_property('a_new_property', float, display_name='Weight')
-     model_with_basic_props_1.update()
+     # Add a property with a description
+     model_with_basic_props_1.add_property('a_new_property', float, display_name='Weight', description="some metric")
 
      updated_model_1 = dataset.get_model(model_with_basic_props_1.id)
 
-     assert updated_model_1.get_property('a_new_property').display_name == 'Weight'
+     test_prop = updated_model_1.get_property('a_new_property')
+     assert test_prop.display_name == 'Weight'
+     assert test_prop.description == "some metric"
 
      # Define properties as ModelProperty objects
      model_with_basic_props_2 = dataset.create_model('Basic_Props_2', description='a new description', schema=[
@@ -220,7 +221,6 @@ def test_simple_model_properties(dataset):
 
      # Add a property
      model_with_basic_props_2.add_property('weight2', ModelPropertyType(data_type=float), display_name='Weight')
-     model_with_basic_props_2.update()
 
      updated_model_2 = dataset.get_model(model_with_basic_props_2.id)
 
@@ -238,7 +238,6 @@ def test_simple_model_properties(dataset):
 
      # Add a property
      model_with_basic_props_3.add_property('weight3', ModelPropertyType(data_type=float), display_name='Weight')
-     model_with_basic_props_3.update()
 
      updated_model_3 = dataset.get_model(model_with_basic_props_3.id)
 
@@ -255,7 +254,6 @@ def test_simple_model_properties(dataset):
 
      # Add a property
      model_with_basic_props_4.add_property('weight4', ModelPropertyType(data_type='double'), display_name='Weight')
-     model_with_basic_props_4.update()
 
      updated_model_4 = dataset.get_model(model_with_basic_props_4.id)
 
@@ -273,7 +271,6 @@ def test_complex_model_properties(dataset):
 
     # Add a property
     model_with_complex_props.add_property('weight', ModelPropertyType(data_type=float, unit='kg'), display_name='Weight')
-    model_with_complex_props.update()
 
     updated_model = dataset.get_model(model_with_complex_props.id)
 
