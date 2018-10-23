@@ -13,6 +13,7 @@ import re
 import sys
 from uuid import uuid4
 
+import tempfile
 import dateutil
 import numpy as np
 import pandas as pd
@@ -3655,28 +3656,37 @@ class GraphView(BaseRecord):
 
         return versions[-1]
 
-    def as_dataframe(self):
+    def as_dataframe(self, columns=None):
         """
         Returns:
             pd.DataFrame:
         """
+        if self.instance is None:
+            raise Exception('View must be a specific instance, e.g. view.latest()')
+
         url = self._api.analytics.get_presigned_url(self, format='parquet')
 
         # TODO: check that response is ready
         # TODO: refactor - read from stream directly
-        fname = 'temp.out.pq'
+        filename = os.path.join(tempfile.gettempdir(), '{}.parquet'.format(self.instance.id))
         with requests.get(url, stream=True) as r:
-            with io.open(fname, 'wb') as f:
-                for chunk in r.iter_content(chunk_size=1024):
+            with io.open(filename, 'wb') as f:
+                for chunk in r.iter_content(chunk_size=16384):
                     if chunk:
                         f.write(chunk)
 
         try:
-            df = pd.read_parquet(fname)
+            # TODO: allow for wildcard columns, e.g. `patient.*`
+            df = pd.read_parquet(filename, columns=columns)
         except pyarrow.ArrowIOError:
-            with open(fname) as f:
+            with io.open(filename) as f:
                 self._check_response(f.read())
             raise
+        finally:
+            try:
+                os.remove(filename)
+            except:
+                pass
 
         return df
 
