@@ -12,7 +12,7 @@ from blackfynn.models import (
     convert_type_to_datatype,
     uncast_value
 )
-from tests.utils import create_test_dataset, current_ts, get_test_client
+from tests.utils import create_test_dataset, current_ts, get_test_client, FILE1
 
 
 @pytest.mark.parametrize('fromtype,datatype,totype', [
@@ -335,3 +335,17 @@ def test_get_topology(simple_graph):
     assert len(topology['models']) == 2
     assert 'relationships' in topology
     assert len(topology['relationships']) == 1
+
+
+def test_get_files_related_to_record(simple_graph):
+    patient = simple_graph.model_records[0]
+    assert patient.get_files() == []
+
+    # TODO: remove response parsing once upload returns a DataPackage
+    resp = simple_graph.dataset.upload(FILE1)
+    package_id = resp[0][0]['package']['content']['id']
+    package = simple_graph.dataset.items[0]
+    assert package.id == package_id
+
+    patient.relate_to(package)
+    assert package in patient.get_files()

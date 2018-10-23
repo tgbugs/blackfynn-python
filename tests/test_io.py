@@ -1,17 +1,7 @@
-import os
-
 import pytest
 
-from pkg_resources import resource_filename
-
 from blackfynn.models import DataPackage, TimeSeries
-
-
-def _resource_path(fname):
-    return resource_filename('tests.resources', fname)
-
-FILE1 = _resource_path('test-upload.txt')
-FILE2 = _resource_path('test-upload-2.txt')
+from .utils import FILE1, FILE2
 
 
 @pytest.mark.parametrize('upload_args,n_files', [

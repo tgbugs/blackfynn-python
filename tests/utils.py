@@ -2,7 +2,16 @@
 
 import time
 
+from pkg_resources import resource_filename
+
 from blackfynn import Blackfynn
+
+
+def _resource_path(fname):
+    return resource_filename('tests.resources', fname)
+
+FILE1 = _resource_path('test-upload.txt')
+FILE2 = _resource_path('test-upload-2.txt')
 
 
 def current_ts():

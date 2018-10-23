@@ -158,7 +158,14 @@ class ModelsAPI(ModelsAPIBase):
                 concept_id=concept_id,
                 instance_id=instance_id
             ))
-        return [DataPackage.from_dict(pkg, api=self.session) for r,pkg in resp]
+
+        # TODO: AE-393 fix this in the concept service
+        try:
+            return [DataPackage.from_dict(pkg, api=self.session) for r,pkg in resp]
+        except ValueError:
+            if isinstance(resp, string_types):
+                return []
+            raise
 
     def get_related(self, dataset, concept):
         dataset_id = self._get_id(dataset)
