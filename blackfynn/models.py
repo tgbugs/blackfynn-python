@@ -3610,7 +3610,7 @@ class GraphView(BaseRecord):
     def __init__(self, name, root_model, included_models, dataset, *args, **kwargs):
         self.name = name
         self.root_model = root_model
-        self.included_models = included_models
+        self.included_models = list(included_models)
         self.dataset = dataset
         self.instance = None
 
@@ -3655,6 +3655,11 @@ class GraphView(BaseRecord):
 
         return versions[-1]
 
+    def _models(self):
+        # TODO: batch
+        model_names = [self.root_model] + self.included_models
+        return {name: self.dataset.get_model(name) for name in model_names}
+
     def as_dataframe(self):
         """
         Returns:
@@ -3678,6 +3683,14 @@ class GraphView(BaseRecord):
                 self._check_response(f.read())
             raise
 
+        for name, model in self._models().items():
+            # TODO: batch per Model
+            def _get_record(m_id):
+                if m_id is not None:
+                    return model.get(m_id)
+
+            df[name] = df[name].map(_get_record)
+
         return df
 
     def as_json(self):
@@ -3690,7 +3703,7 @@ class GraphView(BaseRecord):
 
         try:
             return resp.json()
-        except json.JSONDecodeError:
+        except json.decoder.JSONDecodeError:
             self._check_response(resp.text)
 
     def _check_response(self, content):

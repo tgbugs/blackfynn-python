@@ -1,6 +1,8 @@
 import uuid
 import pytest
 
+from blackfynn.models import Record
+
 
 # This must be a module level fixture because views with duplicate
 # root/included models are not allowed.
@@ -75,10 +77,16 @@ def test_cant_create_duplicate_views(graph_view):
         dataset.create_view('different-name-same-models', graph_view.root_model, graph_view.included_models)
 
 
-def test_as_dataframe(graph_view):
+def test_as_dataframe(graph_view, simple_graph):
     df = graph_view.as_dataframe()
+    patient_model, medication_model = simple_graph.models
+
     assert set(df.columns) == set(['patient', 'patient.name', 'medication', 'medication.name'])
 
+    assert all([isinstance(r, Record) for r in df['patient']])
+    assert all([isinstance(r, Record) or r is None for r in df['medication']])
+
+    import pdb; pdb.set_trace()
 
 def test_as_json(graph_view):
     json = graph_view.as_json()
