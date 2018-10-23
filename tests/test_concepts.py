@@ -103,6 +103,9 @@ def test_models(dataset):
         new_model.create_record()
 
     new_models_old = new_model.get_all()
+    assert new_model.get_all(limit=1) == new_models_old[:1]
+    assert new_model.get_all(limit=2, offset=2) == new_models_old[2:4]
+
     new_model.delete_records(nc_delete_one, nc_delete_two.id)
     new_models = new_model.get_all()
 

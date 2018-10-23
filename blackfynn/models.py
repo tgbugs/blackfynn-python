@@ -2822,7 +2822,7 @@ class Model(BaseModelNode):
         """
         return self._api.concepts.delete(self.dataset_id, self)
 
-    def get_all(self, limit=100):
+    def get_all(self, limit=100, offset=0):
         """
         Retrieves all records of the model from the platform.
 
@@ -2833,7 +2833,7 @@ class Model(BaseModelNode):
 
           mice = mouse.get_all()
         """
-        return self._api.concepts.instances.get_all(self.dataset_id, self, limit=limit)
+        return self._api.concepts.instances.get_all(self.dataset_id, self, limit=limit, offset=offset)
 
     def get(self, id):
         """
