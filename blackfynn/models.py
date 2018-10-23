@@ -3661,7 +3661,7 @@ class GraphView(BaseRecord):
         model_names = [self.root_model] + self.included_models
         return {name: self.dataset.get_model(name) for name in model_names}
 
-    def as_dataframe(self, columns=None, full_models=True):
+    def as_dataframe(self, columns=None, full_records=True):
         """
         Returns:
             pd.DataFrame:
@@ -3693,7 +3693,7 @@ class GraphView(BaseRecord):
             except:
                 pass
 
-        if full_models:
+        if full_records:
             df = self._embed_records_in_dataframe(df)
 
         return df
