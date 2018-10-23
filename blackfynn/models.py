@@ -3664,7 +3664,7 @@ class GraphView(BaseRecord):
         model_names = [self.root_model] + self.included_models
         return {name: self.dataset.get_model(name) for name in model_names}
 
-    def as_dataframe(self):
+    def as_dataframe(self, full_models=True):
         """
         Returns:
             pd.DataFrame:
@@ -3687,13 +3687,28 @@ class GraphView(BaseRecord):
                 self._check_response(f.read())
             raise
 
-        for name, model in self._models().items():
-            # TODO: batch per Model
-            def _get_record(m_id):
-                if m_id is not None:
-                    return model.get(m_id)
+        if full_models:
+            df = self._embed_records_in_dataframe(df)
 
-            df[name] = df[name].map(_get_record)
+        return df
+
+    def _embed_records_in_dataframe(self, df):
+        """
+        Convert record IDs to full Record objects in the dataframe
+        """
+        for name, model in self._models().items():
+            # Get a dict of *all* records for this model, keyed by ID
+            records = {None: None}
+            batch_num = 0
+            batch_size = 100
+            while True:
+                record_batch = model.get_all(limit=batch_size, offset=batch_size * batch_num)
+                if not record_batch:
+                    break
+                batch_num += 1
+                records.update({record.id: record for record in record_batch})
+
+            df[name] = df[name].map(records)
 
         return df
 

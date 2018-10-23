@@ -86,7 +86,6 @@ def test_as_dataframe(graph_view, simple_graph):
     assert all([isinstance(r, Record) for r in df['patient']])
     assert all([isinstance(r, Record) or r is None for r in df['medication']])
 
-    import pdb; pdb.set_trace()
 
 def test_as_json(graph_view):
     json = graph_view.as_json()
