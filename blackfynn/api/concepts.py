@@ -611,5 +611,5 @@ class AnalyticsAPI(APIBase):
 
     def get_presigned_url(self, view, format='parquet'):
         uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/instances/{graphViewInstanceId}/url?format={format}',
-                        **self._kwargs(view.dataset, instance=view.instance), format=format)
+                        format=format, **self._kwargs(view.dataset, instance=view.instance))
         return self._get(uri)
