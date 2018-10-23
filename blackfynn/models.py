@@ -3672,7 +3672,6 @@ class GraphView(BaseRecord):
                 self._check_response(f.read())
             raise
 
-        df.columns = df.columns.astype(str)
         return df
 
     def as_json(self):
