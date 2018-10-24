@@ -61,6 +61,7 @@ def get_package_class(data):
 
     return p
 
+
 def _update_self(self, updated):
     if self.id != updated.id:
         raise Exception("cannot update {} with {}".format(self, updated))
@@ -2405,8 +2406,11 @@ class BaseModelProperty(object):
         title = data.get('title', data.get('conceptTitle', False))
         id = data.get('id', None)
         required = data.get('required', False)
+        description = data.get("description", "")
 
-        return cls(name=data['name'], display_name=display_name, data_type=data_type, id=id, locked=locked, default=default, title=title, required=required)
+        return cls(name=data['name'], display_name=display_name,
+                   data_type=data_type, id=id, locked=locked, default=default,
+                   title=title, required=required, description=description)
 
     def as_dict(self):
         return dict(
@@ -2510,9 +2514,12 @@ class BaseModelNode(BaseNode):
 
         self._add_properties(schema)
 
-    def _add_property(self, name, display_name=None, data_type=str, title=False):
-        prop = self._property_cls(name=name, display_name=display_name, data_type=data_type, title=title)
+    def _add_property(self, name, display_name=None, data_type=str, title=False, description=""):
+        prop = self._property_cls(name=name, display_name=display_name,
+                                  data_type=data_type, title=title,
+                                  description=description)
         self.schema[prop.name] = prop
+        return prop
 
     def _add_properties(self, properties):
         if isinstance(properties, list):
@@ -2545,7 +2552,7 @@ class BaseModelNode(BaseNode):
     def update(self):
         pass
 
-    def add_property(self, name, data_type=str, display_name=None, title=False):
+    def add_property(self, name, data_type=str, display_name=None, title=False, description=""):
         """
         Appends a property to the object's schema and updates the object on the platform.
 
@@ -2553,6 +2560,8 @@ class BaseModelNode(BaseNode):
           name (str): Name of the property
           data_type (type, optional): Python type of the property. Defaults to ``string_types``.
           display_name (str, optional): Display name for the property.
+          title (bool, optional): If True, the property will be used in the title on the platform
+          description (str, optional): Description of the property
 
         Example:
           Adding a new property with the default data_type::
@@ -2561,12 +2570,11 @@ class BaseModelNode(BaseNode):
           Adding a new property with the ``float`` data_type::
             mouse.add_property('weight', float)
         """
-        self._add_property(name, data_type=data_type, display_name=display_name, title=title)
-
-        try:
-            self.update()
-        except:
-            raise #Exception("local object updated, but failed to update remotely")
+        prop = self._add_property(name, data_type=data_type,
+                                  display_name=display_name, title=title,
+                                  description=description)
+        self.update()
+        return prop
 
     def add_properties(self, properties):
         """
@@ -2604,11 +2612,7 @@ class BaseModelNode(BaseNode):
                 ])
         """
         self._add_properties(properties)
-
-        try:
-            self.update()
-        except:
-            raise Exception("local object updated, but failed to update remotely")
+        self.update()
 
     def remove_property(self, property):
         """
@@ -2869,7 +2873,7 @@ class Model(BaseModelNode):
         """
         return self._api.concepts.delete(self.dataset_id, self)
 
-    def get_all(self, limit=100):
+    def get_all(self, limit=100, offset=0):
         """
         Retrieves all records of the model from the platform.
 
@@ -2880,7 +2884,7 @@ class Model(BaseModelNode):
 
           mice = mouse.get_all()
         """
-        return self._api.concepts.instances.get_all(self.dataset_id, self, limit=limit)
+        return self._api.concepts.instances.get_all(self.dataset_id, self, limit=limit, offset=offset)
 
     def get(self, id):
         """

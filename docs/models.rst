@@ -137,27 +137,27 @@ Models
 
 .. autoclass:: Model
    :members:
-   :show-inheritance:
+   :inherited-members:
 
 .. autoclass:: ModelProperty
    :members:
-   :show-inheritance:
+   :inherited-members:
 
 .. autoclass:: ModelPropertyType
    :members:
-   :show-inheritance:
+   :inherited-members:
 
 .. autoclass:: ModelPropertyEnumType
    :members:
-   :show-inheritance:
+   :inherited-members:
 
 .. autoclass:: Record
    :members:
-   :show-inheritance:
+   :inherited-members:
 
 .. autoclass:: RecordSet
    :members:
-   :show-inheritance:
+   :inherited-members:
 
 Relationships
 ^^^^^^^^^^^^^^^
@@ -168,7 +168,7 @@ Relationships
 
 .. autoclass:: Relationship
    :members:
-   :show-inheritance:
+   :inherited-members:
 
 .. autoclass:: RelationshipSet
    :members:
