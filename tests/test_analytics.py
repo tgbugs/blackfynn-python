@@ -1,7 +1,8 @@
 import uuid
 import pytest
 
-from blackfynn.models import Record
+from blackfynn import models
+
 
 
 # This must be a module level fixture because views with duplicate
@@ -82,9 +83,16 @@ def test_as_dataframe(graph_view, simple_graph):
     patient_model, medication_model = simple_graph.models
 
     assert set(df.columns) == set(['patient', 'patient.name', 'medication', 'medication.name'])
+    assert all([isinstance(r, models._LazyRecord) for r in df['patient']])
+    assert all([isinstance(r, models._LazyRecord) or r is None for r in df['medication']])
 
-    assert all([isinstance(r, Record) for r in df['patient']])
-    assert all([isinstance(r, Record) or r is None for r in df['medication']])
+
+def test_lazy_record(simple_graph):
+    patient = simple_graph.model_records[0]
+    lazy_patient = models._LazyRecord(patient.model, patient.id)
+    assert lazy_patient == patient
+    assert lazy_patient.get_files() == []
+    assert lazy_patient.get_related() == [simple_graph.model_records[2]]
 
 
 def test_as_json(graph_view):

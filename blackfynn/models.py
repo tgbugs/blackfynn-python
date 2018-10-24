@@ -3661,7 +3661,7 @@ class GraphView(BaseRecord):
         model_names = [self.root_model] + self.included_models
         return {name: self.dataset.get_model(name) for name in model_names}
 
-    def as_dataframe(self, columns=None, full_records=True):
+    def as_dataframe(self, columns=None):
         """
         Returns:
             pd.DataFrame:
@@ -3693,28 +3693,13 @@ class GraphView(BaseRecord):
             except:
                 pass
 
-        if full_records:
-            df = self._embed_records_in_dataframe(df)
-
-        return df
-
-    def _embed_records_in_dataframe(self, df):
-        """
-        Convert record IDs to full Record objects in the dataframe
-        """
+        # Replace each record ID with a lazy-loaded Record proxy
         for name, model in self._models().items():
-            # Get a dict of *all* records for this model, keyed by ID
-            records = {None: None}
-            batch_num = 0
-            batch_size = 100
-            while True:
-                record_batch = model.get_all(limit=batch_size, offset=batch_size * batch_num)
-                if not record_batch:
-                    break
-                batch_num += 1
-                records.update({record.id: record for record in record_batch})
+            def _lazy_record(id):
+                if id is not None:
+                    return _LazyRecord(model, id)
 
-            df[name] = df[name].map(records)
+            df[name] = df[name].map(_lazy_record)
 
         return df
 
@@ -3743,6 +3728,22 @@ class GraphView(BaseRecord):
 
     def __eq__(self, other):
         return super(GraphView, self).__eq__(other) and self.instance == other.instance
+
+
+class _LazyRecord(object):
+    def __init__(self, model, id):
+        self.model = model
+        self.id = id
+        self._cached_record = None
+
+    def __getattr__(self, attr):
+        if self._cached_record is None and attr not in ['next', '__next__', '_typ']:
+            self._cached_record = self.model.get(self.id)
+        return getattr(self._cached_record, attr)
+
+    @as_native_str()
+    def __repr__(self):
+        return u"<Record type='{}' id='{}'>".format(self.model.type, self.id)
 
 
 class GraphViewInstance(BaseRecord):
