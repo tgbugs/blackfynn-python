@@ -3656,11 +3656,20 @@ class GraphView(BaseRecord):
 
         return versions[-1]
 
+    def delete(self):
+        """
+        Delete the view.
+        """
+        self._check_exists()
+        r = self._api.analytics.delete_view(self)
+        self.id = None
+        return r
+
     def _models(self):
         # TODO: batch
         model_names = [self.root_model] + self.included_models
         return {name: self.dataset.get_model(name) for name in model_names}
-
+      
     def as_dataframe(self, columns=None):
         """
         Returns:

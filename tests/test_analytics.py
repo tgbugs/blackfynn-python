@@ -18,7 +18,9 @@ def graph_view(simple_graph):
     assert view.included_models == ['medication']
     assert view.instance is not None
 
-    return view
+    yield view
+
+    view.delete()
 
 
 def test_refresh(graph_view):
@@ -67,6 +69,15 @@ def test_latest_with_no_instances_creates_one(simple_graph):
 
     view = view.latest()
     assert view.instance is not None
+
+
+def test_delete_view(simple_graph):
+    dataset = simple_graph.dataset
+    view = dataset.create_view('medication-view', 'medication', [])
+    assert view.exists
+    view.delete()
+    assert 'medication-view' not in [v.name for v in dataset.views()]
+    assert not view.exists
 
 
 def test_cant_create_duplicate_views(graph_view):
