@@ -590,6 +590,11 @@ class AnalyticsAPI(APIBase):
         resp = _with_dataset(resp, dataset)
         return GraphView.from_dict(resp, api=self.session)
 
+    def delete_view(self, view):
+        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/{graphViewId}',
+                        **self._kwargs(view.dataset, view))
+        return self._del(uri)
+
     def get_all_views(self, dataset):
         uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views',
                         **self._kwargs(dataset))

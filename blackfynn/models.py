@@ -3656,6 +3656,15 @@ class GraphView(BaseRecord):
 
         return versions[-1]
 
+    def delete(self):
+        """
+        Delete the view.
+        """
+        self._check_exists()
+        r = self._api.analytics.delete_view(self)
+        self.id = None
+        return r
+
     def as_dataframe(self, columns=None):
         """
         Returns:
