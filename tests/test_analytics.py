@@ -1,6 +1,8 @@
 import uuid
 import pytest
 
+from blackfynn import models
+
 
 # This must be a module level fixture because views with duplicate
 # root/included models are not allowed.
@@ -13,22 +15,10 @@ def graph_view(simple_graph):
     assert view.name == name
     assert view.root_model == 'patient'
     assert view.included_models == ['medication']
-    assert view.instance is not None
 
     yield view
 
     view.delete()
-
-
-def test_refresh(graph_view):
-    fresh = graph_view.refresh()
-
-    assert fresh != graph_view
-    assert fresh.id == graph_view.id
-    assert fresh.instance != graph_view.instance
-    assert fresh.name == graph_view.name
-    assert fresh.root_model == graph_view.root_model
-    assert fresh.included_models == graph_view.included_models
 
 
 def test_get_view(graph_view):
@@ -39,17 +29,16 @@ def test_get_view(graph_view):
 
 def test_all_views(graph_view):
     dataset = graph_view.dataset
-    assert dataset.views() == [graph_view.latest()]
+    assert dataset.views() == [graph_view]
 
 
 def test_view_versions(graph_view):
-    v2 = graph_view.refresh()
-    v3 = graph_view.refresh()
+    v2 = graph_view.create_snapshot()
+    v3 = graph_view.create_snapshot()
 
     # Can't compare lists of versions  because other instances
     # are created by other tests
-    versions = graph_view.versions()
-    assert versions[0] == graph_view
+    versions = graph_view.get_snapshots()
     assert versions[-2] == v2
     assert versions[-1] == v3
 
@@ -62,10 +51,9 @@ def test_latest_with_no_instances_creates_one(simple_graph):
     # Create a view with no instances
     view = dataset._api.analytics.create_view(
         dataset, 'patient-view-{}'.format(uuid.uuid4()), 'patient', [])
-    assert view.instance is None
 
-    view = view.latest()
-    assert view.instance is not None
+    assert view.get_snapshots() == []
+    assert isinstance(view.latest(), models.GraphViewSnapshot)
 
 
 def test_delete_view(simple_graph):
@@ -87,12 +75,12 @@ def test_cant_create_duplicate_views(graph_view):
 
 
 def test_as_dataframe(graph_view):
-    df = graph_view.as_dataframe()
+    df = graph_view.latest().as_dataframe()
     assert set(df.columns) == set(['patient', 'patient.name', 'medication', 'medication.name'])
 
 
 def test_as_json(graph_view):
-    json = graph_view.as_json()
+    json = graph_view.latest().as_json()
     for obj in json:
         assert 'patient.name' in obj
         assert 'medication.name' in obj

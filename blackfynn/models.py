@@ -2097,10 +2097,11 @@ class Dataset(BaseCollection):
             include (list): list of related models to include in the view
 
         Returns:
-            GraphView
+            GraphViewDefinition
         """
         view = self._api.analytics.create_view(self, name, root, include)
-        return view.refresh()
+        view.create_snapshot()
+        return view
 
     def get_view(self, name_or_id):
         """
@@ -2110,7 +2111,7 @@ class Dataset(BaseCollection):
             name_or_id (str): Name or ID of the view
 
         Returns:
-            GraphView
+            GraphViewDefinition
         """
         try:
             # by id
@@ -2130,9 +2131,7 @@ class Dataset(BaseCollection):
         Returns:
             List of all graph views defined on the dataset
         """
-        views = self._api.analytics.get_all_views(self)
-        # TODO: this is inefficient. Can we batch this call?
-        return [view.latest(ignore_errors=True) for view in views]
+        return self._api.analytics.get_all_views(self)
 
     @property
     def _get_method(self):
@@ -3608,7 +3607,7 @@ class RelationshipSet(BaseInstanceList):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-class GraphView(BaseRecord):
+class GraphViewDefinition(BaseRecord):
 
     _object_key = None
 
@@ -3617,48 +3616,40 @@ class GraphView(BaseRecord):
         self.root_model = root_model
         self.included_models = included_models
         self.dataset = dataset
-        self.instance = None
 
-        kwargs['type'] = 'GraphView'
+        kwargs['type'] = 'GraphViewDefinition'
 
-        super(GraphView, self).__init__(*args, **kwargs)
+        super(GraphViewDefinition, self).__init__(*args, **kwargs)
 
-    def _with_instance(self, snapshot):
-        # Attach a specific snapshot (instance) of the data to the view,
-        # returning a new view object
-        new_view = copy.copy(self)
-        new_view.instance = snapshot
-        return new_view
-
-    def refresh(self):
+    def create_snapshot(self):
         """
-        Update this view with the latest version of the data.
+        Capture the current state of the data in the view.
         """
-        return self._with_instance(self._api.analytics.create_view_instance(self))
+        return self._api.analytics.create_view_instance(self)
 
-    def versions(self):
+    def get_snapshots(self):
         """
-        All versions of this view.
+        All snapshots (versions) of this view.
         """
         instances = self._api.analytics.get_all_view_instances(self)
-        return [self._with_instance(x) for x in sorted(instances, key=lambda x: x.created_at)]
+        return sorted(instances, key=lambda x: x.created_at)
 
     def latest(self, ignore_errors=False):
         """
-        Return most recent version of the view.
+        Return most recent snapshot of the view.
         """
-        versions = self.versions()
-        if not versions:
-            # no instance? Create one!
-            try:
-                return self.refresh()
-            except:
-                if ignore_errors:
-                    return self
-                else:
-                    raise
+        versions = self.get_snapshots()
+        if versions:
+            return versions[-1]
 
-        return versions[-1]
+        # no instance? Create one!
+        try:
+            return self.create_snapshot()
+        except:
+            if ignore_errors:
+                return self
+            else:
+                raise
 
     def delete(self):
         """
@@ -3669,19 +3660,28 @@ class GraphView(BaseRecord):
         self.id = None
         return r
 
+    @as_native_str()
+    def __repr__(self):
+        return u"<GraphViewDefinition name='{}' id='{}'>".format(self.name, self.id)
+
+
+class GraphViewSnapshot(BaseRecord):
+
+    def __init__(self, view, *args, **kwargs):
+        self.view = view
+        kwargs['type'] = 'GraphViewSnapshot'
+        super(GraphViewSnapshot, self).__init__(*args, **kwargs)
+
     def as_dataframe(self, columns=None):
         """
         Returns:
             pd.DataFrame:
         """
-        if self.instance is None:
-            raise Exception('View must be a specific instance, e.g. view.latest()')
-
         url = self._api.analytics.get_presigned_url(self, format='parquet')
 
         # TODO: check that response is ready
         # TODO: refactor - read from stream directly
-        filename = os.path.join(tempfile.gettempdir(), '{}.parquet'.format(self.instance.id))
+        filename = os.path.join(tempfile.gettempdir(), '{}.parquet'.format(self.id))
         with requests.get(url, stream=True) as r:
             with io.open(filename, 'wb') as f:
                 for chunk in r.iter_content(chunk_size=16384):
@@ -3722,20 +3722,5 @@ class GraphView(BaseRecord):
 
     @as_native_str()
     def __repr__(self):
-        version = self.instance.created_at if self.instance else None
-        return u"<GraphView name='{}' id='{}' version='{}'>".format(
-            self.name, self.id, version)
-
-    def __eq__(self, other):
-        return super(GraphView, self).__eq__(other) and self.instance == other.instance
-
-
-class GraphViewInstance(BaseRecord):
-
-    def __init__(self, *args, **kwargs):
-        kwargs['type'] = 'GraphViewInstance'
-        super(GraphViewInstance, self).__init__(*args, **kwargs)
-
-    @as_native_str()
-    def __repr__(self):
-        return u"<GraphViewInstance created='{}' id='{}'>".format(self.created_at, self.id)
+        return u"<GraphViewSnapshot view='{}' created='{}' id='{}'>".format(
+            self.view.name, self.created_at, self.id)

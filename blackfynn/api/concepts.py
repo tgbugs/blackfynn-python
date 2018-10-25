@@ -7,8 +7,8 @@ import requests
 from blackfynn.api.base import APIBase
 from blackfynn.models import (
     DataPackage,
-    GraphView,
-    GraphViewInstance,
+    GraphViewDefinition,
+    GraphViewSnapshot,
     Model,
     ModelProperty,
     ModelTemplate,
@@ -581,14 +581,14 @@ class AnalyticsAPI(APIBase):
                 raise
 
         resp = _with_dataset(resp, dataset)
-        return GraphView.from_dict(resp, api=self.session)
+        return GraphViewDefinition.from_dict(resp, api=self.session)
 
     def get_view(self, dataset, view):
         uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/{graphViewId}',
                         **self._kwargs(dataset, view))
         resp = self._get(uri)
         resp = _with_dataset(resp, dataset)
-        return GraphView.from_dict(resp, api=self.session)
+        return GraphViewDefinition.from_dict(resp, api=self.session)
 
     def delete_view(self, view):
         uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/{graphViewId}',
@@ -599,22 +599,26 @@ class AnalyticsAPI(APIBase):
         uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views',
                         **self._kwargs(dataset))
         resp = self._get(uri)
-        return [GraphView.from_dict(_with_dataset(r, dataset), api=self.session) for r in resp]
+        return [GraphViewDefinition.from_dict(_with_dataset(r, dataset), api=self.session) for r in resp]
 
     def create_view_instance(self, view):
         uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/{graphViewId}/instances',
                         **self._kwargs(view.dataset, view))
         resp = self._post(uri)
         resp = _with_dataset(resp, view.dataset)
-        return GraphViewInstance.from_dict(resp, api=self.session)
+        resp['view'] = view
+        return GraphViewSnapshot.from_dict(resp, api=self.session)
 
     def get_all_view_instances(self, view):
         uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/{graphViewId}/instances',
                         **self._kwargs(view.dataset, view))
         resp = self._get(uri)
-        return [GraphViewInstance.from_dict(_with_dataset(r, view.dataset), api=self.session) for r in resp]
+        for r in resp:
+            r['view'] = view
+            _with_dataset(r, view.dataset)
+        return [GraphViewSnapshot.from_dict(r, api=self.session) for r in resp]
 
-    def get_presigned_url(self, view, format='parquet'):
+    def get_presigned_url(self, instance, format='parquet'):
         uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/instances/{graphViewInstanceId}/url?format={format}',
-                        format=format, **self._kwargs(view.dataset, instance=view.instance))
+                        format=format, **self._kwargs(instance.view.dataset, instance=instance))
         return self._get(uri)
