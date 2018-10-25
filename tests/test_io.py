@@ -1,5 +1,3 @@
-import os
-
 import pytest
 
 from pkg_resources import resource_filename
@@ -12,6 +10,7 @@ def _resource_path(fname):
 
 FILE1 = _resource_path('test-upload.txt')
 FILE2 = _resource_path('test-upload-2.txt')
+FILE_EMPTY = _resource_path('empty.txt')
 
 
 @pytest.mark.parametrize('upload_args,n_files', [
@@ -67,3 +66,7 @@ def test_append(client, dataset, append_args, n_files):
         manifest = r[0]['manifest']
         assert manifest['content'] is not None
         assert manifest['type'] == 'append'
+
+
+def test_progress_for_empty_files(dataset):
+    dataset.upload(FILE_EMPTY, display_progress=True)
