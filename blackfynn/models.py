@@ -3634,6 +3634,12 @@ class GraphViewDefinition(BaseRecord):
         instances = self._api.analytics.get_all_view_instances(self)
         return sorted(instances, key=lambda x: x.created_at)
 
+    def get_snapshot(self, id):
+        """
+        Return specific snapshot of this view
+        """
+        return self._api.analytics.get_view_instance(self, id)
+
     def latest(self, ignore_errors=False):
         """
         Return most recent snapshot of the view.
@@ -3659,6 +3665,16 @@ class GraphViewDefinition(BaseRecord):
         r = self._api.analytics.delete_view(self)
         self.id = None
         return r
+
+    def as_dict(self):
+        return dict(
+            id = self.id,
+            name = self.name,
+            dataset_id = self.dataset.id,
+            root_model = self.root_model,
+            included_models = self.included_models,
+            created_at = self.created_at
+        )
 
     @as_native_str()
     def __repr__(self):
@@ -3715,6 +3731,12 @@ class GraphViewSnapshot(BaseRecord):
             return resp.json()
         except json.JSONDecodeError:
             self._check_response(resp.text)
+
+    def as_dict(self):
+        return dict(
+            id = self.id,
+            created_at = self.created_at
+        )
 
     def _check_response(self, content):
         if '<Code>NoSuchKey</Code>' in content:

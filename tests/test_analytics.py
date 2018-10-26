@@ -44,6 +44,12 @@ def test_view_versions(graph_view):
 
     assert graph_view.latest() == v3
 
+def test_get_snapshot(graph_view):
+    snapshots = graph_view.get_snapshots()
+    for snap in snapshots:
+        snap2 = graph_view.get_snapshot(snap.id)
+        assert snap2.id == snap.id
+        assert snap2.created_at == snap.created_at
 
 def test_latest_with_no_instances_creates_one(simple_graph):
     dataset = simple_graph.dataset
