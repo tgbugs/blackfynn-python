@@ -2103,9 +2103,10 @@ class Dataset(BaseCollection):
         view.create_snapshot()
         return view
 
-    def get_view(self, name_or_id):
+
+    def get_view_definition(self, name_or_id):
         """
-        Get a graph view with the given name
+        Get a graph view definition with a given name or id
 
         Args:
             name_or_id (str): Name or ID of the view
@@ -2124,7 +2125,8 @@ class Dataset(BaseCollection):
                 raise Exception("View '{}' not found".format(name_or_id))
             view = views[0]
 
-        return view.latest()
+        return view
+
 
     def views(self):
         """

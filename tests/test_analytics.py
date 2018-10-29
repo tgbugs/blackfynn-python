@@ -21,10 +21,16 @@ def graph_view(simple_graph):
     view.delete()
 
 
-def test_get_view(graph_view):
+def test_get_latest_view(graph_view):
     dataset = graph_view.dataset
-    assert dataset.get_view(graph_view.id) == graph_view.latest()
-    assert dataset.get_view(graph_view.name) == graph_view.latest()
+    assert dataset.get_view_definition(graph_view.id).latest() == graph_view.latest()
+    assert dataset.get_view_definition(graph_view.name).latest() == graph_view.latest()
+
+
+def test_get_view_definition(graph_view):
+    dataset = graph_view.dataset
+    assert dataset.get_view_definition(graph_view.id) == graph_view
+    assert dataset.get_view_definition(graph_view.name) == graph_view
 
 
 def test_all_views(graph_view):
@@ -44,12 +50,14 @@ def test_view_versions(graph_view):
 
     assert graph_view.latest() == v3
 
+
 def test_get_snapshot(graph_view):
     snapshots = graph_view.get_snapshots()
     for snap in snapshots:
         snap2 = graph_view.get_snapshot(snap.id)
         assert snap2.id == snap.id
         assert snap2.created_at == snap.created_at
+
 
 def test_latest_with_no_instances_creates_one(simple_graph):
     dataset = simple_graph.dataset
