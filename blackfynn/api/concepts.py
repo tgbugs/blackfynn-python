@@ -601,8 +601,9 @@ class AnalyticsAPI(APIBase):
         resp = self._get(uri)
         return [GraphViewDefinition.from_dict(_with_dataset(r, dataset), api=self.session) for r in resp]
 
-    def create_view_instance(self, view):
-        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/{graphViewId}/instances',
+    def create_view_instance(self, view, batch_size=100):
+        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/{graphViewId}/instances?batchSize={batch_size}',
+                        batch_size=batch_size,
                         **self._kwargs(view.dataset, view))
         resp = self._post(uri)
         resp = _with_dataset(resp, view.dataset)

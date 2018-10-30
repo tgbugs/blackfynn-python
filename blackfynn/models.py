@@ -3623,11 +3623,11 @@ class GraphViewDefinition(BaseRecord):
 
         super(GraphViewDefinition, self).__init__(*args, **kwargs)
 
-    def create_snapshot(self):
+    def create_snapshot(self, batch_size=100):
         """
         Capture the current state of the data in the view.
         """
-        return self._api.analytics.create_view_instance(self)
+        return self._api.analytics.create_view_instance(self, batch_size)
 
     def get_snapshots(self):
         """
