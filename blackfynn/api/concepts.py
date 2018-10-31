@@ -544,7 +544,7 @@ class ModelTemplatesAPI(APIBase):
 def _with_dataset(resp, dataset):
     if isinstance(dataset, (Dataset)):
         resp['dataset_id'] = dataset.int_id
-    elif isinstance(dataset, (basestring, int)):
+    elif isinstance(dataset, (string_types, int)):
         resp['dataset_id'] = dataset
     else:
         raise Exception("Invalid dataset id: {}".format(dataset))
