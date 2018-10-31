@@ -6,6 +6,7 @@ import requests
 
 from blackfynn.api.base import APIBase
 from blackfynn.models import (
+    Dataset,
     DataPackage,
     GraphViewDefinition,
     GraphViewSnapshot,
@@ -541,8 +542,12 @@ class ModelTemplatesAPI(APIBase):
 
 
 def _with_dataset(resp, dataset):
-    resp['dataset'] = dataset
-    resp['dataset_id'] = dataset.id
+    if isinstance(dataset, (Dataset)):
+        resp['dataset_id'] = dataset.int_id
+    elif isinstance(dataset, (basestring, int)):
+        resp['dataset_id'] = dataset
+    else:
+        raise Exception("Invalid dataset id: {}".format(dataset))
     return resp
 
 
@@ -590,9 +595,9 @@ class AnalyticsAPI(APIBase):
         resp = _with_dataset(resp, dataset)
         return GraphViewDefinition.from_dict(resp, api=self.session)
 
-    def delete_view(self, view):
+    def delete_view(self, dataset, view):
         uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/{graphViewId}',
-                        **self._kwargs(view.dataset, view))
+                        **self._kwargs(dataset, view))
         return self._del(uri)
 
     def get_all_views(self, dataset):
@@ -601,18 +606,18 @@ class AnalyticsAPI(APIBase):
         resp = self._get(uri)
         return [GraphViewDefinition.from_dict(_with_dataset(r, dataset), api=self.session) for r in resp]
 
-    def create_view_instance(self, view, batch_size=100):
+    def create_view_instance(self, dataset, view, batch_size=100):
         uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/{graphViewId}/instances?batchSize={batch_size}',
                         batch_size=batch_size,
-                        **self._kwargs(view.dataset, view))
+                        **self._kwargs(dataset, view))
         resp = self._post(uri)
-        resp = _with_dataset(resp, view.dataset)
+        resp = _with_dataset(resp, dataset)
         resp['view'] = view
         return GraphViewSnapshot.from_dict(resp, api=self.session)
 
-    def get_view_instance(self, view, instance):
+    def get_view_instance(self, dataset, view, instance):
         uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/instances/{graphViewInstanceId}',
-                        **self._kwargs(view.dataset, instance=instance))
+                        **self._kwargs(dataset, instance=instance))
         try:
             resp = self._get(uri)
         except requests.exceptions.HTTPError as e:
@@ -621,13 +626,13 @@ class AnalyticsAPI(APIBase):
             raise
 
         resp['view'] = view
-        _with_dataset(resp, view.dataset)
+        _with_dataset(resp, dataset)
         return GraphViewSnapshot.from_dict(resp, api=self.session)
 
-    def get_latest_view_instance(self, view, status=None):
+    def get_latest_view_instance(self, dataset, view, status=None):
         params = dict(status=status) if status is not None else None
         uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/{graphViewId}/instances/latest',
-                        **self._kwargs(view.dataset, view))
+                        **self._kwargs(dataset, view))
         try:
             resp = self._get(uri, params=params)
         except requests.exceptions.HTTPError as e:
@@ -636,13 +641,13 @@ class AnalyticsAPI(APIBase):
             raise
 
         resp['view'] = view
-        _with_dataset(resp, view.dataset)
+        _with_dataset(resp, dataset)
         return GraphViewSnapshot.from_dict(resp, api=self.session)
 
-    def get_all_view_instances(self, view, status=None):
+    def get_all_view_instances(self, dataset, view, status=None):
         params = dict(status=status) if status is not None else None
         uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/{graphViewId}/instances',
-                        **self._kwargs(view.dataset, view))
+                        **self._kwargs(dataset, view))
         try:
             resp = self._get(uri, params=params)
         except requests.exceptions.HTTPError as e:
@@ -652,10 +657,10 @@ class AnalyticsAPI(APIBase):
 
         for r in resp:
             r['view'] = view
-            _with_dataset(r, view.dataset)
+            _with_dataset(r, dataset)
         return [GraphViewSnapshot.from_dict(r, api=self.session) for r in resp]
 
-    def get_presigned_url(self, instance, format='parquet'):
+    def get_presigned_url(self, dataset, instance, format='parquet'):
         uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/instances/{graphViewInstanceId}/url?format={format}',
-                        format=format, **self._kwargs(instance.view.dataset, instance=instance))
+                        format=format, **self._kwargs(dataset, instance=instance))
         return self._get(uri)

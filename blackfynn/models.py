@@ -2099,7 +2099,7 @@ class Dataset(BaseCollection):
         Returns:
             GraphViewDefinition
         """
-        view = self._api.analytics.create_view(self, name, root, include)
+        view = self._api.analytics.create_view(self.int_id, name, root, include)
         if create_snapshot:
             view.create_snapshot()
         return view
@@ -3610,14 +3610,12 @@ class RelationshipSet(BaseInstanceList):
 
 
 class GraphViewDefinition(BaseRecord):
-    _valid_snapshot_status = ['failed','processing','ready']
     _object_key = None
 
-    def __init__(self, name, root_model, included_models, dataset, *args, **kwargs):
+    def __init__(self, name, root_model, included_models, *args, **kwargs):
         self.name = name
         self.root_model = root_model
         self.included_models = included_models
-        self.dataset = dataset
 
         kwargs['type'] = 'GraphViewDefinition'
 
@@ -3627,7 +3625,7 @@ class GraphViewDefinition(BaseRecord):
         """
         Capture the current state of the data in the view.
         """
-        return self._api.analytics.create_view_instance(self, batch_size)
+        return self._api.analytics.create_view_instance(self.dataset_id, self, batch_size)
 
     def get_snapshots(self, status='ready'):
         """
@@ -3642,11 +3640,11 @@ class GraphViewDefinition(BaseRecord):
             List of GraphViewSnapshot objects
         """
         status = None if status == 'any' else status
-        if status not in self._valid_snapshot_status + [None]:
+        if status not in GraphViewSnapshot._valid_snapshot_status + [None]:
             raise Exception("Status must be one of {valid}".format(
-                    valid = self._valid_snapshot_status + ['any', None]
+                    valid = GraphViewSnapshot._valid_snapshot_status + ['any', None]
             ))
-        instances = self._api.analytics.get_all_view_instances(self, status)
+        instances = self._api.analytics.get_all_view_instances(self.dataset_id, self, status)
         return sorted(instances, key=lambda x: x.created_at)
 
     def get_snapshot(self, id):
@@ -3663,7 +3661,7 @@ class GraphViewDefinition(BaseRecord):
         Returns:
             GraphViewSnapshot object
         """
-        return self._api.analytics.get_view_instance(self, id)
+        return self._api.analytics.get_view_instance(self.dataset_id, self, id)
 
 
     def latest(self, status='ready'):
@@ -3679,18 +3677,18 @@ class GraphViewDefinition(BaseRecord):
             GraphViewSnapshot object
         """
         status = None if status == 'any' else status
-        if status not in self._valid_snapshot_status + [None]:
+        if status not in GraphViewSnapshot._valid_snapshot_status + [None]:
             raise Exception("Status must be one of {valid}".format(
-                    valid = self._valid_snapshot_status + ['any', None]
+                    valid = GraphViewSnapshot._valid_snapshot_status + ['any', None]
             ))
-        return self._api.analytics.get_latest_view_instance(self, status=status)
+        return self._api.analytics.get_latest_view_instance(self.dataset_id, self, status=status)
 
     def delete(self):
         """
         Delete the view.
         """
         self._check_exists()
-        r = self._api.analytics.delete_view(self)
+        r = self._api.analytics.delete_view(self.dataset_id, self)
         self.id = None
         return r
 
@@ -3698,7 +3696,7 @@ class GraphViewDefinition(BaseRecord):
         return dict(
             id = self.id,
             name = self.name,
-            dataset_id = self.dataset.id,
+            dataset_id = self.dataset_id,
             root_model = self.root_model,
             included_models = self.included_models,
             created_at = self.created_at
@@ -3710,14 +3708,14 @@ class GraphViewDefinition(BaseRecord):
 
 
 class GraphViewSnapshot(BaseRecord):
-
+    _valid_snapshot_status = ['failed','processing','ready']
     def __init__(self, view, status, *args, **kwargs):
         self.view = view
         self.status = status
         kwargs['type'] = 'GraphViewSnapshot'
 
-        if status not in self.view._valid_snapshot_status:
-            raise Exception("status must be one of {}".format(valid_status))
+        if status not in self._valid_snapshot_status:
+            raise Exception("status must be one of {}".format(self._valid_snapshot_status))
 
         super(GraphViewSnapshot, self).__init__(*args, **kwargs)
 
@@ -3726,7 +3724,7 @@ class GraphViewSnapshot(BaseRecord):
         Returns:
             pd.DataFrame:
         """
-        url = self._api.analytics.get_presigned_url(self, format='parquet')
+        url = self._api.analytics.get_presigned_url(self.dataset_id, self, format='parquet')
 
         # TODO: check that response is ready
         # TODO: refactor - read from stream directly
@@ -3757,7 +3755,7 @@ class GraphViewSnapshot(BaseRecord):
         Returns:
             Data as a JSON structure
         """
-        url = self._api.analytics.get_presigned_url(self, format='json')
+        url = self._api.analytics.get_presigned_url(self.dataset_id, self, format='json')
         resp = requests.get(url)
 
         try:
@@ -3777,5 +3775,9 @@ class GraphViewSnapshot(BaseRecord):
 
     @as_native_str()
     def __repr__(self):
+        if isinstance(self.view, GraphViewDefinition):
+            view_str = self.view.name
+        else:
+            view_str = self.view
         return u"<GraphViewSnapshot view='{}' created='{}' id='{}'>".format(
-            self.view.name, self.created_at, self.id)
+            view_str, self.created_at, self.id)

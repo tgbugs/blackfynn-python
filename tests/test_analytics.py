@@ -13,6 +13,9 @@ def graph_view(simple_graph):
     name = 'patient-view-{}'.format(uuid.uuid4())
     view = dataset.create_view(name, 'patient', ['medication'])
 
+    # add dataset object to view
+    view.dataset = dataset
+
     assert view.name == name
     assert view.root_model == 'patient'
     assert view.included_models == ['medication']
