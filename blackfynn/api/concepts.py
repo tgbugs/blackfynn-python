@@ -610,18 +610,46 @@ class AnalyticsAPI(APIBase):
         resp['view'] = view
         return GraphViewSnapshot.from_dict(resp, api=self.session)
 
-    def get_view_instance(self, view, instance_id):
+    def get_view_instance(self, view, instance):
         uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/instances/{graphViewInstanceId}',
-                        **self._kwargs(view.dataset, instance=instance_id))
-        resp = self._get(uri)
+                        **self._kwargs(view.dataset, instance=instance))
+        try:
+            resp = self._get(uri)
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 404:
+                return None
+            raise
+
         resp['view'] = view
         _with_dataset(resp, view.dataset)
         return GraphViewSnapshot.from_dict(resp, api=self.session)
 
-    def get_all_view_instances(self, view):
+    def get_latest_view_instance(self, view, status=None):
+        params = dict(status=status) if status is not None else None
+        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/{graphViewId}/instances/latest',
+                        **self._kwargs(view.dataset, view))
+        try:
+            resp = self._get(uri, params=params)
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 404:
+                return None
+            raise
+
+        resp['view'] = view
+        _with_dataset(resp, view.dataset)
+        return GraphViewSnapshot.from_dict(resp, api=self.session)
+
+    def get_all_view_instances(self, view, status=None):
+        params = dict(status=status) if status is not None else None
         uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/{graphViewId}/instances',
                         **self._kwargs(view.dataset, view))
-        resp = self._get(uri)
+        try:
+            resp = self._get(uri, params=params)
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 404:
+                return []
+            raise
+
         for r in resp:
             r['view'] = view
             _with_dataset(r, view.dataset)

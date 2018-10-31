@@ -2087,7 +2087,7 @@ class Dataset(BaseCollection):
         """
         return self._api.templates.apply(self, template)
 
-    def create_view(self, name, root, include):
+    def create_view(self, name, root, include, create_snapshot=True):
         """
         Create a graph view rooted at the given model
 
@@ -2100,7 +2100,8 @@ class Dataset(BaseCollection):
             GraphViewDefinition
         """
         view = self._api.analytics.create_view(self, name, root, include)
-        view.create_snapshot()
+        if create_snapshot:
+            view.create_snapshot()
         return view
 
 
@@ -2126,7 +2127,6 @@ class Dataset(BaseCollection):
             view = views[0]
 
         return view
-
 
     def views(self):
         """
@@ -3610,7 +3610,7 @@ class RelationshipSet(BaseInstanceList):
 
 
 class GraphViewDefinition(BaseRecord):
-
+    _valid_snapshot_status = ['failed','processing','ready']
     _object_key = None
 
     def __init__(self, name, root_model, included_models, dataset, *args, **kwargs):
@@ -3629,35 +3629,61 @@ class GraphViewDefinition(BaseRecord):
         """
         return self._api.analytics.create_view_instance(self, batch_size)
 
-    def get_snapshots(self):
+    def get_snapshots(self, status='ready'):
         """
         All snapshots (versions) of this view.
+
+        Args:
+            status (str):
+                Filter snapshots based on status. Value must be 
+                one of 'processing', 'failed', 'ready', or 'any'/None.
+
+        Returns:
+            List of GraphViewSnapshot objects
         """
-        instances = self._api.analytics.get_all_view_instances(self)
+        status = None if status == 'any' else status
+        if status not in self._valid_snapshot_status + [None]:
+            raise Exception("Status must be one of {valid}".format(
+                    valid = self._valid_snapshot_status + ['any', None]
+            ))
+        instances = self._api.analytics.get_all_view_instances(self, status)
         return sorted(instances, key=lambda x: x.created_at)
 
     def get_snapshot(self, id):
         """
-        Return specific snapshot of this view
+        Get specific snapshot of this view.
+
+        Args:
+            id (str):
+                ID of snapshot to return
+            status (str):
+                Filter snapshots based on status. Value must be 
+                one of 'processing', 'failed', 'ready', or 'any'/None.
+
+        Returns:
+            GraphViewSnapshot object
         """
         return self._api.analytics.get_view_instance(self, id)
 
-    def latest(self, ignore_errors=False):
+
+    def latest(self, status='ready'):
         """
         Return most recent snapshot of the view.
-        """
-        versions = self.get_snapshots()
-        if versions:
-            return versions[-1]
 
-        # no instance? Create one!
-        try:
-            return self.create_snapshot()
-        except:
-            if ignore_errors:
-                return self
-            else:
-                raise
+        Args:
+            status (str):
+                Filter snapshots based on status. Value must be 
+                one of 'processing', 'failed', 'ready', or 'any'/None.
+
+        Returns:
+            GraphViewSnapshot object
+        """
+        status = None if status == 'any' else status
+        if status not in self._valid_snapshot_status + [None]:
+            raise Exception("Status must be one of {valid}".format(
+                    valid = self._valid_snapshot_status + ['any', None]
+            ))
+        return self._api.analytics.get_latest_view_instance(self, status=status)
 
     def delete(self):
         """
@@ -3685,9 +3711,14 @@ class GraphViewDefinition(BaseRecord):
 
 class GraphViewSnapshot(BaseRecord):
 
-    def __init__(self, view, *args, **kwargs):
+    def __init__(self, view, status, *args, **kwargs):
         self.view = view
+        self.status = status
         kwargs['type'] = 'GraphViewSnapshot'
+
+        if status not in self.view._valid_snapshot_status:
+            raise Exception("status must be one of {}".format(valid_status))
+
         super(GraphViewSnapshot, self).__init__(*args, **kwargs)
 
     def as_dataframe(self, columns=None):

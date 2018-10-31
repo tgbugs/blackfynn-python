@@ -39,8 +39,7 @@ class ProgressPercentage(object):
         self._size = float(os.path.getsize(filename))
         self._seen_so_far = 0
         self._lock = threading.Lock()
-        self._progress = 0
-        self._done = False
+        self._done = (self.progress == 1)
         self._errored = False
 
         if upload_session_id is None:
@@ -60,6 +59,8 @@ class ProgressPercentage(object):
 
     @property
     def progress(self):
+        if self._size == 0:
+            return 1
         return (self._seen_so_far / self._size)
 
     def set_error(self):

@@ -1,4 +1,5 @@
 import uuid
+import time
 import pytest
 
 from blackfynn import models
@@ -21,12 +22,6 @@ def graph_view(simple_graph):
     view.delete()
 
 
-def test_get_latest_view(graph_view):
-    dataset = graph_view.dataset
-    assert dataset.get_view_definition(graph_view.id).latest() == graph_view.latest()
-    assert dataset.get_view_definition(graph_view.name).latest() == graph_view.latest()
-
-
 def test_get_view_definition(graph_view):
     dataset = graph_view.dataset
     assert dataset.get_view_definition(graph_view.id) == graph_view
@@ -39,35 +34,49 @@ def test_all_views(graph_view):
 
 
 def test_view_versions(graph_view):
+    n_snaps1 = len(graph_view.get_snapshots(status='any'))
     v2 = graph_view.create_snapshot()
     v3 = graph_view.create_snapshot()
+    assert v2.status == 'processing'
+    assert v3.status == 'processing'
+
+    n_snaps2 = len(graph_view.get_snapshots(status='any'))
+    assert n_snaps2-n_snaps1 == 2
 
     # Can't compare lists of versions  because other instances
     # are created by other tests
-    versions = graph_view.get_snapshots()
+    versions = graph_view.get_snapshots(status='any')
     assert versions[-2] == v2
     assert versions[-1] == v3
+    assert graph_view.latest(status='any') == v3
 
-    assert graph_view.latest() == v3
+    # no failed snapshots should exist
+    assert graph_view.get_snapshots(status='failed') == []
+    assert graph_view.latest(status='failed') == None
 
 
 def test_get_snapshot(graph_view):
-    snapshots = graph_view.get_snapshots()
-    for snap in snapshots:
-        snap2 = graph_view.get_snapshot(snap.id)
-        assert snap2.id == snap.id
-        assert snap2.created_at == snap.created_at
+    v1 = graph_view.create_snapshot()
+    v2 = graph_view.get_snapshot(v1.id)
+    assert v1 == v2
+    assert v1.created_at == v2.created_at
 
 
-def test_latest_with_no_instances_creates_one(simple_graph):
+def test_latest_with_no_snapshots_create_one(simple_graph):
     dataset = simple_graph.dataset
 
-    # Create a view with no instances
+    # Create a view with no snapshots
     view = dataset._api.analytics.create_view(
         dataset, 'patient-view-{}'.format(uuid.uuid4()), 'patient', [])
 
-    assert view.get_snapshots() == []
-    assert isinstance(view.latest(), models.GraphViewSnapshot)
+    assert view.get_snapshots(status='any') == []
+    assert view.latest(status='any') == None
+
+    view.create_snapshot()
+
+    snapshots = view.get_snapshots(status='any')
+    assert len(snapshots) == 1
+    assert view.latest(status='any') == snapshots[0]
 
 
 def test_delete_view(simple_graph):
@@ -89,6 +98,15 @@ def test_cant_create_duplicate_views(graph_view):
 
 
 def test_as_dataframe(graph_view):
+
+    with pytest.raises(Exception):
+        graph_view.latest(status='processing').as_dataframe()
+
+    # wait for snapshot to process
+    start = time.time()
+    while graph_view.latest() is None and (time.time() - start < 30):
+        time.sleep(1)
+
     df = graph_view.latest().as_dataframe()
     assert set(df.columns) == set(['patient', 'patient.name', 'medication', 'medication.name'])
 
