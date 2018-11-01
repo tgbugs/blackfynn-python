@@ -3726,14 +3726,8 @@ class GraphViewSnapshot(BaseRecord):
         """
         url = self._api.analytics.get_presigned_url(self.dataset_id, self, format='parquet')
 
-        # TODO: check that response is ready
-        # TODO: refactor - read from stream directly
         filename = os.path.join(tempfile.gettempdir(), '{}.parquet'.format(self.id))
-        with requests.get(url, stream=True) as r:
-            with io.open(filename, 'wb') as f:
-                for chunk in r.iter_content(chunk_size=16384):
-                    if chunk:
-                        f.write(chunk)
+        self.download(filename, format='parquet')
 
         try:
             # TODO: allow for wildcard columns, e.g. `patient.*`
@@ -3749,6 +3743,35 @@ class GraphViewSnapshot(BaseRecord):
                 pass
 
         return df
+
+    def download(self, location, format='parquet'):
+        """
+        Download the snapshot dataframe as a file.
+
+        Args:
+            location (str or file-like object):
+                Location to save snapshot dataframe. Can be either
+                filesystem path string or some file-like
+                object (in-memory or on-disk).
+
+            format (str):
+                Format of file. Can be either 'parquet', 'json'.
+        """
+        url = self._api.analytics.get_presigned_url(self.dataset_id, self, format=format)
+
+        def download_file_contents(response, f):
+            for chunk in response.iter_content(chunk_size=16384):
+                if chunk:
+                    f.write(chunk)
+
+        with requests.get(url, stream=True) as r:
+            if isinstance(location, string_types):
+                with io.open(location, 'wb') as f:
+                    download_file_contents(r, f)
+            elif isinstance(location, (file, io.IOBase)):
+                download_file_contents(r, location)
+            else:
+                raise Exception('location must be file path (str) or file-like object')
 
     def as_json(self):
         """

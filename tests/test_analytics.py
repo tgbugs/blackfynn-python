@@ -1,6 +1,9 @@
+import os
+import io
 import uuid
 import time
 import pytest
+import tempfile
 
 from blackfynn import models
 
@@ -23,6 +26,14 @@ def graph_view(simple_graph):
     yield view
 
     view.delete()
+
+@pytest.fixture(scope='module')
+def ready_snapshot(graph_view):
+    # wait for snapshot to process
+    start = time.time()
+    while graph_view.latest() is None and (time.time() - start < 30):
+        time.sleep(1)
+    return graph_view.latest()
 
 
 def test_get_view_definition(graph_view):
@@ -100,22 +111,39 @@ def test_cant_create_duplicate_views(graph_view):
         dataset.create_view('different-name-same-models', graph_view.root_model, graph_view.included_models)
 
 
-def test_as_dataframe(graph_view):
-
+def test_as_dataframe_not_ready(graph_view):
     with pytest.raises(Exception):
         graph_view.latest(status='processing').as_dataframe()
 
-    # wait for snapshot to process
-    start = time.time()
-    while graph_view.latest() is None and (time.time() - start < 30):
-        time.sleep(1)
 
-    df = graph_view.latest().as_dataframe()
+def test_as_dataframe(ready_snapshot):
+    df = ready_snapshot.as_dataframe()
     assert set(df.columns) == set(['patient', 'patient.name', 'medication', 'medication.name'])
 
 
-def test_as_json(graph_view):
-    json = graph_view.latest().as_json()
+def test_as_json(ready_snapshot):
+    json = ready_snapshot.as_json()
     for obj in json:
         assert 'patient.name' in obj
         assert 'medication.name' in obj
+
+@pytest.mark.parametrize('format', ['parquet', 'json'])
+def test_download_file(ready_snapshot, format):
+    path = os.path.join(
+        tempfile.gettempdir(),
+        '{snap}.{format}'.format(snap=ready_snapshot.id, format=format))
+    assert not os.path.exists(path)
+    ready_snapshot.download(path, format=format)
+    assert os.path.exists(path)
+    os.remove(path)
+    assert not os.path.exists(path)
+
+@pytest.mark.parametrize('format', ['parquet', 'json'])
+def test_download_buffer(ready_snapshot, format):
+    buff = io.BytesIO()
+    assert len(buff.read()) == 0
+    ready_snapshot.download(buff, format=format)
+    buff.seek(0)
+    assert len(buff.read(10)) == 10
+    buff.close()
+    del buff
