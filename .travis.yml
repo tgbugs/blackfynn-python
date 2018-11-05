@@ -26,10 +26,10 @@ jobs:
         - make html-latest
         - cd $TRAVIS_BUILD_DIR
       deploy:
+        provider: s3
         on:
           tags: true
-          branch: master
-        provider: s3
+          all_branches: true
         access_key_id: "$AWS_ACCESS_KEY_ID"
         secret_access_key: "$AWS_SECRET_ACCESS_KEY"
         bucket: "prod-developer-use1.blackfynn.io"
@@ -41,17 +41,20 @@ jobs:
 
     - stage: release
       if: tag IS present
+      python: '3.6'
       install: skip
       script: skip
       deploy:
         - provider: pypi
-          on: master
+          on:
+            all_branches: true
           user: blackfynn
           password: "$PYPI_PASSWORD"
           #server: https://test.pypi.org/legacy/ # uncomment to use test pypi
           distributions: sdist bdist_wheel
         - provider: script
-          on: master
+          on:
+            all_branches: true
           services:
             - docker
           script: bash bin/docker_push.sh "$TRAVIS_TAG"
