@@ -40,22 +40,21 @@ jobs:
         acl: public_read
 
     - stage: release
-      if: branch = master AND tag IS present
+      if: tag IS present
       install: skip
-      script: echo "Deploying to PyPI"
+      script: skip
       deploy:
-        provider: pypi
-        user: blackfynn
-        password: "$PYPI_PASSWORD"
-        #server: https://test.pypi.org/legacy/ # uncomment to use test pypi
-        distributions: sdist bdist_wheel
-
-    - stage: docker image
-      if: branch = master AND tag IS present
-      install: skip
-      services:
-        - docker
-      script: bash bin/docker_push.sh "$TRAVIS_TAG"
+        - provider: pypi
+          on: master
+          user: blackfynn
+          password: "$PYPI_PASSWORD"
+          #server: https://test.pypi.org/legacy/ # uncomment to use test pypi
+          distributions: sdist bdist_wheel
+        - provider: script
+          on: master
+          services:
+            - docker
+          script: bash bin/docker_push.sh "$TRAVIS_TAG"
 
 notifications:
   slack:
