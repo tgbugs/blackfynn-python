@@ -1,6 +1,10 @@
 sudo: false
 language: python
 cache: pip
+
+services:
+  - docker
+
 python:
   - '2.7'
   - '3.4'
@@ -55,8 +59,6 @@ jobs:
         - provider: script
           on:
             all_branches: true
-          services:
-            - docker
           script: bash bin/docker_push.sh "$TRAVIS_TAG"
 
 notifications:
