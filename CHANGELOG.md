@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 Documentation at https://developer.blackfynn.io/python/
 
+## [2.6.2]
+### Fixed
+- Automatic releases via Travis
+
 ## [2.6.1]
 ### Changed
 - Settings overridden via function arguments will be prioritized over settings overridden by environment variables
