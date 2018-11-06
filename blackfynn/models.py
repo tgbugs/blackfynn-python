@@ -3609,15 +3609,15 @@ class RelationshipSet(BaseInstanceList):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-class GraphViewDefinition(BaseRecord):
+class GraphViewDefinition(BaseNode):
     _object_key = None
 
-    def __init__(self, name, root_model, included_models, *args, **kwargs):
+    def __init__(self, name, root_model, included_models, dataset_id, created_at, *args, **kwargs):
         self.name = name
         self.root_model = root_model
         self.included_models = included_models
-
-        kwargs['type'] = 'GraphViewDefinition'
+        self.dataset_id = dataset_id
+        self.created_at = created_at
 
         super(GraphViewDefinition, self).__init__(*args, **kwargs)
 
@@ -3633,7 +3633,7 @@ class GraphViewDefinition(BaseRecord):
 
         Args:
             status (str):
-                Filter snapshots based on status. Value must be 
+                Filter snapshots based on status. Value must be
                 one of 'processing', 'failed', 'ready', or 'any'/None.
 
         Returns:
@@ -3655,7 +3655,7 @@ class GraphViewDefinition(BaseRecord):
             id (str):
                 ID of snapshot to return
             status (str):
-                Filter snapshots based on status. Value must be 
+                Filter snapshots based on status. Value must be
                 one of 'processing', 'failed', 'ready', or 'any'/None.
 
         Returns:
@@ -3670,7 +3670,7 @@ class GraphViewDefinition(BaseRecord):
 
         Args:
             status (str):
-                Filter snapshots based on status. Value must be 
+                Filter snapshots based on status. Value must be
                 one of 'processing', 'failed', 'ready', or 'any'/None.
 
         Returns:
@@ -3707,12 +3707,15 @@ class GraphViewDefinition(BaseRecord):
         return u"<GraphViewDefinition name='{}' id='{}'>".format(self.name, self.id)
 
 
-class GraphViewSnapshot(BaseRecord):
+class GraphViewSnapshot(BaseNode):
+    _object_key = None
     _valid_snapshot_status = ['failed','processing','ready']
-    def __init__(self, view, status, *args, **kwargs):
+
+    def __init__(self, view, status, dataset_id, created_at, *args, **kwargs):
         self.view = view
         self.status = status
-        kwargs['type'] = 'GraphViewSnapshot'
+        self.dataset_id = dataset_id
+        self.created_at = created_at
 
         if status not in self._valid_snapshot_status:
             raise Exception("status must be one of {}".format(self._valid_snapshot_status))

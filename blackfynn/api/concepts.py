@@ -541,27 +541,17 @@ class ModelTemplatesAPI(APIBase):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-def _with_dataset(resp, dataset):
-    if isinstance(dataset, (Dataset)):
-        resp['dataset_id'] = dataset.int_id
-    elif isinstance(dataset, (string_types, int)):
-        resp['dataset_id'] = dataset
-    else:
-        raise Exception("Invalid dataset id: {}".format(dataset))
-    return resp
-
-
 class AnalyticsAPI(APIBase):
     base_uri = '/analytics'
     name = 'analytics'
 
-    def _kwargs(self, dataset, view=None, instance=None, **kwargs):
+    def _with_kwargs(self, dataset, view=None, instance=None, **kwargs):
         kwargs.update({
             'orgId': self._get_int_id(self.session._context),
             'datasetId': self._get_int_id(dataset)
         })
-
         if view is not None:
+            kwargs['view'] = view
             kwargs['graphViewId'] = self._get_id(view)
 
         if instance is not None:
@@ -571,7 +561,7 @@ class AnalyticsAPI(APIBase):
 
     def create_view(self, dataset, name, root, include):
         uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views',
-                        **self._kwargs(dataset))
+                        **self._with_kwargs(dataset))
 
         try:
             resp = self._post(uri, json={
@@ -585,39 +575,39 @@ class AnalyticsAPI(APIBase):
             else:
                 raise
 
-        resp = _with_dataset(resp, dataset)
+        resp = self._with_kwargs(dataset, **resp)
         return GraphViewDefinition.from_dict(resp, api=self.session)
 
     def get_view(self, dataset, view):
         uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/{graphViewId}',
-                        **self._kwargs(dataset, view))
+                        **self._with_kwargs(dataset, view))
         resp = self._get(uri)
-        resp = _with_dataset(resp, dataset)
+        resp = self._with_kwargs(dataset, **resp)
         return GraphViewDefinition.from_dict(resp, api=self.session)
 
     def delete_view(self, dataset, view):
         uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/{graphViewId}',
-                        **self._kwargs(dataset, view))
+                        **self._with_kwargs(dataset, view))
         return self._del(uri)
 
     def get_all_views(self, dataset):
         uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views',
-                        **self._kwargs(dataset))
+                        **self._with_kwargs(dataset))
         resp = self._get(uri)
-        return [GraphViewDefinition.from_dict(_with_dataset(r, dataset), api=self.session) for r in resp]
+        return [GraphViewDefinition.from_dict(self._with_kwargs(dataset, **r), api=self.session)
+                for r in resp]
 
     def create_view_instance(self, dataset, view, batch_size=100):
         uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/{graphViewId}/instances?batchSize={batch_size}',
                         batch_size=batch_size,
-                        **self._kwargs(dataset, view))
+                        **self._with_kwargs(dataset, view))
         resp = self._post(uri)
-        resp = _with_dataset(resp, dataset)
-        resp['view'] = view
+        resp = self._with_kwargs(dataset, view, **resp)
         return GraphViewSnapshot.from_dict(resp, api=self.session)
 
     def get_view_instance(self, dataset, view, instance):
         uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/instances/{graphViewInstanceId}',
-                        **self._kwargs(dataset, instance=instance))
+                        **self._with_kwargs(dataset, instance=instance))
         try:
             resp = self._get(uri)
         except requests.exceptions.HTTPError as e:
@@ -625,14 +615,13 @@ class AnalyticsAPI(APIBase):
                 return None
             raise
 
-        resp['view'] = view
-        _with_dataset(resp, dataset)
+        resp = self._with_kwargs(dataset, view, **resp)
         return GraphViewSnapshot.from_dict(resp, api=self.session)
 
     def get_latest_view_instance(self, dataset, view, status=None):
         params = dict(status=status) if status is not None else None
         uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/{graphViewId}/instances/latest',
-                        **self._kwargs(dataset, view))
+                        **self._with_kwargs(dataset, view))
         try:
             resp = self._get(uri, params=params)
         except requests.exceptions.HTTPError as e:
@@ -640,14 +629,13 @@ class AnalyticsAPI(APIBase):
                 return None
             raise
 
-        resp['view'] = view
-        _with_dataset(resp, dataset)
+        resp = self._with_kwargs(dataset, view, **resp)
         return GraphViewSnapshot.from_dict(resp, api=self.session)
 
     def get_all_view_instances(self, dataset, view, status=None):
         params = dict(status=status) if status is not None else None
         uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/{graphViewId}/instances',
-                        **self._kwargs(dataset, view))
+                        **self._with_kwargs(dataset, view))
         try:
             resp = self._get(uri, params=params)
         except requests.exceptions.HTTPError as e:
@@ -655,12 +643,10 @@ class AnalyticsAPI(APIBase):
                 return []
             raise
 
-        for r in resp:
-            r['view'] = view
-            _with_dataset(r, dataset)
-        return [GraphViewSnapshot.from_dict(r, api=self.session) for r in resp]
+        return [GraphViewSnapshot.from_dict(self._with_kwargs(dataset, view, **r), api=self.session)
+                for r in resp]
 
     def get_presigned_url(self, dataset, instance, format='parquet'):
         uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/instances/{graphViewInstanceId}/url?format={format}',
-                        format=format, **self._kwargs(dataset, instance=instance))
+                        format=format, **self._with_kwargs(dataset, instance=instance))
         return self._get(uri)
