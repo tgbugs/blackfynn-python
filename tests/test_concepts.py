@@ -301,7 +301,8 @@ def test_model_properties_with_enum(dataset):
         ModelProperty('name', data_type=str, title=True),
         ModelProperty('some_enum', data_type=ModelPropertyEnumType(data_type=float, enum=[1.0, 2.0, 3.0], unit="cm", multi_select=False)),
         ModelProperty('some_array',
-                      data_type=ModelPropertyEnumType(data_type=str, enum=['foo', 'bar', 'baz'], multi_select=True))
+                      data_type=ModelPropertyEnumType(data_type=str, enum=['foo', 'bar', 'baz'], multi_select=True)),
+        ModelProperty('non_enum_array', data_type=ModelPropertyEnumType(data_type=int, multi_select=True))
     ])
 
     result = dataset.get_model(model_with_enum_props.id)
@@ -310,6 +311,7 @@ def test_model_properties_with_enum(dataset):
 
     enum_property = result.get_property('some_enum')
     array_property = result.get_property('some_array')
+    non_enum_array_property = result.get_property('non_enum_array')
 
     assert (enum_property.type == float)
     assert (enum_property.multi_select == False)
@@ -320,6 +322,9 @@ def test_model_properties_with_enum(dataset):
     assert (array_property.multi_select == True)
     assert (array_property.enum == ['foo', 'bar', 'baz'])
 
+    assert non_enum_array_property.type == int
+    assert non_enum_array_property.multi_select == True
+    assert non_enum_array_property.enum == None
 
 
 Graph = namedtuple('TestGraph', ['dataset', 'models', 'model_records',

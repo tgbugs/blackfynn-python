@@ -2238,8 +2238,10 @@ class ModelPropertyType(object):
 
     @classmethod
     def from_dict(cls, data):
-
         if isinstance(data, dict):
+            if data['type'].lower() == 'array' or 'items' in data:
+                return ModelPropertyEnumType.from_dict(data)
+
             t = data['type'].lower()
             format = data.get('format')
             unit = data.get('unit')
@@ -2344,12 +2346,7 @@ class BaseModelProperty(object):
     @classmethod
     def from_dict(cls, data):
         display_name = data.get('displayName', data.get('display_name', dict()))
-        dt = data.get('data_type', data.get('dataType'))
-        try:
-            if dt.get('items').get('enum') is not None:
-                data_type = ModelPropertyEnumType.from_dict(dt)
-        except Exception:
-            data_type = ModelPropertyType.from_dict(dt)
+        data_type = ModelPropertyType.from_dict(data.get('data_type', data.get('dataType')))
         locked = data.get('locked', False)
         default = data.get('default', True)
         title = data.get('title', data.get('conceptTitle', False))
