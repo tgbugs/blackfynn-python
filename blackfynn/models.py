@@ -3632,7 +3632,7 @@ class GraphViewDefinition(BaseNode):
         """
         return self._api.analytics.create_view_instance(self.dataset_id, self, batch_size)
 
-    def get_snapshots(self, status='ready'):
+    def snapshots(self, status='ready'):
         """
         All snapshots (versions) of this view.
 

@@ -48,24 +48,24 @@ def test_all_views(graph_view):
 
 
 def test_view_versions(graph_view):
-    n_snaps1 = len(graph_view.get_snapshots(status='any'))
+    n_snaps1 = len(graph_view.snapshots(status='any'))
     v2 = graph_view.create_snapshot()
     v3 = graph_view.create_snapshot()
     assert v2.status == 'processing'
     assert v3.status == 'processing'
 
-    n_snaps2 = len(graph_view.get_snapshots(status='any'))
+    n_snaps2 = len(graph_view.snapshots(status='any'))
     assert n_snaps2-n_snaps1 == 2
 
     # Can't compare lists of versions  because other instances
     # are created by other tests
-    versions = graph_view.get_snapshots(status='any')
+    versions = graph_view.snapshots(status='any')
     assert versions[-2] == v2
     assert versions[-1] == v3
     assert graph_view.latest(status='any') == v3
 
     # no failed snapshots should exist
-    assert graph_view.get_snapshots(status='failed') == []
+    assert graph_view.snapshots(status='failed') == []
     assert graph_view.latest(status='failed') == None
 
 
@@ -83,12 +83,12 @@ def test_latest_with_no_snapshots_create_one(simple_graph):
     view = dataset._api.analytics.create_view(
         dataset, 'patient-view-{}'.format(uuid.uuid4()), 'patient', [])
 
-    assert view.get_snapshots(status='any') == []
+    assert view.snapshots(status='any') == []
     assert view.latest(status='any') == None
 
     view.create_snapshot()
 
-    snapshots = view.get_snapshots(status='any')
+    snapshots = view.snapshots(status='any')
     assert len(snapshots) == 1
     assert view.latest(status='any') == snapshots[0]
 
