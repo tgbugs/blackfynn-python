@@ -34,6 +34,11 @@ try: # Python 3
 except ImportError: # Python 2
     from inspect import getargspec as getfullargspec
 
+if PY2:
+    file_types = (file, io.IOBase)
+else:
+    file_types = (io.IOBase)
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Helpers
@@ -3771,7 +3776,7 @@ class GraphViewSnapshot(BaseNode):
             if isinstance(location, string_types):
                 with io.open(location, 'wb') as f:
                     download_file_contents(r, f)
-            elif isinstance(location, (file, io.IOBase)):
+            elif isinstance(location, file_types):
                 download_file_contents(r, location)
             else:
                 raise Exception('location must be file path (str) or file-like object')
