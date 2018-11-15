@@ -3653,6 +3653,7 @@ class GraphViewDefinition(BaseNode):
         return sorted(instances, key=lambda x: x.created_at)
 
     def get_snapshot(self, id):
+
         """
         Get specific snapshot of this view.
 
@@ -3667,6 +3668,15 @@ class GraphViewDefinition(BaseNode):
             GraphViewSnapshot object
         """
         return self._api.analytics.get_view_instance(self.dataset_id, self, id)
+
+    def delete_snapshot(self, id):
+        """ Delete the given snapshot
+
+        Args:
+            id: (str):
+                ID of snapshot to delete
+        """
+        return self._api.analytics.delete_view_instance(self.dataset_id, id)
 
 
     def latest(self, status='ready'):
@@ -3768,6 +3778,7 @@ class GraphViewSnapshot(BaseNode):
         url = self._api.analytics.get_presigned_url(self.dataset_id, self, format=format)
 
         def download_file_contents(response, f):
+
             for chunk in response.iter_content(chunk_size=16384):
                 if chunk:
                     f.write(chunk)
@@ -3780,7 +3791,9 @@ class GraphViewSnapshot(BaseNode):
                 download_file_contents(r, location)
             else:
                 raise Exception('location must be file path (str) or file-like object')
-
+    def delete(self):
+        """ Deletes the snapshot """
+        return self._api.analytics.delete_view_instance(self.dataset_id, self.id)
     def as_json(self):
         """
         Returns:

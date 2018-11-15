@@ -147,3 +147,28 @@ def test_download_buffer(ready_snapshot, format):
     assert len(buff.read(10)) == 10
     buff.close()
     del buff
+
+
+def _block_until_ready(view, snapshot):
+    start = time.time()
+    while snapshot.status != 'Ready' and (time.time() - start < 30):
+        time.sleep(1)
+        snapshot = view.get_snapshot(snapshot.id)
+    return snapshot
+
+def test_delete_snapshot(graph_view):
+    v1 = graph_view.create_snapshot()
+    v2 = _block_until_ready(graph_view, v1)
+
+    status = v2.delete()
+    v3 = graph_view.get_snapshot(v2.id)
+    assert v3 is None
+
+def test_delete_snapshot_from_view(graph_view):
+    v1 = graph_view.create_snapshot()
+    v2 = _block_until_ready(graph_view, v1)
+
+    graph_view.delete_snapshot(v2.id)
+    v3 = graph_view.get_snapshot(v2.id)
+    assert v3 is None
+

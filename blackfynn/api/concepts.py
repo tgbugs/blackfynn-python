@@ -647,6 +647,12 @@ class AnalyticsAPI(APIBase):
                 for r in resp]
 
     def get_presigned_url(self, dataset, instance, format='parquet'):
+
         uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/instances/{graphViewInstanceId}/url?format={format}',
                         format=format, **self._with_kwargs(dataset, instance=instance))
         return self._get(uri)
+
+    def delete_view_instance(self, dataset, instance):
+        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/instances/{graphViewInstanceId}',
+                        **self._with_kwargs(dataset, instance=instance))
+        return self._del(uri)
