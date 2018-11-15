@@ -1,15 +1,10 @@
 sudo: false
+dist: trusty
 language: python
 cache: pip
 
 services:
   - docker
-
-python:
-  - '2.7'
-  - '3.4'
-  - '3.5'
-  - '3.6'
 
 install:
   - pip install --upgrade pip setuptools wheel
@@ -22,8 +17,25 @@ after_success: bash <(curl -s https://codecov.io/bash)
 
 jobs:
   include:
+    - stage: test
+      python: 2.7
+
+    - stage: test
+      python: 3.4
+
+    - stage: test
+      python: 3.5
+
+    - stage: test
+      python: 3.6
+
+    - stage: test
+      python: 3.7
+      dist: xenial
+      sudo: true
+
     - stage: docs
-      python: '3.6'
+      python: 3.6
       script:
         - cd docs
         - make html
