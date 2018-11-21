@@ -31,6 +31,16 @@ def timeseries(client, dataset):
     assert not ts.exists
     assert ts not in dataset
 
+
+@pytest.fixture()
+def timeseries2(client, dataset):
+    ts = TimeSeries('Animal EEG')
+    dataset.add(ts)
+    assert ts.exists
+    yield ts
+    dataset.remove(ts)
+
+
 def test_update_timeseries_name(client, timeseries):
     # update timeseries: change name
     timeseries.name = 'Monkey EEG'
@@ -317,6 +327,38 @@ def test_timeseries_annotations_can_get_more_than_default_limit(timeseries):
     assert len(annots) == 200
 
     layer.delete()
+
+
+def test_timeseries_annotations_check_that_channels_belong_to_series(timeseries, timeseries2):
+    ch = TimeSeriesChannel(
+        name='test_channel',
+        rate=256,
+        unit='uV',
+        start=0,
+        end=1e6)
+    timeseries.add_channels(ch)
+    print(timeseries, timeseries2)
+
+    ch2 = TimeSeriesChannel(
+        name='test_channel_2',
+        rate=256,
+        unit='uV',
+        start=0,
+        end=1e6)
+    timeseries2.add_channels(ch2)
+
+    layer = TimeSeriesAnnotationLayer(
+        name="a_layer", time_series_id=timeseries.id, description="a layer")
+    timeseries.add_layer(layer)
+
+    with pytest.raises(Exception):
+        layer.annotations(channels=[ch, ch2])
+
+    with pytest.raises(Exception):
+        next(layer.iter_annotations(channels=[ch, ch2]))
+
+    with pytest.raises(Exception):
+        layer.annotation_counts(0, 1e6, period='0.1s', channels=[ch, ch2])
 
 
 def test_timeseries_segments(client, timeseries):

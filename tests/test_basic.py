@@ -196,6 +196,22 @@ def test_properties(client, dataset):
         assert pkg2.get_property('my-key')
 
 
+def test_can_remove_multiple_items(dataset):
+    pkg1 = DataPackage('Some MRI', package_type='MRI')
+    dataset.add(pkg1)
+    pkg1.update()
+    pkg2 = DataPackage('Some Video', package_type='Video')
+    dataset.add(pkg2)
+    pkg2.update()
+    assert pkg1 in dataset.items
+    assert pkg2 in dataset.items
+
+    dataset.remove(pkg1)
+    dataset.remove(pkg2)
+    assert pkg1 not in dataset.items
+    assert pkg2 not in dataset.items
+
+
 def test_timeout():
     with pytest.raises(requests.exceptions.Timeout):
         # initial authentication calls should time out

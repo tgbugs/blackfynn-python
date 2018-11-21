@@ -578,8 +578,10 @@ class BaseCollection(BaseDataNode):
                 raise Exception('Cannot remove item, not in collection:{}'.format(item))
 
         self._api.data.delete(*items)
-        # force refresh
-        self._items = None
+
+        # remove locally
+        for item in items:
+            self._items.remove(item)
 
     @property
     def items(self):
