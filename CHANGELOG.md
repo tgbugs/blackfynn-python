@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 Documentation at https://developer.blackfynn.io/python/
 
+## [2.6.5]
+### Fixed
+- Retrieval of all annotations for a timeseries
+
+### Changed
+- Added support for Python 3.7
+- Refactored checks that channels belong to a given timeseries
+
 ## [2.6.4]
 ### Fixed
 - Loading of non-enumerated array properties
