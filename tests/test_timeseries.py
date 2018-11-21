@@ -286,6 +286,39 @@ def test_timeseries_annotations(client, timeseries):
     layer2.delete()
     assert not layer2.exists
 
+
+def test_timeseries_annotations_can_get_more_than_default_limit(timeseries):
+    ch = TimeSeriesChannel(
+        name='test_channel',
+        rate=256,
+        unit='uV',
+        start=0,
+        end=2e6)
+    timeseries.add_channels(ch)
+
+    layer = TimeSeriesAnnotationLayer(
+        name="limit_layer", time_series_id=timeseries.id,
+        description="layer with many small annotations")
+    timeseries.add_layer(layer)
+
+    for i in range(200):
+        annotation = TimeSeriesAnnotation(
+            label='annotation_{}'.format(i),
+            channel_ids=ch.id,
+            start=i*1e4,
+            end=(i+1)*1e4)
+        layer.add_annotations(annotation)
+
+    # Should retrieve all annotations
+    assert len(layer.annotations()) == 200
+
+    # All of these annotations should be in the first 10-second window
+    annots = next(layer.iter_annotations())
+    assert len(annots) == 200
+
+    layer.delete()
+
+
 def test_timeseries_segments(client, timeseries):
     """
     No valid timeseries data to test against, but we can test the API calls.

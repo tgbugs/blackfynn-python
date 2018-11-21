@@ -5,6 +5,7 @@ from builtins import dict, object, range, zip
 from future.utils import as_native_str, integer_types, string_types
 
 import datetime
+import itertools
 import math
 import re
 
@@ -655,18 +656,25 @@ class TimeSeriesAPI(APIBase):
             win_end = win_start + window_size*1e6
             if win_end > end_time:
                 win_end = end_time
-            annotations = self.query_annotations(ts=ts,layer=layer,start=win_start,end=win_end, channels=channels)
-            yield annotations
+            yield self.get_annotations(ts=ts, layer=layer, start=win_start, end=win_end, channels=channels)
 
-    def get_annotations(self, ts, layer, channels=None):
+    def get_annotations(self, ts, layer, start=None, end=None, channels=None):
         """
         Returns all annotations for a given layer
         """
-        start, end = ts.limits()
-        return self.query_annotations(ts=ts, layer=layer, start=start, end=end, channels=channels, limit=0, offset=0)
+        limit = 100
+        annots = []
+        for offset in itertools.count(0, limit):
+            batch = self.query_annotations(
+                ts=ts, layer=layer, channels=channels, start=start, end=end,
+                limit=limit, offset=offset)
+            if not batch:
+                break
+            annots += batch
 
+        return annots
 
-    def query_annotations(self, ts, layer, start=None, end=None, channels=None, limit=None, offset=0):
+    def query_annotations(self, ts, layer, start=None, end=None, channels=None, limit=100, offset=0):
         """
         Retrieves timeseries annotations for a particular range  on array of channels.
         """

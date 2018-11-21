@@ -1576,7 +1576,6 @@ class TimeSeriesAnnotationLayer(BaseNode):
         """
         Get annotations between ``start`` and ``end`` over ``channels`` (all channels by default).
 
-
         Args:
             start:    Start time
             end:      End time
@@ -1585,9 +1584,8 @@ class TimeSeriesAnnotationLayer(BaseNode):
         """
         self._check_exists()
         ts = self._api.core.get(self.time_series_id)
-        return self._api.timeseries.query_annotations(
-            ts=ts, layer=self, channels=channels, start=start, end=end
-        )
+        return self._api.timeseries.get_annotations(
+            ts=ts, layer=self, channels=channels, start=start, end=end)
 
     def annotation_counts(self, start, end, period, channels=None):
         """
