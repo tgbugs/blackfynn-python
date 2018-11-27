@@ -12,10 +12,6 @@ import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-import boto3
-from boto3.s3.transfer import S3Transfer
-from botocore.client import Config
-
 import blackfynn.log as log
 # blackfynn
 from blackfynn.api.base import APIBase
