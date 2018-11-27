@@ -128,16 +128,10 @@ class UploadManager(object):
 
 
 def upload_file(
+        api,
         file,
-        s3_host,
-        s3_port,
-        s3_bucket,
-        s3_keybase,
-        region,
-        access_key_id,
-        secret_access_key,
-        session_token,
-        encryption_key_id,
+        import_id,
+        org_id,
         upload_session_id=None,
         ):
 
@@ -146,39 +140,13 @@ def upload_file(
     UPLOADS[upload_session_id] = progress
 
     try:
-        # account for dev connections
-        resource_args = {}
-        config_args = dict(signature_version='s3v4')
-        if 'amazon' not in s3_host.lower() and len(s3_host)!=0:
-            resource_args = dict(endpoint_url="http://{}:{}".format(s3_host, s3_port))
-            config_args = dict(s3=dict(addressing_style='path'))
-
-        # connect to s3
-        session = boto3.session.Session()
-        s3 = session.client('s3',
-            region_name = region,
-            aws_access_key_id = access_key_id,
-            aws_secret_access_key = secret_access_key,
-            aws_session_token = session_token,
-            config = Config(**config_args),
-            **resource_args
-        )
-
-        # s3 key
-        s3_key = '{}/{}'.format(s3_keybase, os.path.basename(file))
-
-        # upload file to s3
-        s3.upload_file(
-            Filename=file,
-            Bucket=s3_bucket,
-            Key=s3_key,
-            Callback=progress,
-            ExtraArgs=dict(
-                ServerSideEncryption="aws:kms",
-                SSEKMSKeyId=encryption_key_id
-            ))
-
-        return s3_key
+        uri = api._uri('/upload/organizations/{org_id}/id/{import_id}',
+                        import_id=import_id, org_id=org_id)
+        files = {
+            "file": io.open(file, 'rb')
+        }
+        api._post(uri, files=files)
+        return file
 
     except Exception as e:
         logger.debug(e)
@@ -250,20 +218,12 @@ class IOAPI(APIBase):
 
         # get preview
         import_id_map = self.get_preview(files, append)
-
+        print(import_id_map)
         # get upload credentials
         resp = self.session.security.get_upload_credentials(dataset_id)
-        creds = resp['tempCredentials']
-        s3_bucket = resp['s3Bucket']
-        region = creds['region']
-        access_key_id = creds['accessKey']
-        secret_access_key = creds['secretKey']
-        session_token = creds['sessionToken']
-        encryption_key_id = resp['encryptionKeyId']
 
         # upload session manager
         upload_session = UploadManager()
-
         # parallel upload to s3
         file_results = {}
         group_results = []
@@ -271,16 +231,10 @@ class IOAPI(APIBase):
             futures = {
                 e.submit(
                     fn = upload_file,
+                    api = self,
                     file = file,
-                    s3_host=self.session.settings.s3_host,
-                    s3_port=self.session.settings.s3_port,
-                    s3_bucket = s3_bucket,
-                    s3_keybase = '{}/{}'.format(resp['s3Key'], import_id_map[file]),
-                    region = region,
-                    access_key_id = access_key_id,
-                    secret_access_key = secret_access_key,
-                    session_token = session_token,
-                    encryption_key_id = encryption_key_id,
+                    import_id = import_id_map[file],
+                    org_id = self.session._organization,
                     upload_session_id = upload_session.init_file(file),
                 ): file
                 for file in files
