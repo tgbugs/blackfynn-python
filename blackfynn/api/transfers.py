@@ -287,6 +287,7 @@ class IOAPI(APIBase):
             append = append,
             datasetId = dataset_id,
             importId = import_id,
+            uploadService = True
         )
         if destination_id is not None:
             params['destinationId'] = destination_id
