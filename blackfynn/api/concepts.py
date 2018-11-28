@@ -606,7 +606,7 @@ class AnalyticsAPI(APIBase):
         return GraphViewSnapshot.from_dict(resp, api=self.session)
 
     def get_view_instance(self, dataset, view, instance):
-        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/definitions/snapshots/{graphViewInstanceId}',
+        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/snapshots/{graphViewInstanceId}',
                         **self._with_kwargs(dataset, instance=instance))
         try:
             resp = self._get(uri)
@@ -648,11 +648,11 @@ class AnalyticsAPI(APIBase):
 
     def get_presigned_url(self, dataset, instance, format='parquet'):
 
-        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/definitions/snapshots/{graphViewInstanceId}/url?format={format}',
+        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/snapshots/{graphViewInstanceId}/url?format={format}',
                         format=format, **self._with_kwargs(dataset, instance=instance))
         return self._get(uri)
 
     def delete_view_instance(self, dataset, instance):
-        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/definitions/snapshots/{graphViewInstanceId}',
+        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/snapshots/{graphViewInstanceId}',
                         **self._with_kwargs(dataset, instance=instance))
         return self._del(uri)
