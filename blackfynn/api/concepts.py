@@ -560,7 +560,7 @@ class AnalyticsAPI(APIBase):
         return kwargs
 
     def create_view(self, dataset, name, root, include):
-        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views',
+        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/definitions',
                         **self._with_kwargs(dataset))
 
         try:
@@ -579,26 +579,26 @@ class AnalyticsAPI(APIBase):
         return GraphViewDefinition.from_dict(resp, api=self.session)
 
     def get_view(self, dataset, view):
-        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/{graphViewId}',
+        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/definitions/{graphViewId}',
                         **self._with_kwargs(dataset, view))
         resp = self._get(uri)
         resp = self._with_kwargs(dataset, **resp)
         return GraphViewDefinition.from_dict(resp, api=self.session)
 
     def delete_view(self, dataset, view):
-        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/{graphViewId}',
+        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/definitions/{graphViewId}',
                         **self._with_kwargs(dataset, view))
         return self._del(uri)
 
     def get_all_views(self, dataset):
-        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views',
+        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/definitions',
                         **self._with_kwargs(dataset))
         resp = self._get(uri)
         return [GraphViewDefinition.from_dict(self._with_kwargs(dataset, **r), api=self.session)
                 for r in resp]
 
     def create_view_instance(self, dataset, view, batch_size=100):
-        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/{graphViewId}/instances?batchSize={batch_size}',
+        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/definitions/{graphViewId}/snapshots?batchSize={batch_size}',
                         batch_size=batch_size,
                         **self._with_kwargs(dataset, view))
         resp = self._post(uri)
@@ -606,7 +606,7 @@ class AnalyticsAPI(APIBase):
         return GraphViewSnapshot.from_dict(resp, api=self.session)
 
     def get_view_instance(self, dataset, view, instance):
-        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/instances/{graphViewInstanceId}',
+        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/definitions/snapshots/{graphViewInstanceId}',
                         **self._with_kwargs(dataset, instance=instance))
         try:
             resp = self._get(uri)
@@ -620,7 +620,7 @@ class AnalyticsAPI(APIBase):
 
     def get_latest_view_instance(self, dataset, view, status=None):
         params = dict(status=status) if status is not None else None
-        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/{graphViewId}/instances/latest',
+        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/definitions/{graphViewId}/snapshots/latest',
                         **self._with_kwargs(dataset, view))
         try:
             resp = self._get(uri, params=params)
@@ -634,7 +634,7 @@ class AnalyticsAPI(APIBase):
 
     def get_all_view_instances(self, dataset, view, status=None):
         params = dict(status=status) if status is not None else None
-        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/{graphViewId}/instances',
+        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/definitions/{graphViewId}/snapshots',
                         **self._with_kwargs(dataset, view))
         try:
             resp = self._get(uri, params=params)
@@ -648,11 +648,11 @@ class AnalyticsAPI(APIBase):
 
     def get_presigned_url(self, dataset, instance, format='parquet'):
 
-        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/instances/{graphViewInstanceId}/url?format={format}',
+        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/definitions/snapshots/{graphViewInstanceId}/url?format={format}',
                         format=format, **self._with_kwargs(dataset, instance=instance))
         return self._get(uri)
 
     def delete_view_instance(self, dataset, instance):
-        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/instances/{graphViewInstanceId}',
+        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/definitions/snapshots/{graphViewInstanceId}',
                         **self._with_kwargs(dataset, instance=instance))
         return self._del(uri)
