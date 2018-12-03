@@ -123,13 +123,15 @@ class UploadManager(object):
         sys.stdout.write('\n'*len(self.uploads))
 
 
-def upload_file(
-        api,
-        file,
-        import_id,
-        org_id,
-        upload_session_id=None,
-        ):
+def chunks(f, progress):
+    chunk = f.read(1024)
+    while chunk:
+        yield chunk
+        progress(len(chunk))
+        chunk = f.read(1024)
+
+
+def upload_file(api, file, import_id, org_id, upload_session_id=None):
 
     # progress callback
     progress = ProgressPercentage(file, upload_session_id)
@@ -140,7 +142,8 @@ def upload_file(
                         import_id=import_id, org_id=org_id)
 
         with io.open(file, 'rb') as f:
-            api._post(uri, data=f)
+            api._post(uri, data=chunks(f, progress), params={'filename': file})
+
         return file
 
     except Exception as e:
