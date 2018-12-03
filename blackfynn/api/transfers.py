@@ -117,34 +117,38 @@ class UploadManager(object):
         while True:
             self._print_progress()
             time.sleep(0.2)
-            if self.done or self._exit: break
+            if self.done or self._exit:
+                break
         self._print_progress()
         # move cursor to bottom
         sys.stdout.write('\n'*len(self.uploads))
 
 
+CHUNK_SIZE = 1024
+
 def chunks(f, progress):
-    chunk = f.read(1024)
+    chunk = f.read(CHUNK_SIZE)
     while chunk:
+        #print(len(chunk))
         yield chunk
         progress(len(chunk))
-        chunk = f.read(1024)
+        chunk = f.read(CHUNK_SIZE)
 
 
-def upload_file(api, file, import_id, org_id, upload_session_id=None):
+def upload_file(api, filename, import_id, org_id, upload_session_id=None):
 
     # progress callback
-    progress = ProgressPercentage(file, upload_session_id)
+    progress = ProgressPercentage(filename, upload_session_id)
     UPLOADS[upload_session_id] = progress
 
     try:
         uri = api._uri('/upload/organizations/{org_id}/id/{import_id}',
                         import_id=import_id, org_id=org_id)
+        with io.open(filename, 'rb') as f:
+            # use chunk-encoded request
+            api._post(uri, data=chunks(f, progress), params={'filename': filename})
 
-        with io.open(file, 'rb') as f:
-            api._post(uri, data=chunks(f, progress), params={'filename': file})
-
-        return file
+        return filename
 
     except Exception as e:
         logger.debug(e)
@@ -230,7 +234,7 @@ class IOAPI(APIBase):
                 e.submit(
                     fn = upload_file,
                     api = self,
-                    file = file,
+                    filename = file,
                     import_id = import_id_map[file],
                     org_id = self.session._organization,
                     upload_session_id = upload_session.init_file(file),
