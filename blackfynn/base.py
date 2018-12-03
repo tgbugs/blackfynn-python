@@ -147,7 +147,10 @@ class ClientSession(object):
 
         # serialize data
         if 'data' in kwargs:
-            kwargs['data'] = json.dumps(kwargs['data'])
+            try:
+                kwargs['data'] = json.dumps(kwargs['data'])
+            except TypeError:
+                pass
 
         # we might specify a different host
         if 'host' in kwargs:

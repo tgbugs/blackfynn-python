@@ -138,10 +138,9 @@ def upload_file(
     try:
         uri = api._uri('/upload/organizations/{org_id}/id/{import_id}',
                         import_id=import_id, org_id=org_id)
-        files = {
-            "file": io.open(file, 'rb')
-        }
-        api._post(uri, files=files)
+
+        with io.open(file, 'rb') as f:
+            api._post(uri, data=f)
         return file
 
     except Exception as e:
