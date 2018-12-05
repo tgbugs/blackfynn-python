@@ -129,7 +129,7 @@ Tabular
    :show-inheritance:
 
 
-Concepts and Relationships
+Models and Relationships
 --------------------------
 
 Models

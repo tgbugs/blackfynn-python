@@ -2017,12 +2017,12 @@ class Dataset(BaseCollection):
                     schema = [
                         {
                             'name': 'full_name',
-                            'type': str,
+                            'data_type': str,
                             'title': True
                         },
                         {
                             'name': 'age',
-                            'type': int,
+                            'data_type': int,
                         }
                 ])
 
