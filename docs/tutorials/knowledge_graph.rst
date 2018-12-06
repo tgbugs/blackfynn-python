@@ -78,7 +78,7 @@ with their corresponding properties.
 Define Model Schemas
 ~~~~~~~~~~~~~~~~~~~~
 
-In the following, we will define each model schema and then use these to later create each model on the platform. There are several approaches to creating models, however, for simplicity we will only showcase a single method which uses ``ModelProperty`` objects directly.
+In the following section, we will define each model schema and then use these to create each model on the platform. There are several approaches to creating models, however, for simplicity we will only showcase a single method which uses ``ModelProperty`` objects directly.
 
 **Allowable data types**
 
