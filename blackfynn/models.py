@@ -2703,11 +2703,10 @@ class BaseRecord(BaseNode):
 class ModelTemplate(BaseNode):
     _object_key = None
 
-    def __init__(self, name, category, properties, id=None, display_name=None, schema=None, description=None, required=None,
+    def __init__(self, name, properties, category=None, id=None, display_name=None, schema=None, description=None, required=None,
                  *args, **kwargs):
         assert name is not None, "ModelTemplate name must be defined"
         assert properties is not None, "ModelTemplate properties must be defined"
-        assert category is not None, "ModelTemplate category must be defined"
 
         self.id           = id
         self.schema       = schema or 'http://schema.blackfynn.io/model/draft-01/schema'
