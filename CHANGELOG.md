@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 Documentation at https://developer.blackfynn.io/python/
 
+## [2.6.6]
+### Changed
+- Added knowledge graph tutorial in documentation
+
 ## [2.6.5]
 ### Fixed
 - Retrieval of all annotations for a timeseries
