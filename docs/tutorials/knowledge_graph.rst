@@ -83,7 +83,7 @@ In the following, we will define each model schema and then use these to later c
 **Allowable data types**
 
 The following values can be used to specify the data type. In Blackfynn, 
-there is no distinction between the different values for each data type, e.g. ``long`` and ``int`` will result in the same Blackfynn data type.
+there is no distinction between the different values for each data type, e.g. ``long`` and ``int`` will result in the same Blackfynn data type (``Integer``).
 
 :String: ``"string"``, ``str``, or ``unicode`` (if python2)
 :Integer: ``"long"``, ``int``, ``long`` (if python2)
