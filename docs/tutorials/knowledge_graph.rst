@@ -321,7 +321,7 @@ Utilizing the methods above, we will create a series of Visits for each Particip
 Relating Visits to EEG and Exams
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Similarly, for each Visit we will create an EEG record and two Exam records (before and after the EEG). Additionally, we will utilize the `relationship_type` argument to set the relationship type between Visit and EEGs/Exams as "collected", i.e. ``visit_1 --collected--> exam_1``.
+Similarly, for each Visit we will create an EEG record and two Exam records (before and after the EEG). Additionally, we will utilize the ``relationship_type`` argument to set the relationship type between Visit and EEGs/Exams as "collected", i.e. ``visit_1 --collected--> exam_1``.
 
 .. code:: python
 
