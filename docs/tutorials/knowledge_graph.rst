@@ -68,11 +68,10 @@ with their corresponding properties.
 |   - machine_model
 |   - administrator
 |
-| MRI
-|   - sequence_protocol
-|   - scanner_model
-|   - SNR
-|   - administrator
+| Exam
+|   - context
+|   - mood
+|   - motor_skill
 |
 
 
@@ -133,16 +132,15 @@ EEG
         ModelProperty('administrator')
     ]
 
-MRI
-^^^
+Exam
+^^^^
 
 .. code:: python
 
-    mri_schema = [
-        ModelProperty('sequence_protocol', title=True),
-        ModelProperty('scanner_model'),
-        ModelProperty('SNR', data_type=float)
-        ModelProperty('administrator')
+    exam_schema = [
+        ModelProperty('context', title=True),
+        ModelProperty('mood', data_type=int),
+        ModelProperty('motor_skill', data_type=float),
     ]
 
 Create Models
@@ -159,7 +157,7 @@ graph section.
     ds.create_model('Participant', schema = participant_schema)
     ds.create_model('Visit',       schema = visit_schema)
     ds.create_model('EEG',         schema = eeg_schema)
-    ds.create_model('MRI',         schema = mri_schema)
+    ds.create_model('Exam',        schema = exam_schema)
 
 Creating Records
 ----------------
@@ -279,16 +277,18 @@ And easily transform the result into a Panda's ``DataFrame`` object:
 Relating Records
 ----------------
 
-Basics
-~~~~~~
+Basics (example)
+~~~~~~~~~~~~~~~~
 
-Relating records is done via ``some_record.relate_to(...)`` method, which will relate ``some_record`` to a single record, a list of records, or a data package. E.g.
+Relating records is done via ``some_record.relate_to(...)`` method, which will relate ``some_record`` to a single record, a list of records, or a data package. 
+
+The follow examples showcase this method, but will not work unless ``visit_1``, ``visit_2``, etc. exist.
 
 .. code:: python
     
     pt_123.relate_to(visit_1)
 
-which will relate record ``pt_123`` with record ``visit1``. You can relate many records by supplying a list of records, e.g.
+will relate record ``pt_123`` with record ``visit1``. You can relate many records by supplying a list of records:
 
 .. code:: python
 
@@ -303,6 +303,8 @@ Utilizing the methods above, we will create a series of Visits for each Particip
 .. code:: python
 
     from datetime import datetime
+
+    visit = ds.get_model('Visit')
 
     for pt in participant.get_all():
         
@@ -327,6 +329,9 @@ Similarly, for each Visit we will create an EEG record and two Exam records (bef
 
     from random import randint, random
 
+    eeg = ds.get_model('EEG')
+    exam = ds.get_model('Exam')
+
     for a_visit in visit.get_all():
         
         # One EEG per visit
@@ -340,17 +345,15 @@ Similarly, for each Visit we will create an EEG record and two Exam records (bef
         a_visit.relate_to(visit_eeg, relationship_type='collected')
         
         # Two exams per visit (before/after EEG)
-        visit_exam1 = eeg.create_record({
+        visit_exam1 = exam.create_record({
+            'context': 'before',
             'mood': randint(1,10),
-            'motor_skill': round(random()*10, 2),
-            'speed': round(random()*10, 2),
-            'context': 'before'
+            'motor_skill': round(random()*10, 2)
         })
-        visit_exam2 = eeg.create_record({
+        visit_exam2 = exam.create_record({
+            'context': 'after',
             'mood': randint(1,10),
-            'motor_skill': round(random()*10, 2),
-            'speed': round(random()*10, 2),
-            'context': 'after'
+            'motor_skill': round(random()*10, 2)
         })
         
         # relate exams to visit
