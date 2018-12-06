@@ -295,8 +295,8 @@ will relate record ``pt_123`` with record ``visit1``. You can relate many record
     pt_123.relate_to([visit1, visit2, visit3])
 
 
-Relating Participant to Visits
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Relating Participant to Visit Records
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Utilizing the methods above, we will create a series of Visits for each Participant and relate them to the Participant.
 
@@ -320,8 +320,8 @@ Utilizing the methods above, we will create a series of Visits for each Particip
         pt.relate_to(pt_visits)
 
 
-Relating Visits to EEG and Exams
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Relating Visits to EEG and Exam Records
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Similarly, for each Visit we will create an EEG record and two Exam records (before and after the EEG). Additionally, we will utilize the ``relationship_type`` argument to set the relationship type between Visit and EEGs/Exams as "collected", i.e. ``visit_1 --collected--> exam_1``.
 
@@ -360,4 +360,25 @@ Similarly, for each Visit we will create an EEG record and two Exam records (bef
         a_visit.relate_to([visit_exam1, visit_exam2], relationship_type='collected')
 
 
+Relating Records to Files
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Records can be related to files on the Blackfynn Platform. Files are represented as ``DataPackage`` objects in the data catalog.
+
+For example, in our current graph, we would likely want each EEG record to relate to a ``DataPackage`` that is an uploaded EEG file representing the EEG session. Let's assume that there are files named ``EEG 1``, ``EEG 2``, etc. in our current dataset, you would go about linking these files just as if they are other records:
+
+.. code:: python
+
+    eeg = ds.get_model('EEG')
+
+    for i, eeg_record in enumerate(eeg.get_all()):
+        # get the corresponding EEG file
+        eeg_file = ds.get_items_by_name('EEG ' + i)[0]
+
+        # relate to the current record
+        eeg_record.relate_to(eeg_file)
+
+
 Congratulations — you have successfully created a knowledge graph on the Blackfynn platform!
+
+
