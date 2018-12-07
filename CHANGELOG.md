@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 Documentation at https://developer.blackfynn.io/python/
 
+## [2.7.1]
+### Fixed
+- Removed limit on the number of related records that can be retrieved
+
 ## [2.7.0]
 ### Changed
 - Make ModelTemplate category param optional in constructor
