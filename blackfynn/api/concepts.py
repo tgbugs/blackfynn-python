@@ -2,6 +2,7 @@
 from __future__ import absolute_import, division, print_function
 from future.utils import string_types
 
+import itertools
 import requests
 
 from blackfynn.api.base import APIBase
@@ -301,12 +302,26 @@ class RecordsAPI(ModelsAPIBase):
         dataset_id   = self._get_id(dataset)
         instance_id  = self._get_id(source_instance)
         instance_type = self._get_concept_type(source_concept, source_instance)
-        resp = self._get(self._uri('/{dataset_id}/concepts/{instance_type}/instances/{instance_id}/relations/{return_type}',
+
+        resp = []
+        limit = 100
+        for offset in itertools.count(0, limit):
+            batch = self._get(
+                self._uri('/{dataset_id}/concepts/{instance_type}/instances/{instance_id}/relations/{return_type}',
                     dataset_id    = dataset_id,
                     instance_type = instance_type,
                     instance_id   = instance_id,
-                    return_type   = return_type))
-        for edge,node in resp:
+                    return_type   = return_type),
+                params = {
+                    'limit': limit,
+                    'offset': offset})
+
+            if not batch:
+                break
+
+            resp += batch
+
+        for edge, node in resp:
             node['dataset_id'] = node.get('dataset_id', dataset_id)
         if not isinstance(return_type, Model):
             return_type = self.session.concepts.get(dataset, return_type)

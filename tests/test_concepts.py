@@ -376,6 +376,29 @@ def test_get_related_models(simple_graph):
     assert related_models[0].type == simple_graph.models[1].type
 
 
+def test_related_records_pagination(dataset):
+    patient = dataset.create_model(
+        'patient', description="patient", schema=[
+            ModelProperty("name", data_type=ModelPropertyType(data_type=str),
+                          title=True)])
+
+    visit = dataset.create_model(
+        'visit', description="visit", schema=[
+            ModelProperty("field", data_type=ModelPropertyType(data_type=str),
+                          title=True)])
+
+    attends = dataset.create_relationship_type('attends', 'an attendance')
+
+    patient1 = patient.create_record({"name": "Fred"})
+    visits = visit.create_records([{"field": str(i)} for i in range(200)])
+    patient1.relate_to(visits, attends)
+
+    # Get all records
+    gotten = patient1.get_related()
+    assert len(gotten) == 200
+    assert [r.get("field") for r in gotten] == list(map(str, range(200)))
+
+
 def test_get_topology(simple_graph):
     topology = simple_graph.dataset.get_topology()
     assert 'models' in topology
