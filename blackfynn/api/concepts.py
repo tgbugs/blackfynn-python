@@ -357,6 +357,11 @@ class ModelRelationshipsAPI(ModelsAPIBase):
         relations = [RelationshipType.from_dict(r, api=self.session) for r in resp]
         return {r.type: r for r in relations}
 
+    def delete(self, dataset, relationship):
+        dataset_id = self._get_id(dataset)
+        assert isinstance(relationship, RelationshipType), "Must be of type Relationship"
+        resp = self._del(self._uri('/{dataset_id}/relationships/{r_type}', dataset_id=dataset_id, r_type=relationship.id))
+
 class ModelRelationshipInstancesAPI(ModelsAPIBase):
     base_uri = "/datasets"
     name = 'concepts.relationships.instances'

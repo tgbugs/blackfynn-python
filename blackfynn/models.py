@@ -3214,8 +3214,7 @@ class RelationshipType(BaseModelNode):
         raise Exception("Updating Relationships is not available at this time.")
 
     def delete(self):
-        raise Exception("Deleting Relationships is not available at this time.")
-        #TODO: self._api.concepts.relationships.delete(self.dataset_id, self)
+        return self._api.concepts.relationships.delete(self.dataset_id, self)
 
     def get_all(self):
         """
