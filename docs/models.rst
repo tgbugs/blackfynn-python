@@ -79,7 +79,7 @@ Datasets are core entities on the Blackfynn platform. All data must be placed in
 .. autoclass:: Dataset
    :members:
    :inherited-members:
-   :exclude-members: set_ready, set_error, set_unavailable, add_collaborators, add_properties, insert_property
+   :exclude-members: set_ready, set_error, set_unavailable, add_properties, insert_property
 
 Collection
 ^^^^^^^^^^^^

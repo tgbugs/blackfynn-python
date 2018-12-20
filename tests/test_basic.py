@@ -52,24 +52,6 @@ def test_datasets(client, dataset):
     with pytest.raises(Exception):
         client.create_dataset(dataset.name)
 
-# def test_dataset_collaborators(client, client2, test_organization, dataset):
-#     # share with user
-#     user2Id = client2.profile.id
-#     user_share_resp = dataset.add_collaborators(user2Id)
-#     assert user_share_resp['changes'][user2Id]['success']
-
-#     # unshare with user
-#     user_remove_resp = dataset.remove_collaborators(user2Id)
-#     assert user_remove_resp['changes'][user2Id]['success']
-
-#     # # share with org
-#     org_share_resp = dataset.add_collaborators(test_organization.id)
-#     assert org_share_resp['changes'][test_organization.id]['success']
-
-#     # # unshare with org
-#     org_remove_resp = dataset.remove_collaborators(test_organization.id)
-#     assert org_remove_resp['changes'][test_organization.id]['success']
-
 def test_packages_create_delete(client, dataset):
 
     # init

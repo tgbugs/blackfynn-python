@@ -8,7 +8,6 @@ Available commands:
   datasets          List your datasets
   organizations     List the organizations you belong to
 
-  collaborators     List the collaborators of the current working dataset
   share             Share a dataset with users, teams, or your organization
   unshare           Revoke access to the a dataset from users, teams, or your organization
 
@@ -95,9 +94,6 @@ def blackfynn_cli():
     elif args['<command>'] in ['organizations', 'orgs']:
         from . import bf_organizations
         bf_organizations.main(bf)
-    elif args['<command>'] in ['share', 'unshare', 'collaborators']:
-        from . import bf_share
-        bf_share.main(bf)
     elif args['<command>'] == 'cache':
         from . import bf_cache
         bf_cache.main(bf)

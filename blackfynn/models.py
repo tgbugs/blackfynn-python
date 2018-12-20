@@ -1898,34 +1898,6 @@ class Dataset(BaseCollection):
     def __repr__(self):
         return u"<Dataset name='{}' id='{}'>".format(self.name, self.id)
 
-    @property
-    def collaborators(self):
-        """
-        List of collaborators on Dataset.
-        """
-        self._check_exists()
-        return self._api.datasets.get_collaborators(self)
-
-    def add_collaborators(self, *collaborator_ids):
-        """
-        Add new collaborator(s) to Dataset.
-
-        Args:
-            collaborator_ids: List of collaborator IDs to add (Users, Organizations, Teams)
-        """
-        self._check_exists()
-        return self._api.datasets.add_collaborators(self, *collaborator_ids)
-
-    def remove_collaborators(self, *collaborator_ids):
-        """
-        Remove collaborator(s) from Dataset.
-
-        Args:
-            collaborator_ids: List of collaborator IDs to remove (Users)
-        """
-        self._check_exists()
-        return self._api.datasets.remove_collaborators(self, *collaborator_ids)
-
     def get_topology(self):
         """ Returns the set of Models and Relationships defined for the dataset
 
