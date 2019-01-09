@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 Documentation at https://developer.blackfynn.io/python/
 
+## [2.7.2]
+### Changed
+- Deprecated the following `Dataset` methods: `collaborators`, `add_collaborators`, and `remove_collaborators`. Permissions should now be managed through the Blackfynn web app.
+
 ## [2.7.1]
 ### Fixed
 - Removed limit on the number of related records that can be retrieved

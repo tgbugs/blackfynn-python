@@ -25,6 +25,9 @@ def main(bf):
     ds = require_working_dataset(bf)
 
     if args['collaborators']:
+        print("'bf collaborators' is deprecated since version 2.7.2 and will be removed")
+        print("Manage permissions through the Blackfynn web app instead\n")
+
         resp = ds.collaborators
 
         if resp['users'] or resp['organizations']:
@@ -39,12 +42,18 @@ def main(bf):
             print("  No collaborators.")
 
     elif args['share']:
+        print("'bf share' is deprecated since version 2.7.2 and will be removed")
+        print("Manage permissions through the Blackfynn web app instead\n")
+
         ids = args['<collaborators>']
 
         resp = ds.add_collaborators(*ids)
         print_collaborator_edit_resp(resp)
 
     elif args['unshare']:
+        print("'bf unshare' is deprecated since version 2.7.2 and will be removed")
+        print("Manage permissions through the Blackfynn web app instead\n")
+
         ids = args['<collaborators>']
 
         resp = ds.remove_collaborators(*ids)

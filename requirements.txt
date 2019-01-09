@@ -6,6 +6,7 @@ pandas>=0.20
 protobuf==3.2.0
 configparser>=3.5
 future>=0.15.0
+deprecated>=1.2.0
 # CLI
 docopt>=0.6
 psutil>=5.4

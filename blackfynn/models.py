@@ -16,6 +16,7 @@ import numpy as np
 import pandas as pd
 import pytz
 import requests
+from deprecated import deprecated
 
 import blackfynn.log as log
 from blackfynn.utils import (
@@ -1899,6 +1900,7 @@ class Dataset(BaseCollection):
         return u"<Dataset name='{}' id='{}'>".format(self.name, self.id)
 
     @property
+    @deprecated(version="2.7.2", reason="Manage permissions through the Blackfynn web app")
     def collaborators(self):
         """
         List of collaborators on Dataset.
@@ -1906,6 +1908,7 @@ class Dataset(BaseCollection):
         self._check_exists()
         return self._api.datasets.get_collaborators(self)
 
+    @deprecated(version="2.7.2", reason="Manage permissions through the Blackfynn web app")
     def add_collaborators(self, *collaborator_ids):
         """
         Add new collaborator(s) to Dataset.
@@ -1916,6 +1919,7 @@ class Dataset(BaseCollection):
         self._check_exists()
         return self._api.datasets.add_collaborators(self, *collaborator_ids)
 
+    @deprecated(version="2.7.2", reason="Manage permissions through the Blackfynn web app")
     def remove_collaborators(self, *collaborator_ids):
         """
         Remove collaborator(s) from Dataset.
