@@ -5,6 +5,7 @@ from builtins import dict, object, range, zip
 from future.utils import as_native_str, integer_types, string_types
 
 import datetime
+import itertools
 import math
 import re
 
@@ -634,19 +635,6 @@ class TimeSeriesAPI(APIBase):
         if not isinstance(ts, TimeSeries):
             raise Exception("Argument 'ts' must be TimeSeries.")
 
-        if channels is None:
-            # use all channels
-            channels = ts.channels
-        else:
-            # make sure specified channels are in current timeseries
-            ts_ch_ids = [ch.id for ch in ts.channels]
-            for ch in channels:
-                if ch in ts_channels:
-                    continue
-                raise Exception("Channel '{ch}' not found in TimeSeries '{ts}'".format(
-                        ts = ts.id,
-                        ch = self._get_id(ch)))
-
         # paginate annotations
         start_time, end_time = ts.limits()
         num_windows = (end_time-start_time)/(window_size*1e6)
@@ -655,25 +643,44 @@ class TimeSeriesAPI(APIBase):
             win_end = win_start + window_size*1e6
             if win_end > end_time:
                 win_end = end_time
-            annotations = self.query_annotations(ts=ts,layer=layer,start=win_start,end=win_end, channels=channels)
-            yield annotations
+            yield self.get_annotations(ts=ts, layer=layer, start=win_start, end=win_end, channels=channels)
 
-    def get_annotations(self, ts, layer, channels=None):
+    def get_annotations(self, ts, layer, start=None, end=None, channels=None):
         """
         Returns all annotations for a given layer
         """
-        start, end = ts.limits()
-        return self.query_annotations(ts=ts, layer=layer, start=start, end=end, channels=channels, limit=0, offset=0)
+        limit = 100
+        annots = []
+        for offset in itertools.count(0, limit):
+            batch = self.query_annotations(
+                ts=ts, layer=layer, channels=channels, start=start, end=end,
+                limit=limit, offset=offset)
+            if not batch:
+                break
+            annots += batch
 
+        return annots
 
-    def query_annotations(self, ts, layer, start=None, end=None, channels=None, limit=None, offset=0):
+    def requested_channels(self, ts, channels):
+        # empty uses all channels
+        if channels is None:
+            return []
+
+        ch_list = [self._get_id(x) for x in channels]
+
+        # validate
+        all_channels = set([ch.id for ch in ts.channels])
+        if not set(ch_list).issubset(all_channels):
+            raise Exception("Channels {chs} not found in TimeSeries '{ts}'".format(
+                  ts=ts.id, chs=list(all_channels - set(ch_list))))
+
+        return ch_list
+
+    def query_annotations(self, ts, layer, start=None, end=None, channels=None, limit=100, offset=0):
         """
         Retrieves timeseries annotations for a particular range  on array of channels.
         """
-        if channels is None:
-            ch_list = [] #empty uses all channels
-        else:
-            ch_list = [self._get_id(x) for x in channels]
+        ch_list = self.requested_channels(ts, channels)
 
         ts_start, ts_end = ts.limits()
         if start is None:
@@ -720,10 +727,7 @@ class TimeSeriesAPI(APIBase):
             A dict
             layer_id -> list of counts for each period
         """
-        if channels is None:
-            ch_list = [] # empty uses all channels
-        else:
-            ch_list = [self._get_id(x) for x in channels]
+        ch_list = self.requested_channels(ts, channels)
 
         if isinstance(start, datetime.datetime):
             start = usecs_since_epoch(start)

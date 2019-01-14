@@ -300,7 +300,8 @@ def test_model_properties_with_enum(dataset):
         ModelProperty('name', data_type=str, title=True),
         ModelProperty('some_enum', data_type=ModelPropertyEnumType(data_type=float, enum=[1.0, 2.0, 3.0], unit="cm", multi_select=False)),
         ModelProperty('some_array',
-                      data_type=ModelPropertyEnumType(data_type=str, enum=['foo', 'bar', 'baz'], multi_select=True))
+                      data_type=ModelPropertyEnumType(data_type=str, enum=['foo', 'bar', 'baz'], multi_select=True)),
+        ModelProperty('non_enum_array', data_type=ModelPropertyEnumType(data_type=int, multi_select=True))
     ])
 
     result = dataset.get_model(model_with_enum_props.id)
@@ -309,6 +310,7 @@ def test_model_properties_with_enum(dataset):
 
     enum_property = result.get_property('some_enum')
     array_property = result.get_property('some_array')
+    non_enum_array_property = result.get_property('non_enum_array')
 
     assert (enum_property.type == float)
     assert (enum_property.multi_select == False)
@@ -319,11 +321,37 @@ def test_model_properties_with_enum(dataset):
     assert (array_property.multi_select == True)
     assert (array_property.enum == ['foo', 'bar', 'baz'])
 
+    assert non_enum_array_property.type == int
+    assert non_enum_array_property.multi_select == True
+    assert non_enum_array_property.enum == None
 
 def test_get_related_models(simple_graph):
     related_models = simple_graph.models[0].get_related()
     assert len(related_models) == 1
     assert related_models[0].type == simple_graph.models[1].type
+
+
+def test_related_records_pagination(dataset):
+    patient = dataset.create_model(
+        'patient', description="patient", schema=[
+            ModelProperty("name", data_type=ModelPropertyType(data_type=str),
+                          title=True)])
+
+    visit = dataset.create_model(
+        'visit', description="visit", schema=[
+            ModelProperty("field", data_type=ModelPropertyType(data_type=str),
+                          title=True)])
+
+    attends = dataset.create_relationship_type('attends', 'an attendance')
+
+    patient1 = patient.create_record({"name": "Fred"})
+    visits = visit.create_records([{"field": str(i)} for i in range(200)])
+    patient1.relate_to(visits, attends)
+
+    # Get all records
+    gotten = patient1.get_related()
+    assert len(gotten) == 200
+    assert [r.get("field") for r in gotten] == list(map(str, range(200)))
 
 
 def test_get_topology(simple_graph):

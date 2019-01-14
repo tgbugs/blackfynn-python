@@ -25,7 +25,7 @@ Import and Initialize
 
 .. note::
 
-   If you are using Python 2.7 it is highly recommended that you add ``from __future__ import print_function, `` to the top of your scripts. This will allow you to easily use Python 3 in the future.
+   If you are using Python 2.7 it is highly recommended that you add ``from __future__ import print_function`` to the top of your scripts. This will allow you to easily use Python 3 in the future.
 
 .. code:: python
 

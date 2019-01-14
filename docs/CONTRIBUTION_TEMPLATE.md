@@ -34,7 +34,7 @@ At this point, you're ready to make your changes! Feel free to ask for help; eve
 The core team looks at Pull Requests on a regular basis in a weekly triage meeting. After feedback has been given we expect responses within the month. After one month, we may close the pull request if it isn't showing any activity.
 
 # Supporting Python 2 and 3
-We currently support Python 2.7 and 3.4-3.6. In general, we try and write Python 3 code that will run on Python 2.7 using backports provided by [future](http://python-future.org). Keep the following in mind as you code:
+We currently support Python 2.7 and 3.4-3.7. In general, we try and write Python 3 code that will run on Python 2.7 using backports provided by [future](http://python-future.org). Keep the following in mind as you code:
 
 * All modules must include the following import statement:
 

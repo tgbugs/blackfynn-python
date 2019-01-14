@@ -1,50 +1,78 @@
 sudo: false
+dist: trusty
 language: python
-python:
-- '2.7'
-- '3.4'
-- '3.5'
-- '3.6'
-install:
-- pip install -r requirements.txt
-- pip install -r requirements-test.txt
-- pip install codecov
-- pip install .
-script: pytest
-after_success: codecov
-before_deploy:
-  - cd docs
-  - make html
-  - make html-latest
-  - cd $TRAVIS_BUILD_DIR
+cache: pip
+
 services:
   - docker
-deploy:
-  - provider: pypi
-    on:
-      tags: true
-      branch: master
-    user: blackfynn
-    password: "$PYPI_PASSWORD"
-    #server: https://test.pypi.org/legacy/ # uncomment to use test pypi
-    distributions: sdist bdist_wheel
-  - provider: s3
-    on:
-      tags: true
-      branch: master
-    access_key_id: "$AWS_ACCESS_KEY_ID"
-    secret_access_key: "$AWS_SECRET_ACCESS_KEY"
-    bucket: "prod-developer-use1.blackfynn.io"
-    skip_cleanup: true
-    region: us-east-1
-    local_dir: docs/_build/html
-    upload-dir: python
-    acl: public_read
-  - provider: script
-    script: bash bin/docker_push.sh "$TRAVIS_TAG"
-    on:
-      tags: true
-      branch: master
+
+install:
+  - pip install --upgrade pip setuptools wheel
+  - pip install -r requirements.txt
+  - pip install --upgrade -r requirements-test.txt
+  - pip install .
+
+script: pytest
+after_success: bash <(curl -s https://codecov.io/bash)
+
+jobs:
+  include:
+    - stage: test
+      python: 2.7
+
+    - stage: test
+      python: 3.4
+
+    - stage: test
+      python: 3.5
+
+    - stage: test
+      python: 3.6
+
+    - stage: test
+      python: 3.7
+      dist: xenial
+      sudo: true
+
+    - stage: docs
+      python: 3.6
+      script:
+        - cd docs
+        - make html
+        - make html-latest
+        - cd $TRAVIS_BUILD_DIR
+      deploy:
+        provider: s3
+        on:
+          tags: true
+          all_branches: true
+        access_key_id: "$AWS_ACCESS_KEY_ID"
+        secret_access_key: "$AWS_SECRET_ACCESS_KEY"
+        bucket: "prod-developer-use1.blackfynn.io"
+        skip_cleanup: true
+        region: us-east-1
+        local_dir: docs/_build/html
+        upload-dir: python
+        acl: public_read
+
+    - stage: release
+      if: tag IS present
+      python: '3.6'
+      install: skip
+      script: skip
+      deploy:
+        - provider: pypi
+          on:
+            all_branches: true
+          user: blackfynn
+          password: "$PYPI_PASSWORD"
+          #server: https://test.pypi.org/legacy/ # uncomment to use test pypi
+          distributions: sdist bdist_wheel
+        - provider: script
+          on:
+            all_branches: true
+          script: bash bin/docker_push.sh "$TRAVIS_TAG"
+
 notifications:
   slack:
     secure: X1xWT7VNg8FB5i8ze65lckyMz/BXKAvftyK27HdSempXw+SOle/wSo2Om+6I52pl2UDxncYBspTFYs65A2mEpWXMVJdF6WIp4tYf+MzgpAQf2vMCi04YqMY22LaqVkwwuk6fVFjQ6lp4tZtwWoW3hjat1FD9E9f/sK3nH5bu8zRvnq6gseqkAEOu87U58FcL4mSjkigU36LulQUFEsSCDIzEmMng6CExMsjj3YLaYJu4S5N8viRl3iOUs6ksCzkwvM9V5+eOJ4K+y2wu/0GlDBgrGHjYPOojCV5hXOj3oAAAGuW+T+BM2mx5YPXqL7VNKOkiHsxzASwIExqDE3Tr+Z/L1+5b2LR0LZWU02aGbSsXjgTroShdKOkvsQlHMo7NaVBypGMVET7+zMTdwCqj2AZrIN6+k0PuqILnZBvMXeGePZYCxSOFsUczSq2jeh/DivW6ZAGHa5D/5UXCpAh88bzbnNnMai+gxjN/sYFqhDciXZBRvGi5NQBOwZdZf447O3ZreS2XJhDXxnbNduy1xMWOR82cDYlyqz+64QDzemoDs6P2tD/i/qs34iZSpgIWjjoMbx8kQxHsvOBBYDPifNW5mUPyduqs5S3VSqc+Fy6xk9yfxrN8U40Q/poqp7WEXG3cllL1/wgh2zGRk4boCymxUkFJoKhX8bPZvYPaJDU=

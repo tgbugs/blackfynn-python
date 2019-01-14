@@ -1,4 +1,4 @@
-Working with the data catalog
+Working with the Data Catalog
 ===============================
 
 This section provides examples that show how to interact with :ref:`collections <Collection>`, :ref:`datasets <Dataset>` and :ref:`packages <Data Package>`.

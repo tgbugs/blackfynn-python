@@ -6,6 +6,51 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 Documentation at https://developer.blackfynn.io/python/
 
+## [2.7.2]
+### Changed
+- Deprecated the following `Dataset` methods: `collaborators`, `add_collaborators`, and `remove_collaborators`. Permissions should now be managed through the Blackfynn web app.
+
+## [2.7.1]
+### Fixed
+- Removed limit on the number of related records that can be retrieved
+
+## [2.7.0]
+### Changed
+- Make ModelTemplate category param optional in constructor
+
+## [2.6.6]
+### Changed
+- Added knowledge graph tutorial in documentation
+
+## [2.6.5]
+### Fixed
+- Retrieval of all annotations for a timeseries
+
+### Changed
+- Added support for Python 3.7
+- Refactored checks that channels belong to a given timeseries
+
+## [2.6.4]
+### Fixed
+- Loading of non-enumerated array properties
+
+## [2.6.3]
+### Fixed
+- Automatic releases via Travis (again)
+
+## [2.6.2]
+### Fixed
+- Automatic releases via Travis
+
+## [2.6.1]
+### Changed
+- Settings overridden via function arguments will be prioritized over settings overridden by environment variables
+- Documentation updates
+- Added descriptions to properties
+
+### Fixed
+- Divide-by-zero error during empty file upload
+
 ## [2.6.0]
 ### Added
 - Support for Python 3!
