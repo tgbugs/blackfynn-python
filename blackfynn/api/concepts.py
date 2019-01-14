@@ -8,8 +8,6 @@ from blackfynn.api.base import APIBase
 from blackfynn.models import (
     Dataset,
     DataPackage,
-    GraphViewDefinition,
-    GraphViewSnapshot,
     Model,
     ModelProperty,
     ModelTemplate,
@@ -21,10 +19,6 @@ from blackfynn.models import (
     RelationshipSet,
     RelationshipType
 )
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Models
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class ModelsAPIBase(APIBase):
 
@@ -536,123 +530,4 @@ class ModelTemplatesAPI(APIBase):
 
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Graph Views
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-class AnalyticsAPI(APIBase):
-    base_uri = '/analytics'
-    name = 'analytics'
-
-    def _with_kwargs(self, dataset, view=None, instance=None, **kwargs):
-        kwargs.update({
-            'orgId': self._get_int_id(self.session._context),
-            'datasetId': self._get_int_id(dataset)
-        })
-        if view is not None:
-            kwargs['view'] = view
-            kwargs['graphViewId'] = self._get_id(view)
-
-        if instance is not None:
-            kwargs['graphViewInstanceId'] = self._get_id(instance)
-
-        return kwargs
-
-    def create_view(self, dataset, name, root, include):
-        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/definitions',
-                        **self._with_kwargs(dataset))
-
-        try:
-            resp = self._post(uri, json={
-                'name': name,
-                'rootModel': root,
-                'includedModels': include,
-            })
-        except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 400:
-                raise Exception(e.response.text)
-            else:
-                raise
-
-        resp = self._with_kwargs(dataset, **resp)
-        return GraphViewDefinition.from_dict(resp, api=self.session)
-
-    def get_view(self, dataset, view):
-        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/definitions/{graphViewId}',
-                        **self._with_kwargs(dataset, view))
-        resp = self._get(uri)
-        resp = self._with_kwargs(dataset, **resp)
-        return GraphViewDefinition.from_dict(resp, api=self.session)
-
-    def delete_view(self, dataset, view):
-        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/definitions/{graphViewId}',
-                        **self._with_kwargs(dataset, view))
-        return self._del(uri)
-
-    def get_all_views(self, dataset):
-        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/definitions',
-                        **self._with_kwargs(dataset))
-        resp = self._get(uri)
-        return [GraphViewDefinition.from_dict(self._with_kwargs(dataset, **r), api=self.session)
-                for r in resp]
-
-    def create_view_instance(self, dataset, view, batch_size=100):
-        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/definitions/{graphViewId}/snapshots?batchSize={batch_size}',
-                        batch_size=batch_size,
-                        **self._with_kwargs(dataset, view))
-        resp = self._post(uri)
-        resp = self._with_kwargs(dataset, view, **resp)
-        return GraphViewSnapshot.from_dict(resp, api=self.session)
-
-    def get_view_instance(self, dataset, view, instance):
-        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/snapshots/{graphViewInstanceId}',
-                        **self._with_kwargs(dataset, instance=instance))
-        try:
-            resp = self._get(uri)
-        except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 404:
-                return None
-            raise
-
-        resp = self._with_kwargs(dataset, view, **resp)
-        return GraphViewSnapshot.from_dict(resp, api=self.session)
-
-    def get_latest_view_instance(self, dataset, view, status=None):
-        params = dict(status=status) if status is not None else None
-        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/definitions/{graphViewId}/snapshots/latest',
-                        **self._with_kwargs(dataset, view))
-        try:
-            resp = self._get(uri, params=params)
-        except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 404:
-                return None
-            raise
-
-        resp = self._with_kwargs(dataset, view, **resp)
-        return GraphViewSnapshot.from_dict(resp, api=self.session)
-
-    def get_all_view_instances(self, dataset, view, status=None):
-        params = dict(status=status) if status is not None else None
-        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/definitions/{graphViewId}/snapshots',
-                        **self._with_kwargs(dataset, view))
-        try:
-            resp = self._get(uri, params=params)
-        except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 404:
-                return []
-            raise
-
-        return [GraphViewSnapshot.from_dict(self._with_kwargs(dataset, view, **r), api=self.session)
-                for r in resp]
-
-    def get_presigned_url(self, dataset, instance, format='parquet'):
-
-        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/snapshots/{graphViewInstanceId}/url?format={format}',
-                        format=format, **self._with_kwargs(dataset, instance=instance))
-        return self._get(uri)
-
-    def delete_view_instance(self, dataset, instance):
-        uri = self._uri('/organizations/{orgId}/datasets/{datasetId}/views/snapshots/{graphViewInstanceId}',
-                        **self._with_kwargs(dataset, instance=instance))
-        return self._del(uri)

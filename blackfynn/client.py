@@ -8,14 +8,15 @@ from future.utils import as_native_str
 import blackfynn.log as log
 from blackfynn import Settings
 from blackfynn.api.compute import ComputeAPI
+from blackfynn.api.workspaces import WorkspacesAPI
 from blackfynn.api.concepts import (
-    AnalyticsAPI,
     ModelRelationshipInstancesAPI,
     ModelRelationshipsAPI,
     ModelsAPI,
     ModelTemplatesAPI,
     RecordsAPI,
 )
+from blackfynn.api.analytics import AnalyticsAPI
 from blackfynn.api.core import (
     CoreAPI,
     OrganizationsAPI,
@@ -33,8 +34,8 @@ from blackfynn.api.timeseries import TimeSeriesAPI
 from blackfynn.api.transfers import IOAPI
 from blackfynn.api.user import UserAPI
 from blackfynn.base import ClientSession
+from blackfynn.models.workspace import Workspace
 from blackfynn.models import Dataset, ModelTemplate
-
 
 class Blackfynn(object):
     """
@@ -115,6 +116,7 @@ class Blackfynn(object):
             CoreAPI,
             OrganizationsAPI,
             DatasetsAPI,
+            WorkspacesAPI,
             FilesAPI,
             DataAPI,
             PackagesAPI,
@@ -162,6 +164,11 @@ class Blackfynn(object):
         self._check_context()
         return self.context.datasets
 
+    def workspaces(self):
+        """ Return all workspaces for the current user/organizaton combination """
+        self._check_context()
+        return self.context.workspaces
+
     def get(self, id, update=True):
         """
         Get any DataPackage or Collection object by ID.
@@ -186,6 +193,30 @@ class Blackfynn(object):
         Create a object on the platform.
         """
         return self._api.core.create(thing)
+
+    def create_workspace(self, name, description=None):
+        """ Create a new workspace
+
+        Args:
+            name (str): Name of the workspace
+            description (str): A description for the workspace (optional)
+
+        Returns:
+            `blackfynn.models.workspace.Workspace`
+
+        """
+        self._check_context()
+        return self._api.workspaces.create(Workspace(name, description=description))
+
+    def get_workspace(self, name_or_id):
+        """
+        Get Workspace by name or ID.
+
+        Args:
+            name_or_id (str): the name or the ID of the workspace
+
+        """
+        return self._api.workspaces.get(name_or_id)
 
     def create_dataset(self, name):
         """
@@ -308,7 +339,6 @@ class Blackfynn(object):
     def _check_context(self):
         if self.context is None:
             raise Exception('Must set context before executing method.')
-
 
     def get_model_template(self, template_id):
         """

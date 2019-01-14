@@ -137,3 +137,20 @@ def generate_dataframe(minutes=2, freq=100):
         'sawtooth': generate_data(n, func='sawtooth'),
         'square': generate_data(n, func='square')
     }, index=ind)
+
+def find_by_name(arr, name):
+    """ Look up an entity by name
+
+    Args:
+        arr (array_like): Iterable of blackfynn objects
+        name (str): Name to look up
+
+    Notes:
+        Blackfynn objects in the iterable are assumed to have a `name`
+        property
+    """
+    matches = [m for m in arr if m.name == name]
+    if len(matches) == 0:
+        return
+    return matches[0]
+
