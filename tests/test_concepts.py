@@ -405,3 +405,19 @@ def test_get_topology(simple_graph):
     assert len(topology['models']) == 2
     assert 'relationships' in topology
     assert len(topology['relationships']) == 1
+
+def test_get_graph_summary(simple_graph):
+    summary = simple_graph.dataset.get_graph_summary()
+    expected_fields = ["modelCount", "modelRecordCount", "modelSummary",
+                       "relationshipCount", "relationshipRecordCount",
+                       "relationshipSummary", "relationshipTypeCount",
+                       "relationshipTypeSummary"]
+    for f in expected_fields:
+        assert f in summary.keys()
+
+    assert summary['modelCount'] == 2
+    assert summary['modelRecordCount'] == 2
+    assert summary['relationshipCount'] == 1
+    assert summary['relationshipRecordCount'] == 1
+    assert summary['relationshipTypeCount'] == 1
+

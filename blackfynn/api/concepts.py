@@ -194,6 +194,13 @@ class ModelsAPI(ModelsAPIBase):
                 results['models'].append(Model.from_dict(r, api=self.session))
         return results
 
+    def get_summary(self, dataset):
+        dataset_id = self._get_id(dataset)
+        resp = self._get(
+            self._uri('/{dataset_id}/concepts/graph/summary',
+                      dataset_id=dataset_id))
+        return resp
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Model Instances
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
