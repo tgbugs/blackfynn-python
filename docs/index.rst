@@ -1,4 +1,3 @@
-
 Python Client
 ==============
 
@@ -7,5 +6,6 @@ Python Client
 
    quickstart
    tutorials/index
+   configuration
    client
    models

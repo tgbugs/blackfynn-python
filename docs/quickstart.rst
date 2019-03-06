@@ -8,14 +8,69 @@ Installation
 
 The Python client is compatible with Python 2.7 and 3.4-3.7.
 
-.. code:: python
+.. code:: bash
 
-      pip install -U blackfynn
+    $ pip install -U blackfynn
+
+
+Configuration
+-------------
 
 .. important::
 
-    In order to connect to Blackfynn using the *any* client, first you must `Generate API token & secret and enable in client <http://help.blackfynn.com/blackfynn-developer-tools/overview/creating-an-api-key-for-the-blackfynn-clients>`_.
+    In order to conect to Blackfynn using *any* client, first you must
+    `Generate an API token & secret <http://help.blackfynn.com/blackfynn-developer-tools/overview/creating-an-api-key-for-the-blackfynn-clients>`_.
+    Once you have generated your API keys, don't close your browser window until
+    you have used your keys in the following steps.
 
+To create a configuration profile, run ``bf profile create`` from the command line:
+
+.. code:: bash
+
+    $ bf profile create
+
+When prompted, give your profile a unique name, or press enter to name your profile ``default``:
+
+.. code:: bash
+
+   Profile name [default]: my_profile
+
+When prompted, paste in your new API key (also called a token) and press enter:
+
+.. code:: bash
+
+   API token: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+
+Now paste in the API secret key and press enter:
+
+.. code:: bash
+
+   API secret: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+
+Finally, enter ``y`` to set this profile as the *default profile*:
+
+.. code:: bash
+
+   Would you like to set 'my_profile' as default (Y/n)? y
+   Default profile: my_profile
+
+To verify that your profile was set up correctly, run ``bf status``:
+
+.. code:: bash
+
+   $ bf status
+
+   Active profile:
+     my_profile
+
+   Blackfynn environment:
+     User          : <your email>
+     Organization  : <your organization>
+     API Location  : https://api.blackfynn.io
+     Streaming API : https://streaming.blackfynn.io
+     Models API    : https://concepts.blackfynn.io
+
+Using this technique you can add multiple connection profiles belonging to different organizations.
 
 Basic Usage
 --------------
@@ -25,7 +80,9 @@ Import and Initialize
 
 .. note::
 
-   If you are using Python 2.7 it is highly recommended that you add ``from __future__ import print_function`` to the top of your scripts. This will allow you to easily use Python 3 in the future.
+   If you are using Python 2.7 it is highly recommended that you add
+   ``from __future__ import print_function`` to the top of your scripts. This will
+   allow you to easily use Python 3 in the future.
 
 .. code:: python
 
@@ -33,7 +90,8 @@ Import and Initialize
 
     bf = Blackfynn()
 
-This will use your *default profile* to establish a connection. Alternatively, you may want to specify a profile explicitly:
+This will use your *default profile* to establish a connection. Alternatively, you
+may want to specify a profile explicitly by name:
 
 .. code:: python
 
@@ -41,8 +99,6 @@ This will use your *default profile* to establish a connection. Alternatively, y
 
 Where ``my_profile`` is an existing profile.
 
-.. note::
-    See `Create connection profile <http://help.blackfynn.com/blackfynn-developer-tools/command-line-interface-cli/using-the-command-line-tool>`_ for creating and managing connection profiles.
 
 Basic Operations
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -93,7 +149,7 @@ Let's say you grab a ``TimeSeries`` package::
 
     ts = bf.get('N:package:your-timeseries-id')
 
-You can get first minute of data in 1-second chunks::
+You can get the first minute of data in 1-second chunks::
 
     for chunk in ts.get_data_iter(chunk_size='1s', length='1m'):
         # do something with data (pandas Dataframe)

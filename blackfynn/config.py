@@ -1,3 +1,131 @@
+"""
+Blackfynn Configuration File
+----------------------------
+
+Blackfynn stores connection information in your Blackfynn configuration file.
+Advanced users might want to edit their Blackfynn client tool configuration file directly
+for control of the client libraries. Alternatively, users can modify client behavior using
+environment variables.
+
+Location
+~~~~~~~~
+
+Your configuration file is located in your ``.blackfynn/`` directory. The ``.blackfynn/`` directory
+is found in the ``$HOME`` directory (Mac/Linux) or the ``User`` directory (Windows).
+
+Full path: ``$HOME/.blackfynn/config.ini``
+
+Format
+~~~~~~
+
+The config file is in `INI <https://en.wikipedia.org/wiki/INI_file>`_ format.
+There are three types of sections: ``[global]``, ``[agent]``, and ``[<profile>]``.
+You can have as many ``[<profile>]`` sections as you want
+
+Example of the ``config.ini`` file::
+
+    # Global settings
+    [global]
+    default_profile = default
+
+    # Profiles
+    [default]
+    api_token = c09be34d-5696-4c49-b174-7fe3fb3194af
+    api_secret = 87092fd-b3ad-4de9-bf78-2dbcedb7737a
+
+    [debug_mode]
+    use_cache = false
+    api_token = c09be34d-5696-4c49-b174-7fe3fb3194af
+    api_secret = 87092fd-b3ad-4de9-bf78-2dbcedb7737a
+
+    [super_conn]
+    api_token = da064188-47e4-43b0-b5cd-91805b7522d7
+    api_secret = 2a543888-d24d-4958-8833-3311a55e4ed6
+
+    # Settings for the Blackfynn CLI Agent
+    [agent]
+    ...
+
+The following settings (and their default values) are available under ``[<profile>]`` or ``[global]``::
+
+    # Blackfynn API token/secret
+    'api_token'                   : None,
+    'api_secret'                  : None,
+
+    'api_host'                    : 'https://api.blackfynn.io',
+    'streaming_api_host'          : 'https://streaming.blackfynn.io',
+    'concepts_api_host'           : 'https://concepts.blackfynn.io',
+
+    # I/O
+    'max_request_time'            : 120, # two minutes
+    'max_request_timeout_retries' : 2,
+    'max_upload_workers'          : 10,
+
+    # Timeseries
+    'max_points_per_chunk'        : 10000,
+
+    # Directories
+    'blackfynn_dir'               : $HOME/.blackfynn
+    'cache_dir'                   : $HOME/.blackfynn/cache
+
+    # Cache
+    'cache_index'                 : $HOME/.blackfynn/cache/index.db
+    'cache_max_size'              : 2048,
+    'cache_inspect_interval'      : 1000,
+    'ts_page_size'                : 3600,
+    'use_cache'                   : True,
+
+In addition to the above, these settings are available under ``[global]``::
+
+    default_profile
+
+To see your current configuration (and any variables), use the Python command line tool::
+
+    $ bf profile keys
+
+Environment Variables
+---------------------
+
+It is also possible to set configuration options using environment variables
+
+.. note:
+
+    Environment variables (if present) override any profile-defined settings
+    in your Blackfynn Configuration File. They are useful for terminal-specific settings.
+
+To switch between profiles in a given terminal session, set the environment variable::
+
+    BLACKFYNN_PROFILE="your profile name"
+
+Alternatively, you can specify your token/secret directly::
+
+    BLACKFYNN_API_TOKEN="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+    BLACKFYNN_API_SECRET="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+
+To control the verbosity of the Python client's logging::
+
+    BLACKFYNN_LOG_LEVEL=("DEBUG" or "INFO" or "WARN" or "ERROR")
+
+To specify an alternate directory to use as the Blackfynn config directory::
+
+    BLACKFYNN_DIR="./some_other_dir"
+
+If the ``BLACKFYNN_DIR`` environment variable is set, your configuration file will be::
+
+    $BLACKFYNN_DIR/config.ini
+
+Additional environment variables and their corresponding config options::
+
+    BLACKFYNN_USE_CACHE: 0  (false) or 1  (true)  # `use_cache`
+    BLACKFYNN_API_LOC                             # `api_host`
+    BLACKFYNN_CONCEPTS_LOC                        # `concepts_host`
+    BLACKFYNN_STREAMING_API_LOC                   # `streaming_api_host`
+    BLACKFYNN_CACHE_MAX_SIZE                      # `cache_max_size`
+    BLACKFYNN_CACHE_INSPECT_EVERY                 # `cache_inspect_interval`
+    BLACKFYNN_TS_PAGE_SIZE                        # `ts_page_size`
+
+"""
+
 from __future__ import absolute_import, division, print_function
 
 import configparser
@@ -7,8 +135,12 @@ import tempfile
 
 import psutil
 
+
+#: Default Blackfynn home directory
 BLACKFYNN_DIR_DEFAULT = os.path.join(os.path.expanduser('~'), '.blackfynn')
+#: Default cache directory
 CACHE_DIR_DEFAULT = os.path.join(BLACKFYNN_DIR_DEFAULT, 'cache')
+#: Default cache database
 CACHE_INDEX_DEFAULT = os.path.join(CACHE_DIR_DEFAULT, 'index.db')
 
 DEFAULTS = {
