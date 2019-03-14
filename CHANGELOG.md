@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 Documentation at https://developer.blackfynn.io/python/
 
+## [2.8.0]
+- Added `Dataset.status` for viewing the current status of a dataset
+- Added `Dataset.get_graph_summary` method for retrieving high-level statistics about the graph
+
 ## [2.7.2]
 ### Changed
 - Deprecated the following `Dataset` methods: `collaborators`, `add_collaborators`, and `remove_collaborators`. Permissions should now be managed through the Blackfynn web app.

@@ -45,6 +45,16 @@ from blackfynn import Blackfynn, Settings
 from .working_dataset import set_working_dataset
 
 
+DEPRECATION = """
++---------------------------------------------------+
+| WARNING: The Python CLI is deprecated and will be |
+| removed in a future release.                      |
+|                                                   |
+| Please install and use the new Blackfynn CLI:     |
+| https://developer.blackfynn.io/agent              |
++---------------------------------------------------+
+"""
+
 def blackfynn_cli():
     args = docopt(__doc__,
                   version='bf version {}'.format(blackfynn.__version__),
@@ -54,7 +64,10 @@ def blackfynn_cli():
     # do not require a Blackfynn client
     if args['<command>'] in ['help',None]:
         print(__doc__.strip('\n'))
+        print(DEPRECATION)
         return
+
+    print(DEPRECATION)
 
     if args['<command>'] == 'profile':
         from . import bf_profile

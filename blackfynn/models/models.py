@@ -1900,11 +1900,12 @@ class Organization(BaseNode):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class Dataset(BaseCollection):
-    def __init__(self, name, description=None, **kwargs):
+    def __init__(self, name, description=None, status=None, **kwargs):
         kwargs.pop('package_type', None)
         kwargs.pop('type', None)
         super(Dataset, self).__init__(name, "DataSet", **kwargs)
         self.description = description or ''
+        self.status = status
 
         # remove things that do not apply (a bit hacky)
         for k in ("parent", "type", "set_ready", "set_unavailable", "set_error", "state", "dataset"):
@@ -1954,6 +1955,10 @@ class Dataset(BaseCollection):
 
         """
         return self._api.concepts.get_topology(self)
+
+    def get_graph_summary(self):
+        """ Returns summary metrics about the knowledge graph """
+        return self._api.concepts.get_summary(self)
 
     def models(self):
         """
