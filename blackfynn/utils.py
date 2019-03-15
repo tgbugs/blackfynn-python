@@ -154,3 +154,9 @@ def find_by_name(arr, name):
         return
     return matches[0]
 
+
+def download_file_contents(response, f):
+    """ Download response contents to a file in chunks """
+    for chunk in response.iter_content(chunk_size=16384):
+        if chunk:
+            f.write(chunk)

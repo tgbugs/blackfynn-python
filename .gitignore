@@ -99,3 +99,8 @@ ENV/
 
 # Visual Studio Code
 .vscode
+
+tags
+
+# IntelliJ PyCharm
+.idea/

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 from __future__ import absolute_import, division, print_function
 from builtins import object, zip
 from future.utils import as_native_str, string_types, PY2
@@ -7,8 +6,9 @@ from future.utils import as_native_str, string_types, PY2
 import requests
 
 from blackfynn.api.base import APIBase
-from blackfynn.models.workspace import GraphViewSnapshot, GraphViewDefinition, \
-    NamedQuery
+from blackfynn.models.workspace import GraphViewSnapshot, \
+    GraphViewDefinition, NamedQuery, QueryResults
+
 
 class AnalyticsAPI(APIBase):
     base_uri = '/analytics'
@@ -35,6 +35,12 @@ class AnalyticsAPI(APIBase):
             kwargs['queryId'] = self._get_id(query_obj)
 
         return kwargs
+
+    def delete_workspace(self, workspace):
+        uri = self._uri('/organizations/{orgId}/workspaces/{workspaceId}/',
+                        **self._with_kwargs(workspace))
+        resp = self._del(uri)
+        return
 
     def create_view(self, workspace, dataset, name, root, include):
         uri = self._uri('/organizations/{orgId}/workspaces/{workspaceId}/views/definitions?dataset_id={datasetId}',
@@ -151,6 +157,16 @@ class AnalyticsAPI(APIBase):
         resp = self._with_kwargs(workspace, **resp)
         return NamedQuery.from_dict(resp, api=self.session)
 
+    def update_named_query(self, workspace, query):
+        uri = self._uri('/organizations/{orgId}/workspaces/{workspaceId}/queries/{queryId}',
+                        **self._with_kwargs(workspace, query_obj=query))
+        resp = self._put(uri, json={
+            'name': query.name,
+            'query': query.query,
+        })
+        resp = self._with_kwargs(workspace, **resp)
+        return NamedQuery.from_dict(resp, api=self.session)
+
     def get_all_named_queries(self, workspace):
         uri = self._uri('/organizations/{orgId}/workspaces/{workspaceId}/queries/',
                         **self._with_kwargs(workspace))
@@ -167,3 +183,38 @@ class AnalyticsAPI(APIBase):
         uri = self._uri('/organizations/{orgId}/workspaces/{workspaceId}/queries/',
                         **self._with_kwargs(workspace))
         return self._del(uri)
+
+    def execute_query(self, workspace, query_str):
+        uri = self._uri('/organizations/{orgId}/workspaces/{workspaceId}/queries/execute',
+                        **self._with_kwargs(workspace))
+        request = {
+            "query": query_str
+        }
+        resp = self._post(uri, json=request)
+        return resp
+
+    def get_query_execution_results(self, workspace, execution_id):
+        uri = self._uri('/organizations/{orgId}/workspaces/{workspaceId}/queries/execute/{executionId}/results',
+                        **self._with_kwargs(workspace, executionId=execution_id))
+        resp = self._get(uri)
+        resp = self._with_kwargs(workspace, execution_id=execution_id, **resp)
+        results = QueryResults.from_dict(resp, api=self.session)
+        return results
+
+    def get_query_execution_status(self, workspace, execution_id):
+        uri = self._uri('/organizations/{orgId}/workspaces/{workspaceId}/queries/execute/{executionId}/status',
+                        **self._with_kwargs(workspace, executionId=execution_id))
+        resp = self._get(uri)
+        return resp
+
+    def export_query_results(self, workspace, execution_id):
+        uri = self._uri('/organizations/{orgId}/workspaces/{workspaceId}/queries/execute/{executionId}/export',
+                        **self._with_kwargs(workspace, executionId=execution_id))
+        resp = self._get(uri)
+        return resp
+
+    def get_query_results_presigned_url(self, workspace, execution_id):
+        uri = self._uri('/organizations/{orgId}/workspaces/{workspaceId}/queries/execute/{executionId}/url',
+                        **self._with_kwargs(workspace, executionId=execution_id))
+        resp = self._post(uri)
+        return resp

@@ -13,7 +13,7 @@ import pyarrow
 import pandas as pd
 
 from blackfynn.models import BaseNode
-from blackfynn.utils import find_by_name
+from blackfynn.utils import find_by_name, download_file_contents
 
 if PY2:
     file_types = (file, io.IOBase)
@@ -38,6 +38,10 @@ class Workspace(BaseNode):
     @as_native_str()
     def __repr__(self):
         return u"<Workspace name='{}' id='{}'>".format(self.name, self.id)
+
+    def update(self):
+        """ Update the current workspace on the platform """
+        return self._api.workspaces.update(self)
 
     def create_view(self, dataset, name, root, include, create_snapshot=True):
         """
@@ -139,6 +143,19 @@ class Workspace(BaseNode):
         """ Retrieve all named queries in a workspace """
         return self._api.analytics.get_all_named_queries(self)
 
+    def execute_query(self, query_str):
+        """ Execute a query against a snapshot in the workspace
+
+        Args:
+            query_str (str): Query to execute
+        Returns:
+            str
+        """
+        execution_id = self._api.analytics.execute_query(self, query_str)
+        results = self._api.analytics.get_query_execution_results(
+            self, execution_id)
+        return results
+
     def delete_all_named_queries(self):
         """ Deleted all named queries in a workspace """
         return self._api.analytics.delete_all_named_queries(self)
@@ -163,21 +180,114 @@ class NamedQuery(BaseNode):
         super(NamedQuery, self).__init__(*args, **kwargs)
 
     def delete(self):
+        """ Delete the named query """
         self._check_exists()
         self._api.analytics.delete_named_query(self.workspace_id, self)
 
+    def update(self):
+        """ Update the named query """
+        self._check_exists()
+        return self._api.analytics.update_named_query(self.workspace_id, self)
+
+    def execute(self):
+        """ Execute the saved query """
+        self._check_exists()
+        execution_id = self._api.analytics.execute_query(self.workspace_id, self.query)
+        results = self._api.analytics.get_query_execution_results(
+            self.workspace_id, execution_id)
+        return results
+
     def as_dict(self):
         return dict(
-            id = self.id,
-            name = self.name,
-            workspace_id = self.workspace_id,
-            query = self.query,
-            created_at = self.created_at
+            id=self.id,
+            name=self.name,
+            workspace_id=self.workspace_id,
+            query=self.query,
+            created_at=self.created_at
         )
 
     @as_native_str()
     def __repr__(self):
         return u"<NamedQuery name='{}' id='{}'>".format(self.name, self.id)
+
+
+class QueryResults(BaseNode):
+    """ Represents the results of a query within a Workspace """
+    _object_key = None
+
+    def __init__(self, workspace_id, execution_id, status, reason, schema,
+                 data, next_token, execution_time_in_milliseconds, *args,
+                 **kwargs):
+        self._status = status
+        self.reason = reason
+        self.schema = schema
+        self.data = data
+        self.next_token = next_token
+        self.workspace_id = workspace_id
+        self.execution_id = execution_id
+
+        super(QueryResults, self).__init__(*args, **kwargs)
+
+    @property
+    def status(self):
+        """ Get the updated status for the query results """
+        updated_status = self._api.analytics.get_query_execution_status(
+            self.workspace_id, self.execution_id)
+        self._status = updated_status
+        return updated_status
+
+    def download(self, location):
+        """
+        Download the query results to a CSV file
+
+        Args:
+            location (str or file-like object):
+                Location to save query results. Can be either filesystem path
+                string or some file-like object (in-memory or on-disk).
+
+        """
+        url = self._api.analytics.get_query_results_presigned_url(
+            self.workspace_id, self.execution_id)
+
+        with requests.get(url, stream=True) as r:
+            if isinstance(location, string_types):
+                with io.open(location, 'wb') as f:
+                    download_file_contents(r, f)
+            elif isinstance(location, file_types):
+                download_file_contents(r, location)
+            else:
+                raise Exception(
+                    'location must be file path (str) or file-like object')
+
+    def as_dataframe(self):
+        """ Return query results as a dataframe
+
+        Returns
+            DataFrame
+        """
+        filename = os.path.join(tempfile.gettempdir(),
+                                '{}.csv'.format(self.id))
+        self.download(filename)
+
+        try:
+            df = pd.read_csv(filename)
+        except Exception:
+            raise
+        finally:
+            try:
+                os.remove(filename)
+            except:
+                pass
+        return df
+
+    def as_dict(self):
+        return dict(
+            status=self.status,
+            reason=self.reason,
+            schema=self.schema,
+            data=self.data,
+            next_token=self.next_token
+        )
 
 
 class GraphViewDefinition(BaseNode):
@@ -298,7 +408,6 @@ class GraphViewSnapshot(BaseNode):
         self.workspace_id = workspace_id
         self.created_at = kwargs.pop("createdAt", None)
         self.status = kwargs.pop("status", None)
-
         super(GraphViewSnapshot, self).__init__(*args, **kwargs)
 
     def as_dataframe(self, columns=None):
@@ -339,13 +448,8 @@ class GraphViewSnapshot(BaseNode):
             format (str):
                 Format of file. Can be either 'parquet', 'json'.
         """
-        url = self._api.analytics.get_presigned_url(self.workspace_id, self, format=format)
-
-        def download_file_contents(response, f):
-
-            for chunk in response.iter_content(chunk_size=16384):
-                if chunk:
-                    f.write(chunk)
+        url = self._api.analytics.get_presigned_url(
+            self.workspace_id, self, format=format)
 
         with requests.get(url, stream=True) as r:
             if isinstance(location, string_types):
@@ -354,7 +458,8 @@ class GraphViewSnapshot(BaseNode):
             elif isinstance(location, file_types):
                 download_file_contents(r, location)
             else:
-                raise Exception('location must be file path (str) or file-like object')
+                raise Exception(
+                    'location must be file path (str) or file-like object')
 
     def delete(self):
         """ Deletes the snapshot """
@@ -363,7 +468,7 @@ class GraphViewSnapshot(BaseNode):
     def as_json(self):
         """
         Returns:
-g           Data as a JSON structure
+            Data as a JSON structure
         """
         url = self._api.analytics.get_presigned_url(self.workspace_id, self, format='json')
         resp = requests.get(url)
