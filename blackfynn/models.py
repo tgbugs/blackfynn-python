@@ -648,7 +648,20 @@ class BaseCollection(BaseDataNode):
         Upload files into current object.
 
         Args:
-            files: list of local files to upload.
+            files: list of local files to upload. If the Blackfynn CLI Agent is
+                installed you can also upload a directory. See :ref:`agent` for
+                more information.
+
+        Keyword Args:
+            display_progress (boolean): If ``True``, a progress bar will be
+                shown to track upload progress. Defaults to ``False``.
+            use_agent (boolean): If ``True``, and a compatible version of the
+                Agent is installed, uploads will be performed by the
+                Blackfynn CLI Agent. This allows large file upload in excess
+                of 1 hour. Defaults to ``True``.
+            recursive (boolean): If ``True``, the nested folder structure of
+                the uploaded directory will be preversed. This can only be used
+                with the Blackfynn CLI Agent. Defaults to ``False``.
 
         Example::
 
@@ -1195,6 +1208,21 @@ class TimeSeries(DataPackage):
         return self._api.timeseries.process_annotation_file(self,file)
 
     def append_files(self, *files, **kwargs):
+
+        """
+        Append files to this timeseries package.
+
+        Args:
+            files: list of local files to upload.
+
+        Keyword Args:
+            display_progress (boolean): If ``True``, a progress bar will be
+                shown to track upload progress. Defaults to ``False``.
+            use_agent (boolean): If ``True``, and a compatible version of the
+                Agent is installed, uploads will be performed by the
+                Blackfynn CLI Agent. This allows large file upload in excess
+                of 1 hour. Defaults to ``True``.
+        """
         self._check_exists()
         files = _flatten_file_args(files)
         return self._api.io.upload_files(self, files, append=True, **kwargs)

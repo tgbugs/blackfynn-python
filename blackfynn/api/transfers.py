@@ -18,6 +18,7 @@ from botocore.client import Config
 
 import blackfynn.log as log
 # blackfynn
+from blackfynn.api.agent import agent_installed, agent_upload
 from blackfynn.api.base import APIBase
 from blackfynn.models import Collection, DataPackage, Dataset, TimeSeries
 
@@ -192,7 +193,8 @@ class IOAPI(APIBase):
     """
     name = 'io'
 
-    def upload_files(self, destination, files, dataset=None, append=False, display_progress=False):
+    def upload_files(self, destination, files, dataset=None, append=False,
+                     display_progress=False, recursive=False, use_agent=True):
         if isinstance(destination, Dataset):
             # uploading into dataset
             destination_id = None
@@ -247,6 +249,30 @@ class IOAPI(APIBase):
             else:
                 if not isinstance(destination, Collection):
                     raise Exception("Upload destination must be Collection or Dataset.")
+
+        # Is the agent configured and usable?
+        agent_ok = use_agent and agent_installed(self.session.settings)
+
+        if any(os.path.isdir(f) for f in files) and not agent_ok:
+            raise Exception(
+                "Blackfynn Agent required to upload directories\n",
+                "Visit https://developer.blackfynn.io/agent for installation directions and pass `use_agent=True` to `upload`.")
+
+        if recursive and not agent_ok:
+            raise Exception(
+                "Blackfynn Agent required to upload recursively\n",
+                "Visit https://developer.blackfynn.io/agent for installation directions.`")
+
+        # Push uploads through the Blackfynn agent
+        if agent_ok:
+            return agent_upload(
+                destination=destination,
+                files=files,
+                dataset=ds,
+                append=append,
+                recursive=recursive,
+                display_progress=display_progress,
+                settings=self.session.settings)
 
         # get preview
         import_id_map = self.get_preview(files, append)

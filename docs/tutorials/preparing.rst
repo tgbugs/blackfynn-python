@@ -1,3 +1,5 @@
+.. _preparing:
+
 Preparing for the Tutorials
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

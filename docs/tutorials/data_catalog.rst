@@ -47,6 +47,10 @@ In this example, the only datasets available are ``Test Data`` and ``My Research
 Creating new data
 ^^^^^^^^^^^^^^^^^^
 
+.. note::
+
+   See :ref:`agent` for information about uploading large files and recursive directory structures using the Blackfynn CLI Agent.
+
 We will create a new dataset, upload a file, then read the uploaded file using the client.
 
 .. code-block:: python

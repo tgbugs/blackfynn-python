@@ -6,6 +6,7 @@ Python Client
 
    quickstart
    tutorials/index
+   agent
    configuration
    client
    models

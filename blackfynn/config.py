@@ -22,7 +22,9 @@ The config file is in `INI <https://en.wikipedia.org/wiki/INI_file>`_ format.
 There are three types of sections: ``[global]``, ``[agent]``, and ``[<profile>]``.
 You can have as many ``[<profile>]`` sections as you want
 
-Example of the ``config.ini`` file::
+Example of the ``config.ini`` file:
+
+.. code-block:: ini
 
     # Global settings
     [global]
@@ -46,7 +48,9 @@ Example of the ``config.ini`` file::
     [agent]
     ...
 
-The following settings (and their default values) are available under ``[<profile>]`` or ``[global]``::
+The following settings (and their default values) are available under ``[<profile>]`` or ``[global]``:
+
+.. code-block:: ini
 
     # Blackfynn API token/secret
     'api_token'                   : None,
@@ -75,11 +79,15 @@ The following settings (and their default values) are available under ``[<profil
     'ts_page_size'                : 3600,
     'use_cache'                   : True,
 
-In addition to the above, these settings are available under ``[global]``::
+In addition to the above, these settings are available under ``[global]``:
+
+.. code-block:: ini
 
     default_profile
 
-To see your current configuration (and any variables), use the Python command line tool::
+To see your current configuration (and any variables), use the Python command line tool:
+
+.. code-block:: bash
 
     $ bf profile keys
 
@@ -93,28 +101,40 @@ It is also possible to set configuration options using environment variables
     Environment variables (if present) override any profile-defined settings
     in your Blackfynn Configuration File. They are useful for terminal-specific settings.
 
-To switch between profiles in a given terminal session, set the environment variable::
+To switch between profiles in a given terminal session, set the environment variable:
+
+.. code-block:: bash
 
     BLACKFYNN_PROFILE="your profile name"
 
-Alternatively, you can specify your token/secret directly::
+Alternatively, you can specify your token/secret directly:
+
+.. code-block:: bash
 
     BLACKFYNN_API_TOKEN="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
     BLACKFYNN_API_SECRET="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 
-To control the verbosity of the Python client's logging::
+To control the verbosity of the Python client's logging:
+
+.. code-block:: bash
 
     BLACKFYNN_LOG_LEVEL=("DEBUG" or "INFO" or "WARN" or "ERROR")
 
-To specify an alternate directory to use as the Blackfynn config directory::
+To specify an alternate directory to use as the Blackfynn config directory:
+
+.. code-block:: bash
 
     BLACKFYNN_DIR="./some_other_dir"
 
-If the ``BLACKFYNN_DIR`` environment variable is set, your configuration file will be::
+If the ``BLACKFYNN_DIR`` environment variable is set, your configuration file will be:
+
+.. code-block:: bash
 
     $BLACKFYNN_DIR/config.ini
 
-Additional environment variables and their corresponding config options::
+Additional environment variables and their corresponding config options:
+
+.. code-block:: bash
 
     BLACKFYNN_USE_CACHE: 0  (false) or 1  (true)  # `use_cache`
     BLACKFYNN_API_LOC                             # `api_host`
@@ -130,17 +150,9 @@ from __future__ import absolute_import, division, print_function
 
 import configparser
 import os
-import sys
-import tempfile
 
-import psutil
-
-
-#: Default Blackfynn home directory
 BLACKFYNN_DIR_DEFAULT = os.path.join(os.path.expanduser('~'), '.blackfynn')
-#: Default cache directory
 CACHE_DIR_DEFAULT = os.path.join(BLACKFYNN_DIR_DEFAULT, 'cache')
-#: Default cache database
 CACHE_INDEX_DEFAULT = os.path.join(CACHE_DIR_DEFAULT, 'index.db')
 
 DEFAULTS = {
@@ -291,7 +303,8 @@ class Settings(object):
         else:
             self.__dict__.update(self.profiles[name])
             self.active_profile = name
-            if name is 'global': self.active_profile = 'none'
+            if name is 'global':
+                self.active_profile = None
 
     @property
     def host(self):
