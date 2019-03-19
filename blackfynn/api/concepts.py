@@ -159,7 +159,24 @@ class ModelsAPI(ModelsAPIBase):
             ))
         return [DataPackage.from_dict(pkg, api=self.session) for r,pkg in resp]
 
+
+    def get_connected(self, dataset, model):
+        """ Return a list of concepts related to the given model """
+        dataset_id = self._get_id(dataset)
+        model_id = self._get_id(model)
+        resp = self._get(self._uri('/{dataset_id}/concepts/{model_id}/related',
+                                   dataset_id=dataset_id,
+                                   model_id=model_id),
+                         stream=True)
+        for r in resp:
+            r['dataset_id'] = r.get('dataset_id', dataset_id)
+            r['schema'] = self.get_properties(dataset, r['id'])
+
+        concepts = [Model.from_dict(r, api=self.session) for r in resp]
+        return {c.type: c for c in concepts}
+
     def get_related(self, dataset, concept):
+        """ Return all SchemaRelationships and the Concepts they point to """
         dataset_id = self._get_id(dataset)
         concept_id = self._get_id(concept)
         resp = self._get(
@@ -169,7 +186,6 @@ class ModelsAPI(ModelsAPIBase):
             r['dataset_id'] = r.get('dataset_id', dataset_id)
             r['schema'] = self.get_properties(dataset, r['id'])
         concepts = [Model.from_dict(r, api=self.session) for r in resp]
-
         return concepts
 
     def get_topology(self, dataset):
@@ -501,7 +517,9 @@ class ModelProxiesAPI(ModelsAPIBase):
             }
         ]
 
-        r = self._post(self._uri('/{dataset_id}/proxy/{p_type}/instances', dataset_id=dataset_id, p_type=proxy_type), json=request)
+        r = self._post(self._uri('/{dataset_id}/proxy/{p_type}/instances',
+                                 dataset_id=dataset_id, p_type=proxy_type),
+                       json=request)
         instance = r[0]['relationshipInstance']
         instance['dataset_id'] = instance.get('dataset_id', dataset_id)
         return Relationship.from_dict(instance, api=self.session)

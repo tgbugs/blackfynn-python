@@ -2028,6 +2028,25 @@ class Dataset(BaseCollection):
         """
         return self._api.concepts.relationships.get(self.id, name_or_id)
 
+    def get_connected_models(self, name_or_id):
+        """ Retrieve all models connected to the given model
+
+            Connected is defined as model that can be reached by following
+            outgoing relationships starting at the current model
+
+        Args:
+            name_or_id: Name or id of the model
+
+        Return:
+            List of ``Model`` objects
+
+
+        Example::
+            connected_models = ds.get_related_models('patient')
+
+        """
+        return self._api.concepts.get_connected(self.id, name_or_id)
+
     def create_model(self, name, display_name=None, description=None, schema=None, **kwargs):
         """
         Defines a ``Model`` on the platform.
@@ -2883,7 +2902,7 @@ class Model(BaseModelNode):
         Retrieves a record of the model by id from the platform.
 
         Args:
-            id (int): the id of the record
+            id: the Blackfynn id of the model
 
         Returns:
             A single ``Record``
@@ -2893,6 +2912,24 @@ class Model(BaseModelNode):
           mouse_001 = mouse.get(123456789)
         """
         return self._api.concepts.instances.get(self.dataset_id, id, self)
+
+    def get_connected(self):
+        """ Retrieves all connected models
+
+            Connected is defined as model that can be reached by following
+            outgoing relationships starting at the current model
+
+        Args:
+            id: The Blackfynn id of the "root" model
+
+        Returns:
+            A list of models connected to the given model
+
+        Example::
+
+            connected_models = mouse.get_connected()
+        """
+        return self._api.concepts.get_connected(self.dataset_id, self.id)
 
     def create_record(self, values=dict()):
         """
@@ -3229,6 +3266,7 @@ class RelationshipProperty(BaseModelProperty):
     def __repr__(self):
         return u"<RelationshipProperty name='{}' {}>".format(self.name, self.type)
 
+
 class RelationshipValue(BaseModelValue):
     @as_native_str()
     def __repr__(self):
@@ -3504,7 +3542,6 @@ class ProxyInstance(BaseRecord):
     @as_native_str()
     def __repr__(self):
         return u"<ProxyInstance type='{}' id='{}'>".format(self.type, self.id)
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Model/Relation Instance Sets

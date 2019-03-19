@@ -296,6 +296,42 @@ def test_complex_model_properties(dataset):
     with pytest.raises(Exception):
         bad_record = updated_model.create_record(bad_values)
 
+
+def test_get_connected(dataset):
+    model_1 = dataset.create_model('Model_A', description="model a", schema=[
+        ModelProperty("prop1", data_type=ModelPropertyType(data_type=str),
+                      title=True)])
+
+    related_models = model_1.get_connected()
+    # For a single, unconnected model, it should return nothing
+    assert len(related_models) == 0
+
+    model_2 = dataset.create_model('Model_B', description="model b", schema=[
+        ModelProperty("prop1", data_type=ModelPropertyType(data_type=str),
+                      title=True)])
+
+    relationship = dataset.create_relationship_type(
+        'New_Relationship_{}'.format(current_ts()), 'a new relationship')
+
+    model_instance_1 = model_1.create_record({"prop1": "val1"})
+    model_instance_2 = model_2.create_record({"prop1": "val1"})
+    model_instance_1.relate_to(model_instance_2, relationship)
+
+    related_models = model_1.get_connected()
+    assert len(related_models) == 2
+
+    # For a connected model, return all connections + the model itself
+    related_models = model_2.get_connected()
+    assert len(related_models) == 2
+
+    # Check that get_connected_models from the dataset object also works
+    related_models = dataset.get_connected_models(model_1.id)
+    assert len(related_models) == 2
+
+    related_models = dataset.get_connected_models(model_2.id)
+    assert len(related_models) == 2
+
+
 def test_model_properties_with_enum(dataset):
     model_with_enum_props = dataset.create_model('Enum_Props', description='a new description', schema=[
         ModelProperty('name', data_type=str, title=True),
@@ -420,4 +456,3 @@ def test_get_graph_summary(simple_graph):
     assert summary['relationshipCount'] == 1
     assert summary['relationshipRecordCount'] == 1
     assert summary['relationshipTypeCount'] == 1
-
