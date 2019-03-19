@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 Documentation at https://developer.blackfynn.io/python/
 
+## [2.9.0]
+### Changed
+- The `bf` Python CLI is deprecated and will be removed in a future release. Please install and use the new Blackfynn CLI Agent https://developer.blackfynn.io/agent.
+
+### Added
+- The Python client can now use the Blackfynn CLI Agent for large file uploads
+- Newly created Blackfynn datasets no longer process all uploaded data. Pass `automatically_process_packages=True` to `create_dataset` to revert to the old behavior.
+- Added `Dataset.get_connected_models` and `Model.get_connected` methods to retrieve topologically connected models.
+
 ## [2.8.0]
 - Added `Dataset.status` for viewing the current status of a dataset
 - Added `Dataset.get_graph_summary` method for retrieving high-level statistics about the graph

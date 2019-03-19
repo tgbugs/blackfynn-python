@@ -16,7 +16,7 @@ from blackfynn.models import Collection, Dataset, DataPackage
 
 logger = get_logger('blackfynn.agent')
 
-MINIMUM_AGENT_VERSION = semver.parse_version_info("0.2.0")
+MINIMUM_AGENT_VERSION = semver.parse_version_info("0.2.1")
 DEFAULT_LISTEN_PORT = 11235
 
 
