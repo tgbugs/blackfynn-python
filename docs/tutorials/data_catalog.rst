@@ -70,6 +70,13 @@ Example response:
 We can see that an ID string ``N:dataset:ebc05784-e6d0-4c2b-975d-72d3fdd5facc`` has
 been assigned to our created dataset as an unique identifier for the object.
 
+The `create_dataset` function can also optionally take a `description` argument,
+which allows for an optional description of the dataset, and an
+`automatically_process_packages` argument, which describes whether newly uploaded
+files will be automatically processed (i.e. TimeSeries) or left as simple
+downloadable assets on the Blackfynn platform. By default, the `description` is
+left empty and packages are not automatically processed.
+
 .. code-block:: python
    :linenos:
 

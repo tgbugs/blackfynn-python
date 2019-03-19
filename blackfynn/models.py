@@ -813,6 +813,14 @@ class DataPackage(BaseDataNode):
         self._check_exists()
         return self._api.packages.get_view(self)
 
+    def process(self):
+        """
+        Process a data package that has successfully uploaded it's source
+        files but has not yet been processed by the Blackfynn ETL.
+        """
+        self._check_exists()
+        return self._api.packages.process(self)
+
     def relate_to(self, *records):
         """
         Relate current ``DataPackage`` to one or more ``Record`` objects.
@@ -1913,12 +1921,13 @@ class Organization(BaseNode):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class Dataset(BaseCollection):
-    def __init__(self, name, description=None, status=None, **kwargs):
+    def __init__(self, name, description=None, status=None, automatically_process_packages=False, **kwargs):
         kwargs.pop('package_type', None)
         kwargs.pop('type', None)
         super(Dataset, self).__init__(name, "DataSet", **kwargs)
         self.description = description or ''
         self.status = status
+        self.automatically_process_packages = automatically_process_packages
 
         # remove things that do not apply (a bit hacky)
         for k in ("parent", "type", "set_ready", "set_unavailable", "set_error", "state", "dataset"):
@@ -2128,6 +2137,7 @@ class Dataset(BaseCollection):
         return dict(
             name = self.name,
             description = self.description,
+            automaticallyProcessPackages = self.automatically_process_packages,
             properties = [p.as_dict() for p in self.properties]
         )
 

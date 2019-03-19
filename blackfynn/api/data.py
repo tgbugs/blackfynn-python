@@ -6,6 +6,7 @@ import datetime
 import math
 
 import pandas as pd
+import requests
 
 import blackfynn.log as log
 from blackfynn.api.base import APIBase
@@ -200,7 +201,7 @@ class PackagesAPI(APIBase):
         """
         d = pkg.as_dict()
         d.update(kwargs)
-        resp = self._put(self._uri('/{id}',id=pkg.id), json=d)
+        resp = self._put(self._uri('/{id}', id=pkg.id), json=d)
         pkg = self._get_package_from_data(resp)
         return pkg
 
@@ -220,11 +221,28 @@ class PackagesAPI(APIBase):
             if hasattr(include, '__iter__'):
                 params = {'include': ','.join(include)}
 
-        resp = self._get(self._uri('/{id}',id=pkg_id), params=params)
+        resp = self._get(self._uri('/{id}', id=pkg_id), params=params)
 
         # TODO: cast to specific DataPackages based on `type`
         pkg = self._get_package_from_data(resp)
         return pkg
+
+    def process(self, pkg):
+        """
+        Process a package that has been successfully uploaded but not yet processed
+        """
+        try:
+            self._put(self._uri('/{id}/process', id=pkg.id))
+            return True
+        except requests.exceptions.HTTPError as error:
+            response = error.response
+            status_code = response.status_code
+            message = response.json().get('message')
+
+            if status_code == requests.codes.bad_request and message is not None:
+              raise Exception(message)
+            else:
+              raise error
 
     def get_sources(self, pkg):
         """

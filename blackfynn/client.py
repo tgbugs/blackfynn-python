@@ -185,7 +185,7 @@ class Blackfynn(object):
         """
         return self._api.core.create(thing)
 
-    def create_dataset(self, name):
+    def create_dataset(self, name, description=None, automatically_process_packages=False):
         """
         Create a dataset under the active organization.
 
@@ -197,7 +197,7 @@ class Blackfynn(object):
 
         """
         self._check_context()
-        return self._api.datasets.create(Dataset(name))
+        return self._api.datasets.create(Dataset(name, description=description, automatically_process_packages=automatically_process_packages))
 
     def get_dataset(self, name_or_id):
         """
