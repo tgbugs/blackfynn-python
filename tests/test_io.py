@@ -126,29 +126,6 @@ def test_cannot_upload_directory_using_s3(client, dataset):
     with pytest.raises(Exception):
         dataset.upload(FLAT_DIR, use_agent=False)
 
-# NOTE: This is a brittle test. Getting the package into the UPLOADED
-# state relies on internal facing functionality that requires a file to
-# have completed uploading. We do not allow forcing a package state change
-# via an API.
-@pytest.mark.parametrize('upload_args', [[FILE3]])
-def test_upload(client, dataset, upload_args):
-    """
-    Note: ETL will fail since destination will likely be removed
-          before being processed.
-    """
-    # upload file(s) into dataset
-    collection = dataset.create_collection("random-test-collection-for-testing-manual-processing")
-    resp = collection.upload(*upload_args)
-    package = collection.items[0]
-
-    # wait for max of one minute or until the package is in the UPLOADED state
-    wait_until = time.time() + 60
-    while time.time() < wait_until and package.state != "UPLOADED":
-        time.sleep(5)
-        package = client.get(package.id)
-
-    assert package.state == "UPLOADED"
-    assert package.process()
 
 @pytest.mark.parametrize('append_args,n_files', [
     ([FILE1], 1),          # Single file
