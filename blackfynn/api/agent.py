@@ -1,3 +1,5 @@
+from __future__ import division
+
 import errno
 import json
 import os
@@ -5,7 +7,6 @@ import socket
 import subprocess
 import sys
 from collections import OrderedDict
-from contextlib import contextmanager
 from time import sleep
 
 import semver
@@ -195,9 +196,6 @@ def agent_upload(destination, files, dataset, append, recursive, display_progres
     else:
         raise ValueError('Can only upload to a Dataset, Package, or Collection')
 
-    upload_manager = UploadManager(expected_files, display_progress)
-    upload_manager.print_progress()
-
     with AgentListener(settings, DEFAULT_LISTEN_PORT):
         try:
             ws = create_agent_socket(DEFAULT_LISTEN_PORT)
@@ -211,6 +209,9 @@ def agent_upload(destination, files, dataset, append, recursive, display_progres
                     'append': append,
                     'recursive': recursive
             }}))
+
+            upload_manager = UploadManager(expected_files, display_progress)
+            upload_manager.print_progress()
 
             for msg in ws:
                 msg = json.loads(msg)
@@ -230,7 +231,7 @@ def agent_upload(destination, files, dataset, append, recursive, display_progres
                     upload_manager.set_error(msg['import_id'])
 
                 elif msg['message'] == 'error':
-                    raise AgentError(msg)
+                    raise AgentError(msg['context'])
 
                 else:
                     logger.debug("Unknown message", msg)
@@ -359,13 +360,23 @@ class FileProgress(object):
         self.filename = filename
         self.import_id = import_id
         self.name = os.path.basename(filename)
-        self.percent_done = 0
+        self._percent_done = 0
         self.done = False
         self.errored = False
         self.queued = False
 
     @property
-    def progress(self):
+    def percent_done(self):
         if self.done:
-            return 1
-        return (self.percent_done / 100)
+            return 100
+        return self._percent_done
+
+    @percent_done.setter
+    def percent_done(self, value):
+        # Only increment progress (in case messages come out of order)
+        if value > self._percent_done:
+            self._percent_done = value
+
+    @property
+    def progress(self):
+        return self.percent_done / 100

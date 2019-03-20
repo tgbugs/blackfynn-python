@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 Documentation at https://developer.blackfynn.io/python/
 
+## [2.9.1]
+### Fixed
+- Bugs in progress bars when using the Agent for uploads
+
 ## [2.9.0]
 ### Changed
 - The `bf` Python CLI is deprecated and will be removed in a future release. Please install and use the new Blackfynn CLI Agent https://developer.blackfynn.io/agent.
