@@ -7,7 +7,6 @@ from future.utils import as_native_str
 
 import blackfynn.log as log
 from blackfynn import Settings
-from blackfynn.api.compute import ComputeAPI
 from blackfynn.api.concepts import (
     ModelRelationshipInstancesAPI,
     ModelRelationshipsAPI,
@@ -119,7 +118,6 @@ class Blackfynn(object):
             TimeSeriesAPI,
             TabularAPI,
             SecurityAPI,
-            ComputeAPI,
             SearchAPI,
             IOAPI,
             UserAPI,
