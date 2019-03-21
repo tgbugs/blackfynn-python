@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 Documentation at https://developer.blackfynn.io/python/
 
+## [2.9.2]
+### Fixed
+- Backwards-incompatible errors caused by old versions of the Agent. You now must explicitly pass `use_agent=True` to enable uploads via the Blackfynn CLI Agent.
+
 ## [2.9.1]
 ### Fixed
 - Bugs in progress bars when using the Agent for uploads

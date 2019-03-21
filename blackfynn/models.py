@@ -658,7 +658,7 @@ class BaseCollection(BaseDataNode):
             use_agent (boolean): If ``True``, and a compatible version of the
                 Agent is installed, uploads will be performed by the
                 Blackfynn CLI Agent. This allows large file upload in excess
-                of 1 hour. Defaults to ``True``.
+                of 1 hour. Defaults to ``False``.
             recursive (boolean): If ``True``, the nested folder structure of
                 the uploaded directory will be preversed. This can only be used
                 with the Blackfynn CLI Agent. Defaults to ``False``.
@@ -1229,7 +1229,7 @@ class TimeSeries(DataPackage):
             use_agent (boolean): If ``True``, and a compatible version of the
                 Agent is installed, uploads will be performed by the
                 Blackfynn CLI Agent. This allows large file upload in excess
-                of 1 hour. Defaults to ``True``.
+                of 1 hour. Defaults to ``False``.
         """
         self._check_exists()
         files = _flatten_file_args(files)

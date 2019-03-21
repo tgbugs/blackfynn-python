@@ -10,6 +10,7 @@ from collections import OrderedDict
 from time import sleep
 
 import semver
+from future.utils import raise_from
 from websocket import create_connection
 
 from blackfynn.log import get_logger
@@ -38,24 +39,25 @@ def agent_cmd():
     raise AgentError('Platform {} is not supported'.format(sys.platform))
 
 
-def agent_installed(settings):
+def validate_agent_installation(settings):
     """
     Check whether the agent is installed and at least the minimum version.
     """
     try:
         version = subprocess.check_output([agent_cmd(), 'version'], env=agent_env(settings))
     except (AgentError, subprocess.CalledProcessError, EnvironmentError) as e:
-        logger.debug('Agent not installed: %s', e)
-        return False
+        raise AgentError('Agent not installed. Visit https://developer.blackfynn.io/agent for installation directions.')
 
-    agent_version = semver.parse_version_info(version.decode().strip())
+    try:
+        agent_version = semver.parse_version_info(version.decode().strip())
+    except ValueError as e:
+        raise_from(AgentError('Invalid version string'), e)
+
     if agent_version < MINIMUM_AGENT_VERSION:
-        logger.info('Agent not compatible: Found version %s, need version %s',
-                     agent_version, MINIMUM_AGENT_VERSION)
-        return False
+        raise AgentError('Agent not compatible: found version {}, need version {}'.format(
+                         agent_version, MINIMUM_AGENT_VERSION))
 
     logger.info('Agent version %s found', agent_version)
-    return True
 
 
 def agent_env(settings):

@@ -18,7 +18,7 @@ See :ref:`preparing` to download the data used in this example.
 Uploading Directories
 ^^^^^^^^^^^^^^^^^^^^^
 
-If the Python client detects that the Blackfynn agent is installed, it will attempt to use the Agent for uploading. This enables features that are not available in older versions of the Python client, such as uploading directories.
+If the Agent is installed, you can use it for uploading by passing ``use_agent=True`` to ``upload`` and ``append``. This enables features that are not available in older versions of the Python client, such as uploading directories.
 
 Let's get a dataset:
 
@@ -32,13 +32,13 @@ As a reminder, you can upload files directly to a dataset or a collection:
 
 .. code-block:: python
 
-   dataset.upload("example_data/gait.csv", "example_data/test_10hz_ms.bfts")
+   dataset.upload("example_data/gait.csv", "example_data/test_10hz_ms.bfts", use_agent=True)
 
 To upload all files in the ``example_data/`` directory to this dataset, use the following:
 
 .. code-block:: python
 
-   dataset.upload("example_data")
+   dataset.upload("example_data", use_agent=True)
 
 This will ignore any directories nested in ``example_data/``, but the remaining source files will be uploaded into the dataset and produce a structure like this:
 
@@ -53,7 +53,7 @@ You can also upload an entire directory structure recursively:
 
 .. code-block:: python
 
-   dataset.upload("example_data", recursive=True)
+   dataset.upload("example_data", recursive=True, use_agent=True)
 
 This creates a new collection called ``example_data``, maintaining the nested structure of the directory on your computer:
 
@@ -69,6 +69,6 @@ The ``upload`` method also supports a ``display_progress`` argument that will sh
 
 .. code-block:: python
 
-   dataset.upload("example_data/test_10hz_1ms.bfts", display_progress=True)
+   dataset.upload("example_data/test_10hz_1ms.bfts", display_progress=True, use_agent=True)
 
 Visit https://developer.blackfynn.io/agent for more information about using the Blackfynn Agent directly.
