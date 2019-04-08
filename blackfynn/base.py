@@ -57,6 +57,7 @@ class ClientSession(object):
         self._concepts_host = settings.concepts_api_host
         self._api_token = settings.api_token
         self._api_secret = settings.api_secret
+        self._jwt = settings.jwt
 
         self._logger = log.get_logger('blackfynn.base.ClientSession')
 
@@ -70,9 +71,17 @@ class ClientSession(object):
 
     def authenticate(self, organization = None):
         """
-        API token is used to authentiate against the Blackfynn platform. An API
-        session token is returned from the API call and is used for all subsequent
-        API calls.
+        """
+        if self._jwt is None:
+            self._authenticate_with_session(organization = organization)
+        else:
+            self._authenticate_with_jwt(organization = organization)
+
+    def _authenticate_with_session(self, organization = None):
+        """
+        An API token is used to authenticate against the Blackfynn platform.
+        The token that is returned from the API call will be used for all
+        subsequent API calls.
         """
         # make authentication request
         session_response = self._post('/account/api/session', json=dict(tokenId = self._api_token, secret = self._api_secret))
@@ -84,6 +93,20 @@ class ClientSession(object):
         if organization is None:
             organization = session_response.get('organization')
 
+        self._set_org_context(organization)
+
+    def _authenticate_with_jwt(self, organization = None):
+        """
+        Use a JWT to make all subsequent requests to API.
+        """
+        # Force session creation:
+        self.session
+        self.token = self._jwt
+        # Get the associated user and set the org context to the preferred
+        # org set for the user. Additionally, if authentication fails at this
+        # step don't attempt to reauthenticate recursively.
+        user = self._get("/user", reauthenticate=False)
+        organization = user['preferredOrganization']
         self._set_org_context(organization)
 
     @property
@@ -100,10 +123,11 @@ class ClientSession(object):
         self._session.headers['X-ORGANIZATION-ID'] = organization_id
 
     def _set_auth(self, session_token):
-        self._session.headers.update({
-            'X-SESSION-ID': session_token,
-            'Authorization': 'Bearer {}'.format(session_token)
-        })
+        self._session.headers['Authorization'] = 'Bearer {}'.format(session_token)
+        # If the JWT is present, we need to skip the `X-SESSION-ID` header
+        # as it will cause the JWT to be interpreted as a regular session token.
+        if self._jwt is None:
+            self._session.headers['X-SESSION-ID'] = session_token
 
     @property
     def session(self):
@@ -112,7 +136,7 @@ class ClientSession(object):
         """
         if self._session is None:
             self._session = Session()
-            self._set_auth(self._token)
+            self._set_auth(self.token)
 
             # Enable retries via urllib
             adapter = HTTPAdapter(
@@ -135,7 +159,7 @@ class ClientSession(object):
         self._logger.debug("headers = {}".format(self.session.headers))
         return BlackfynnRequest(func, uri, *args, **kwargs)
 
-    def _call(self, method, endpoint, base='', *args, **kwargs):
+    def _call(self, method, endpoint, base='', reauthenticate=True, *args, **kwargs):
         if method == 'get':
             func = self.session.get
         elif method == 'put':
@@ -159,7 +183,7 @@ class ClientSession(object):
         # call endpoint
         uri = self._uri(endpoint, base=base, host=host)
         req = self._make_request(func, uri, *args, **kwargs)
-        resp = self._get_response(req)
+        resp = self._get_response(req, reauthenticate=reauthenticate)
 
         return resp.data
 
@@ -180,11 +204,11 @@ class ClientSession(object):
     def _del(self, endpoint, *args, **kwargs):
         return self._call('delete', endpoint, *args, **kwargs)
 
-    def _get_response(self, req):
+    def _get_response(self, req, reauthenticate=True):
         try:
             return req.call(timeout=self.settings.max_request_time)
         except UnauthorizedException as e:
-            if self._token is None:
+            if self._token is None or reauthenticate is False:
                 raise e
 
             # try to refresh the session and re-request

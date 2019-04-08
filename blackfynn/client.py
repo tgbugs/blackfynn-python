@@ -86,7 +86,7 @@ class Blackfynn(object):
         are properly set.
 
     """
-    def __init__(self, profile=None, api_token=None, api_secret=None, host=None, streaming_host=None, concepts_host=None, env_override=True, **overrides):
+    def __init__(self, profile=None, api_token=None, api_secret=None, jwt=None, host=None, streaming_host=None, concepts_host=None, env_override=True, **overrides):
 
         self._logger = log.get_logger("blackfynn.client.Blackfynn")
 
@@ -94,13 +94,19 @@ class Blackfynn(object):
             'api_token': api_token,
             'api_secret': api_secret,
             'api_host': host,
+            'jwt': jwt,
             'streaming_api_host': streaming_host,
             'concepts_api_host': concepts_host,
             }.items() if v != None })
         self.settings = Settings(profile, overrides, env_override)
 
-        if self.settings.api_token  is None: raise Exception('Error: No API token found. Cannot connect to Blackfynn.')
-        if self.settings.api_secret is None: raise Exception('Error: No API secret found. Cannot connect to Blackfynn.')
+        if (self.settings.api_token is None or self.settings.api_secret is None) and self.settings.jwt is None:
+            if self.settings.api_token  is None:
+                raise Exception('Error: No API token found. Cannot connect to Blackfynn.')
+            if self.settings.api_secret is None:
+                raise Exception('Error: No API secret found. Cannot connect to Blackfynn.')
+            if self.settings.jwt  is None:
+                raise Exception('Error: No JWT found. Cannot connect to Blackfynn.')
 
         # direct interface to REST API.
         self._api = ClientSession(self.settings)
