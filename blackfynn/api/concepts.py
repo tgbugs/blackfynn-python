@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function
 from future.utils import string_types
 
 import itertools
+import json
 import requests
 
 from blackfynn.api.base import APIBase
@@ -11,6 +12,9 @@ from blackfynn.models import (
     Model,
     ModelProperty,
     ModelTemplate,
+    ModelSelect,
+    ModelFilter,
+    ModelJoin,
     ProxyInstance,
     Record,
     RecordSet,
@@ -56,6 +60,7 @@ class ModelsAPI(ModelsAPIBase):
         self.instances = RecordsAPI(session)
         self.relationships = ModelRelationshipsAPI(session)
         self.proxies = ModelProxiesAPI(session)
+        self.query = ModelQueryAPI(session)
         super(ModelsAPI, self).__init__(session)
 
     def get_properties(self, dataset, concept):
@@ -523,6 +528,191 @@ class ModelProxiesAPI(ModelsAPIBase):
         instance = r[0]['relationshipInstance']
         instance['dataset_id'] = instance.get('dataset_id', dataset_id)
         return Relationship.from_dict(instance, api=self.session)
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Model Query
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+class ModelQuery(object):
+    allowed_operators = set(['eq', 'neq', 'lt', 'lte', 'gt', 'gte'])
+
+    def __init__(self, query_api, model, dataset_id):
+        self.query_api = query_api
+        self.model = model
+        self.dataset_id = dataset_id
+        self._select = None
+        self._filters = []
+        self._joins = []
+        self._offset = 0
+        self._limit = 50
+
+    def select(self, *join_keys):
+        """
+        Add a select clause to the query.
+
+        Args:
+            join_keys: (List[str|model]) The names of the targets to select on.
+
+        Examples::
+
+            Review.query() \
+                .filter("is_complete", "eq", False) \
+                .join("reviewer", ("id", "eq", "12345")) \
+                .select(reviewer")
+                .run()
+        """
+        self._select = ModelSelect(*join_keys)
+        return self
+
+    def filter(self, key, operator, value):
+        """
+        Add a filter to the query.
+
+        Args:
+            key: (string) The name of the property to test.
+
+            operator: (string) The predicate operator.
+
+            value (any) The right hand of the predicate to match against.
+
+        Returns:
+            The current query object.
+
+        Example::
+
+            Review.query() \
+                .filter("is_complete", "eq", False) \
+                .run()
+        """
+        assert isinstance(key, str), "key must be a string"
+        assert operator in self.allowed_operators, "not a valid predicate operator: {}".format(operator)
+        self._filters.append(ModelFilter(key, operator, value))
+        return self
+
+    def join(self, target, *filters):
+        """
+        Add a join clause to the query.
+
+        Args:
+            target: (string|model) The model to join to via some relationship.
+
+            filters: (*tuple) Filter conditions to apply to the join. Each
+                tuple is expected to be a triple (key, operator, value), much
+                like the constructor for `ModelFilter`.
+
+        Returns:
+            The current query object.
+
+        Example::
+
+            Review.query() \
+                .filter("is_complete", "eq", False) \
+                .join("reviewer", ("id", "eq", "12345")) \
+                .select(reviewer")
+                .run()
+        """
+        assert isinstance(target, (str, Model)), "target must be a string or a model"
+        self._joins.append(ModelJoin(target, *filters))
+        return self
+
+    def offset(self, value):
+        """
+        Adds an offset to the query.
+
+        Args:
+            value (int) The offset value.
+
+        Returns:
+            The current query object.
+
+        Example::
+
+            Review.query() \
+                .filter("is_complete", "eq", False) \
+                .offset(100)
+                .run()
+        """
+        self._offset = value
+        return self
+
+    def limit(self, value):
+        """
+        Adds an limit to the query.
+
+        Args:
+            value (int) The limit value.
+
+        Returns:
+            The current query object.
+
+        Example::
+
+            Review.query() \
+                .filter("is_complete", "eq", False) \
+                .limit(100)
+                .run()
+        """
+        self._limit = value
+        return self
+
+    def _build_query(self):
+        query = {
+            "type": { "concept": { "type": self.model.type } },
+            "filters": [f.as_dict() for f in self._filters],
+            "joins": [j.as_dict() for j in self._joins],
+            "offset": self._offset,
+            "limit": self._limit,
+            "orderBy": { "Ascending": { "field": "$createdAt" } },
+        }
+        if self._select is not None:
+            query['select'] = self._select.as_dict()
+        return query
+
+    def run(self):
+        """
+        Run the constructed query.
+
+        Returns:
+            A list of matching Record instances.
+        """
+        resp = self.query_api._post(self.query_api._uri('/{dataset_id}/query/run', dataset_id=self.dataset_id), json=self._build_query())
+        if resp is None:
+            return []
+
+        records = []
+        for r in resp:
+            r = r['targetValue']
+            r['dataset_id'] = self.dataset_id
+            records.append(Record.from_dict(r, api=self.query_api.session))
+        return records
+
+class ModelQueryAPI(ModelsAPIBase):
+    base_uri = "/datasets"
+    name = 'concepts.query'
+
+    def __init__(self, session):
+        self.host = session._concepts_host
+        super(ModelQueryAPI, self).__init__(session)
+
+    def new(self, model, dataset_id):
+        """
+        Construct a new query.
+
+        Args:
+            model: The model to use as the join target.
+
+            dataset_id: The ID of the dataset the model is contained in.
+
+        Returns:
+            A list of records fulfilling the conditions of the query.
+
+        Example::
+
+            self.new(model, dataset_id) \
+                .filter("is_completed", "eq", False) \
+                .run()
+        """
+        return ModelQuery(self, model, dataset_id)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Model Templates

@@ -2296,6 +2296,14 @@ def uncast_value(value):
 
     return v
 
+def target_type_string(target):
+    if isinstance(target, Model):
+        return target.type
+    elif isinstance(target, str):
+        return target
+    else:
+        raise Exception("target must be a string or model")
+
 class ModelPropertyType(object):
     def __init__(self, data_type, format=None, unit=None):
         self.data_type = data_type
@@ -2846,6 +2854,53 @@ class ModelValue(BaseModelValue):
     def __repr__(self):
         return u"<ModelValue name='{}' value='{}' {}>".format(self.name, self.value, self.type)
 
+class ModelSelect(object):
+    def __init__(self, *join_keys):
+        self.join_keys = join_keys
+
+    def as_dict(self):
+        join_keys = [target_type_string(k) for k in self.join_keys]
+        return {
+            "Concepts": { "joinKeys": join_keys }
+        }
+
+    @as_native_str()
+    def __repr__(self):
+        join_keys = [target_type_string(k) for k in self.join_keys]
+        return u"<ModelSelect join_keys='{}'>".format(','.join(join_keys))
+
+class ModelFilter(object):
+    def __init__(self, key, operator, value):
+        self.key = key
+        self.operator = operator
+        self.value = value
+
+    def as_dict(self):
+        return {
+            "key": self.key,
+            "predicate": { "operation": self.operator, "value": self.value }
+        }
+
+    @as_native_str()
+    def __repr__(self):
+        return u"<ModelFilter key='{}' operator='{}' value='{}'>".format(self.key, self.operator, self.value)
+
+class ModelJoin(object):
+    def __init__(self, target, *filters):
+        self.target = target
+        self.filters = [ModelFilter(*f) if not isinstance(f, ModelFilter) else f for f in filters]
+
+    def as_dict(self):
+        key = target_type_string(self.target)
+        return {
+            "targetType": { "concept": { "type": key } },
+            "filters": [f.as_dict() for f in self.filters],
+            "key": key
+        }
+
+    @as_native_str()
+    def __repr__(self):
+        return u"<ModelJoin targetType='{}' filter='{}', key='{}'>".format(target_type_string(self.target), self.filters, self.key)
 
 class Model(BaseModelNode):
     """
@@ -2912,6 +2967,12 @@ class Model(BaseModelNode):
           mouse_001 = mouse.get(123456789)
         """
         return self._api.concepts.instances.get(self.dataset_id, id, self)
+
+    def query(self):
+        """
+        Run a query with this model as the join target.
+        """
+        return self._api.concepts.query.new(self, self.dataset_id)
 
     def get_connected(self):
         """ Retrieves all connected models

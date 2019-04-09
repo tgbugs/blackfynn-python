@@ -456,3 +456,50 @@ def test_get_graph_summary(simple_graph):
     assert summary['relationshipCount'] == 1
     assert summary['relationshipRecordCount'] == 1
     assert summary['relationshipTypeCount'] == 1
+
+def test_simple_query(simple_graph):
+    model_a = simple_graph.dataset.get_model('Model_A')
+    model_b = simple_graph.dataset.get_model('Model_B')
+
+    # Filter via a model name:
+    assert len(model_a.query().filter("prop1", "eq", "val1").run()) == 1
+    assert len(model_a.query().filter("prop1", "eq", "not-present").run()) == 0
+
+    # Join via a model name:
+    assert len(model_a.query().join("Model_B", ("prop1", "eq", "val1")).run()) == 1
+    assert len(model_a.query().join("Model_B", ("prop1", "eq", "val2")).run()) == 0
+
+    # Filter via a model instance:
+    assert len(model_a.query().filter("prop1", "eq", "val1").run()) == 1
+    assert len(model_a.query().filter("prop1", "eq", "not-present").run()) == 0
+
+    # Join via a model instance:
+    assert len(model_a.query().join(model_b, ("prop1", "eq", "val1")).run()) == 1
+    assert len(model_a.query().join(model_b, ("prop1", "eq", "val2")).run()) == 0
+
+    # use select, join, and filter:
+    result = model_a.query() \
+            .select(model_b) \
+            .filter("prop1", "eq", "val1") \
+            .join(model_b, ("prop1", "eq", "val1")) \
+            .run()
+    assert len(result) == 1
+
+    # and with an offset of 1:
+    result = model_a.query() \
+            .select(model_b) \
+            .filter("prop1", "eq", "val1") \
+            .join(model_b, ("prop1", "eq", "val1")) \
+            .offset(1) \
+            .run()
+    assert len(result) == 0
+
+    # and with a limit of 0:
+    result = model_a.query() \
+            .select(model_b) \
+            .filter("prop1", "eq", "val1") \
+            .join(model_b, ("prop1", "eq", "val1")) \
+            .limit(0) \
+            .run()
+    assert len(result) == 0
+
