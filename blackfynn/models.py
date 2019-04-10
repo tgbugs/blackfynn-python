@@ -2697,7 +2697,9 @@ class BaseRecord(BaseNode):
         self.type       = type
         self.dataset_id  = dataset_id
         self.created_at = kwargs.pop('createdAt', None)
+        self.created_by = kwargs.pop('createdBy', None)
         self.updated_at = kwargs.pop('updatedAt', None)
+        self.updated_by = kwargs.pop('updatedBy', None)
         values          = kwargs.pop('values', None)
 
         super(BaseRecord, self).__init__(*args, **kwargs)
@@ -2856,12 +2858,11 @@ class ModelValue(BaseModelValue):
 
 class ModelSelect(object):
     def __init__(self, *join_keys):
-        self.join_keys = join_keys
+        self.join_keys = [target_type_string(k) for k in join_keys]
 
     def as_dict(self):
-        join_keys = [target_type_string(k) for k in self.join_keys]
         return {
-            "Concepts": { "joinKeys": join_keys }
+            "Concepts": { "joinKeys": self.join_keys }
         }
 
     @as_native_str()
@@ -3316,6 +3317,92 @@ class Record(BaseRecord):
     @as_native_str()
     def __repr__(self):
         return u"<Record type='{}' id='{}'>".format(self.type, self.id)
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Query Result
+#
+#   Returned per "row" result of a query
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+class QueryResult(object):
+    def __init__(self, dataset_id, target, joined):
+        self.dataset_id = dataset_id
+        self._target = target
+        self._joined = joined
+
+    @property
+    def target(self):
+        """
+        Get the target of the query.
+
+        Returns:
+            the target of the query.
+
+        Example::
+
+            For the following query,
+
+                Review.query() \
+                    .filter("is_complete", "eq", False) \
+                    .join("reviewer", ("id", "eq", "12345")) \
+                    .select(reviewer")
+                    .run()
+
+            a record whose type is `review` would be the target.
+        """
+        return self._target
+
+    def get(self, model):
+        """
+        Get the result for a specific join key appearing in a `select()`.
+
+        Args:
+
+            model: (string|Model) The type of the record to retrieve from this
+                query result.
+
+        Returns:
+            the record whose type matches the given model, or None if no such
+            record exists.
+
+        Example::
+
+            For the following query,
+
+                result = Review.query() \
+                    .filter("is_complete", "eq", False) \
+                    .join("reviewer", ("id", "eq", "12345")) \
+                    .select(reviewer")
+                    .run()
+
+                reviewer_record = result.get("reviewer") # Also equivalent to `result.get(Reviewer)`
+        """
+        return self._joined.get(target_type_string(model), None)
+
+    def items(self):
+        """
+        Gets all (model:string, record:Record) instances contained in this
+        query result.
+
+        Returns:
+            A list of (model:string, record:Record) pairs contained in this
+            query result.
+        """
+        return self._joined.items()
+
+    def __getitem__(self, model):
+        return self.get(model)
+
+    def __contains__(self, model):
+        return target_type_string(model) in self._joined
+
+    def as_dict(self):
+        d = { t: record.as_dict() for (t, record) in self._joined.items() }
+        d["targetValue"] = self.target.as_dict()
+        return d
+
+    @as_native_str()
+    def __repr__(self):
+        return u"<QueryResult dataset='{}' target='{}'>".format(self.dataset_id, self._target.id)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 Documentation at https://developer.blackfynn.io/python/
 
+## [2.11.0]
+### Changed
+- Knowledge graph query results now include the records of models specified
+  in a `join()`.
+
 ## [2.10.0]
 ### Changed
 - Added query support to knowledge graph models.

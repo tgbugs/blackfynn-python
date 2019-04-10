@@ -16,6 +16,7 @@ from blackfynn.models import (
     ModelFilter,
     ModelJoin,
     ProxyInstance,
+    QueryResult,
     Record,
     RecordSet,
     Relationship,
@@ -681,9 +682,22 @@ class ModelQuery(object):
 
         records = []
         for r in resp:
-            r = r['targetValue']
-            r['dataset_id'] = self.dataset_id
-            records.append(Record.from_dict(r, api=self.query_api.session))
+            # get the target first:
+            target_value = r['targetValue']
+            target_value['dataset_id'] = self.dataset_id
+            target = Record.from_dict(target_value, api=self.query_api.session)
+
+            # then any attached records by join type:
+            joined = {}
+            if self._select is not None:
+                for join_key in self._select.join_keys:
+                    if join_key in r:
+                        join_value = r[join_key]
+                        join_value['dataset_id'] = self.dataset_id
+                        joined[join_key] = Record.from_dict(join_value, api=self.query_api.session)
+
+            records.append(QueryResult(self.dataset_id, target, joined))
+
         return records
 
 class ModelQueryAPI(ModelsAPIBase):

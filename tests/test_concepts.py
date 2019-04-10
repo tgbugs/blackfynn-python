@@ -483,7 +483,11 @@ def test_simple_query(simple_graph):
             .filter("prop1", "eq", "val1") \
             .join(model_b, ("prop1", "eq", "val1")) \
             .run()
+
     assert len(result) == 1
+    assert len(result[0].items()) == 1
+    assert result[0].target.type == model_a.type
+    assert result[0].get(model_b).type == model_b.type
 
     # and with an offset of 1:
     result = model_a.query() \
