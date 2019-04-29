@@ -2111,7 +2111,7 @@ class Dataset(BaseCollection):
             **kwargs)
         return self._api.concepts.create(self.id, c)
 
-    def create_relationship_type(self, name, description, schema=None, **kwargs):
+    def create_relationship_type(self, name, description, schema=None, source=None, destination=None, **kwargs):
         """
         Defines a ``RelationshipType`` on the platform.
 
@@ -2133,7 +2133,7 @@ class Dataset(BaseCollection):
                 description = description,
                 schema      = schema,
                 **kwargs)
-        return self._api.concepts.relationships.create(self.id, r)
+        return self._api.concepts.relationships.create(self.id, r, source, destination)
 
     def import_model(self, template):
         """
@@ -3251,7 +3251,7 @@ class Record(BaseRecord):
             relationships_types = self._api.concepts.relationships.get_all(self.dataset_id)
             if relationship_type not in relationships_types:
                 r = RelationshipType(dataset_id=self.dataset_id, name=relationship_type, description=relationship_type)
-                relationship_type = self._api.concepts.relationships.create(self.dataset_id, r,source=self.model.id, destination=destinations[0].model.id)
+                relationship_type = self._api.concepts.relationships.create(self.dataset_id, r, source=self.model.id, destination=destinations[0].model.id)
             else:
                 relationship_type = relationships_types[relationship_type]
 
