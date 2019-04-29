@@ -3251,7 +3251,7 @@ class Record(BaseRecord):
             relationships_types = self._api.concepts.relationships.get_all(self.dataset_id)
             if relationship_type not in relationships_types:
                 r = RelationshipType(dataset_id=self.dataset_id, name=relationship_type, description=relationship_type)
-                relationship_type = self._api.concepts.relationships.create(self.dataset_id, r)
+                relationship_type = self._api.concepts.relationships.create(self.dataset_id, r,source=self.model.id, destination=destinations[0].model.id)
             else:
                 relationship_type = relationships_types[relationship_type]
 

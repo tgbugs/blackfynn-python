@@ -379,10 +379,15 @@ class ModelRelationshipsAPI(ModelsAPIBase):
         self.instances = ModelRelationshipInstancesAPI(session)
         super(ModelRelationshipsAPI, self).__init__(session)
 
-    def create(self, dataset, relationship):
+    def create(self, dataset, relationship, source=None, destination=None):
         assert isinstance(relationship, RelationshipType), "Must be of type Relationship"
         dataset_id = self._get_id(dataset)
-        r = self._post(self._uri('/{dataset_id}/relationships', dataset_id=dataset_id), json=relationship.as_dict())
+        rel_dict=relationship.as_dict()
+        if source != None:
+            rel_dict['from']=source
+        if destination !=None:
+            rel_dict['to']=destination
+        r = self._post(self._uri('/{dataset_id}/relationships', dataset_id=dataset_id), json=rel_dict)
         r['dataset_id'] = r.get('dataset_id', dataset_id)
         return RelationshipType.from_dict(r, api=self.session)
 
