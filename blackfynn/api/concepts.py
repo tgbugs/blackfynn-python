@@ -382,7 +382,8 @@ class ModelRelationshipsAPI(ModelsAPIBase):
     def create(self, dataset, relationship):
         assert isinstance(relationship, RelationshipType), "Must be of type Relationship"
         dataset_id = self._get_id(dataset)
-        r = self._post(self._uri('/{dataset_id}/relationships', dataset_id=dataset_id), json=relationship.as_dict())
+        rel_dict = relationship.as_dict()
+        r = self._post(self._uri('/{dataset_id}/relationships', dataset_id=dataset_id), json=rel_dict)
         r['dataset_id'] = r.get('dataset_id', dataset_id)
         return RelationshipType.from_dict(r, api=self.session)
 

@@ -2111,7 +2111,7 @@ class Dataset(BaseCollection):
             **kwargs)
         return self._api.concepts.create(self.id, c)
 
-    def create_relationship_type(self, name, description, schema=None, **kwargs):
+    def create_relationship_type(self, name, description, schema=None, source=None, destination=None, **kwargs):
         """
         Defines a ``RelationshipType`` on the platform.
 
@@ -2131,6 +2131,8 @@ class Dataset(BaseCollection):
                 dataset_id  = self.id,
                 name        = name,
                 description = description,
+                source      = source,
+                destination = destination,
                 schema      = schema,
                 **kwargs)
         return self._api.concepts.relationships.create(self.id, r)
@@ -3250,7 +3252,7 @@ class Record(BaseRecord):
         if isinstance(relationship_type, string_types):
             relationships_types = self._api.concepts.relationships.get_all(self.dataset_id)
             if relationship_type not in relationships_types:
-                r = RelationshipType(dataset_id=self.dataset_id, name=relationship_type, description=relationship_type)
+                r = RelationshipType(dataset_id=self.dataset_id, name=relationship_type, description=relationship_type,  source=self.model.id, destination=destinations[0].model.id)
                 relationship_type = self._api.concepts.relationships.create(self.dataset_id, r)
             else:
                 relationship_type = relationships_types[relationship_type]
@@ -3428,9 +3430,10 @@ class RelationshipType(BaseModelNode):
     _object_key = ''
     _property_cls = RelationshipProperty
 
-    def __init__(self, dataset_id, name, display_name=None, description=None, locked=False, *args, **kwargs):
-
+    def __init__(self, dataset_id, name, display_name=None, description=None, locked=False, source=None, destination=None, *args, **kwargs): 
         kwargs.pop('type', None)
+        self.destination = destination
+        self.source = source
         super(RelationshipType, self).__init__(dataset_id, name, display_name, description, locked, *args, **kwargs)
 
     def update(self):
@@ -3587,7 +3590,10 @@ class RelationshipType(BaseModelNode):
     def as_dict(self):
         d = super(RelationshipType, self).as_dict()
         d['type'] = 'relationship'
-
+        if self.source != None:
+            d['from'] = self.source
+        if self.destination != None:
+            d['to'] = self.destination
         return d
 
     @as_native_str()
