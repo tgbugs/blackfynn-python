@@ -170,10 +170,16 @@ def test_models(dataset):
     nr_two = nc_two.relate_to(nc_three, new_relationship)
     nr_three = nc_three.relate_to(nc_four, new_relationship)
     nr_six = nc_four.relate_to(nc_three, new_relationship)
+    nr_seven = nc_four.relate_to(nc_one, relationship_type="goes_to")
 
-    assert len(nc_four.get_related(new_model.type)) == 4
+    assert nr_seven[0].destination == nc_one.id
+    assert nr_seven[0].source == nc_four.id
+    assert nr_seven[0].type == "goes_to"
+    assert len(nc_four.get_related(new_model.type)) == 5
 
     new_relationships = new_relationship.get_all()
+
+
 
     nr_delete_three = new_relationship.relate(nc_one, nc_two)
     assert len(new_relationship.get_all()) == len(new_relationships) + 1
@@ -192,7 +198,7 @@ def test_models(dataset):
     nc_three.relate_to(p, new_relationship)
     new_relationship.relate(nc_four, p)
 
-    assert len(nc_four.get_related(new_model.type)) == 4
+    assert len(nc_four.get_related(new_model.type)) == 5
 
 def test_simple_model_properties(dataset):
 

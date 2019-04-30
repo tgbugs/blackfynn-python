@@ -3428,9 +3428,10 @@ class RelationshipType(BaseModelNode):
     _object_key = ''
     _property_cls = RelationshipProperty
 
-    def __init__(self, dataset_id, name, display_name=None, description=None, locked=False, *args, **kwargs):
-
+    def __init__(self, dataset_id, name, display_name=None, description=None, locked=False, source=None, destination=None, *args, **kwargs): 
         kwargs.pop('type', None)
+        self.destination=destination
+        self.source=source
         super(RelationshipType, self).__init__(dataset_id, name, display_name, description, locked, *args, **kwargs)
 
     def update(self):
