@@ -12,8 +12,8 @@ from datetime import datetime
 from glob import glob
 from itertools import groupby
 
-import numpy as np
-import pandas as pd
+#import numpy as np
+#import pandas as pd
 
 import blackfynn.log as log
 from blackfynn.models import DataPackage, TimeSeriesChannel

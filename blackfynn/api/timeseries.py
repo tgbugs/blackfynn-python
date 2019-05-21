@@ -12,8 +12,8 @@ import re
 from concurrent.futures import ThreadPoolExecutor
 from itertools import count, islice
 
-import numpy as np
-import pandas as pd
+#import numpy as np
+#import pandas as pd
 import requests
 
 # blackfynn
@@ -62,7 +62,6 @@ def parse_timedelta(time):
         # assume already in microseconds
         return time
 
-vec_usecs_to_datetime = np.vectorize(usecs_to_datetime)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # TimeSeries Request
@@ -70,6 +69,8 @@ vec_usecs_to_datetime = np.vectorize(usecs_to_datetime)
 
 class ChannelPage(object):
     def __init__(self, channel, page, settings, use_cache=True):
+
+        self.vec_usecs_to_datetime = np.vectorize(usecs_to_datetime)
         self.channel   = channel
         self.page      = int(page)
         self.use_cache = use_cache
@@ -136,7 +137,7 @@ class ChannelPage(object):
         data  = data[order]
 
         if datetime_index and len(times)>0:
-            times = vec_usecs_to_datetime(times)
+            times = self.vec_usecs_to_datetime(times)
 
         # return pandas series
         return pd.Series( data=data, index=times, name=str(self.channel))

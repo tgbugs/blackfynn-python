@@ -12,8 +12,8 @@ import sys
 from uuid import uuid4
 
 import dateutil
-import numpy as np
-import pandas as pd
+#import numpy as np
+#import pandas as pd
 import pytz
 import requests
 from deprecated import deprecated
