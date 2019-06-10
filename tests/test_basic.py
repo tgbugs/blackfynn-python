@@ -207,6 +207,3 @@ def test_client_host_overrides():
 
     bf = Blackfynn(streaming_host=host)
     assert bf.settings.streaming_api_host == host
-
-    bf = Blackfynn(concepts_host=host)
-    assert bf.settings.concepts_api_host == host

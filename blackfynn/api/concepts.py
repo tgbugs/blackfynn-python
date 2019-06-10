@@ -53,11 +53,10 @@ class ModelsAPIBase(APIBase):
 
 
 class ModelsAPI(ModelsAPIBase):
-    base_uri = "/datasets"
+    base_uri = "/models/datasets"
     name = 'concepts'
 
     def __init__(self, session):
-        self.host = session._concepts_host
         self.instances = RecordsAPI(session)
         self.relationships = ModelRelationshipsAPI(session)
         self.proxies = ModelProxiesAPI(session)
@@ -228,11 +227,10 @@ class ModelsAPI(ModelsAPIBase):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class RecordsAPI(ModelsAPIBase):
-    base_uri = "/datasets"
+    base_uri = "/models/datasets"
     name = 'concepts.instances'
 
     def __init__(self, session):
-        self.host = session._concepts_host
         super(RecordsAPI, self).__init__(session)
 
     def get(self, dataset, instance, concept=None):
@@ -371,11 +369,10 @@ class RecordsAPI(ModelsAPIBase):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class ModelRelationshipsAPI(ModelsAPIBase):
-    base_uri = "/datasets"
+    base_uri = "/models/datasets"
     name = 'concepts.relationships'
 
     def __init__(self, session):
-        self.host = session._concepts_host
         self.instances = ModelRelationshipInstancesAPI(session)
         super(ModelRelationshipsAPI, self).__init__(session)
 
@@ -403,11 +400,10 @@ class ModelRelationshipsAPI(ModelsAPIBase):
         return {r.type: r for r in relations}
 
 class ModelRelationshipInstancesAPI(ModelsAPIBase):
-    base_uri = "/datasets"
+    base_uri = "/models/datasets"
     name = 'concepts.relationships.instances'
 
     def __init__(self, session):
-        self.host = session._concepts_host
         super(ModelRelationshipInstancesAPI, self).__init__(session)
 
     def get_all(self, dataset, relationship):
@@ -475,14 +471,13 @@ class ModelRelationshipInstancesAPI(ModelsAPIBase):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class ModelProxiesAPI(ModelsAPIBase):
-    base_uri = "/datasets"
+    base_uri = "/models/datasets"
     name = 'concepts.proxies'
 
     proxy_types = ["package"]
     direction_types = ["FromTarget", "ToTarget"]
 
     def __init__(self, session):
-        self.host = session._concepts_host
         super(ModelProxiesAPI, self).__init__(session)
 
     def get_all(self, dataset, proxy_type):
@@ -702,11 +697,10 @@ class ModelQuery(object):
         return records
 
 class ModelQueryAPI(ModelsAPIBase):
-    base_uri = "/datasets"
+    base_uri = "/models/datasets"
     name = 'concepts.query'
 
     def __init__(self, session):
-        self.host = session._concepts_host
         super(ModelQueryAPI, self).__init__(session)
 
     def new(self, model, dataset_id):
