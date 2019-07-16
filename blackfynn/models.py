@@ -247,10 +247,9 @@ class BaseNode(object):
         return item
 
     def __eq__(self, item):
-        if self.exists and item.exists:
-            return self.id == item.id
-        else:
-            return self is item
+        return ((isinstance(item, type(self)) or isinstance(self, type(item)))
+                and (self is item or
+                     (self.exists and item.exists and self.id == item.id)))
 
     @property
     def exists(self):
