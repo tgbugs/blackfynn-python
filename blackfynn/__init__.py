@@ -32,4 +32,4 @@ from .models import (
 )
 
 __title__ = 'blackfynn'
-__version__ = '2.13.1'
+__version__ = '2.14.0'

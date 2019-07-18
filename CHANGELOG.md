@@ -10,6 +10,10 @@ Documentation at https://developer.blackfynn.io/python/
 
 ### Fixed
 - Adding and retrieving array model values
+- The body of HTTP errors is now shown to users in raised exceptions
+
+### Added
+- Support for linked properties
 
 ### Changed
 - Deprecated the `set_type` method on model properties. You can set property types using `ModelProperty.type` directly.
