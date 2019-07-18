@@ -3257,7 +3257,7 @@ class Model(BaseModelNode):
                     dict(
                         name=k,
                         value=v,
-                        dataType=self.schema.get(k).type
+                        dataType=self.schema.get(k)._type
                     )
                     for k,v in values.items()
                 ]

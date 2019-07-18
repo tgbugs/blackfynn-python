@@ -350,9 +350,14 @@ def test_array_model_properties(dataset):
     assert int_array.enum == None
 
     record = model.create_record({'name': 'A', 'int_array': [1, 2, 3]})
+    bulk_records = model.create_records([
+        {'name': 'B', 'int_array': [1, 2, 3]},
+        {'name': 'B', 'int_array': [1, 2, 3]},
+        {'name': 'B', 'int_array': [1, 2, 3]}
+    ])
 
-    gotten = model.get_all()[0]
-    assert gotten.values['int_array'] == [1, 2, 3]
+    gotten = model.get_all()
+    assert all(x.values['int_array'] == [1, 2, 3] for x in gotten)
 
 
 def test_enum_model_properties(dataset):
