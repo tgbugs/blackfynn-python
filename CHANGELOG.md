@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 Documentation at https://developer.blackfynn.io/python/
 
+## [2.14.1]
+
+### Fixed
+- A bug in `Model.create_records` when adding array-valued properties
+
 ## [2.14.0]
 
 ### Fixed
