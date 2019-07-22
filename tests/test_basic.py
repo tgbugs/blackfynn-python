@@ -7,10 +7,19 @@ import requests
 from blackfynn import Blackfynn
 from blackfynn.base import UnauthorizedException
 # client library
-from blackfynn.models import DataPackage, Dataset, File
+from blackfynn.models import BaseNode, DataPackage, Dataset, File
 
 from .utils import get_test_client
 
+
+def test_basenode(client, dataset):
+    node1 = dataset
+    node2 = client.get_dataset(dataset.id)
+    node3 = BaseNode()
+    assert node1 == node2
+    assert node1 != node3
+    assert node1 != object()
+    assert [node1, node2] == [node2, node1]
 
 def test_update_dataset(client, dataset, session_id):
     # update name of dataset
