@@ -12,6 +12,8 @@ The Python client is compatible with Python 2.7 and 3.4-3.7.
 
     $ pip install -U blackfynn
 
+The **Blackfynn Agent** is installed separately and is required for optimal performance when uploading files.
+See platform-specific installation instructions `here <https://developer.blackfynn.io/agent/>`_.
 
 Configuration
 -------------
@@ -23,11 +25,11 @@ Configuration
     Once you have generated your API keys, don't close your browser window until
     you have used your keys in the following steps.
 
-To create a configuration profile, run ``bf profile create`` from the command line:
+To create a configuration profile, run ``bf_profile create`` from the command line:
 
 .. code:: bash
 
-    $ bf profile create
+    $ bf_profile create
 
 When prompted, give your profile a unique name, or press enter to name your profile ``default``:
 
@@ -54,11 +56,11 @@ Finally, enter ``y`` to set this profile as the *default profile*:
    Would you like to set 'my_profile' as default (Y/n)? y
    Default profile: my_profile
 
-To verify that your profile was set up correctly, run ``bf status``:
+To verify that your profile was set up correctly, run ``bf_profile status``:
 
 .. code:: bash
 
-   $ bf status
+   $ bf_profile status
 
    Active profile:
      my_profile
@@ -133,13 +135,17 @@ Rename it & add some properties::
 Uploading files
 ----------------
 
-.. note::
-  You must upload files into a ``Dataset`` or ``Collection``.
-
-You can upload using the ``.upload()`` methods provided on ``Dataset`` and ``Collection`` objects::
+You can upload into a ``Dataset`` or ``Collection`` using the ``.upload()`` methods::
 
     # upload a file into a dataset (ds)
     ds.upload('/path/to/my_data.nii.gz')
+
+    # upload into a collection
+    collection = ds.create_collection('my data folder')
+    collection.upload('/path/to/my_data.mef')
+
+See :ref:`agent` for more information on uploading data.
+
 
 Retrieving data
 ----------------

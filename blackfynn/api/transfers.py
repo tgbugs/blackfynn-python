@@ -193,7 +193,7 @@ class IOAPI(APIBase):
     name = 'io'
 
     def upload_files(self, destination, files, dataset=None, append=False,
-                     display_progress=False, recursive=False, use_agent=False):
+                     display_progress=False, recursive=False, use_agent=True):
         if isinstance(destination, Dataset):
             # uploading into dataset
             destination_id = None

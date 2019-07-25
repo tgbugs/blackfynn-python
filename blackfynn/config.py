@@ -20,7 +20,7 @@ Format
 
 The config file is in `INI <https://en.wikipedia.org/wiki/INI_file>`_ format.
 There are three types of sections: ``[global]``, ``[agent]``, and ``[<profile>]``.
-You can have as many ``[<profile>]`` sections as you want
+You can have as many ``[<profile>]`` sections as you want.
 
 Example of the ``config.ini`` file:
 

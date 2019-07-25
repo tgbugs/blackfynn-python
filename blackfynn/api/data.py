@@ -94,42 +94,6 @@ class DatasetsAPI(APIBase):
         ds.id = None
         return resp
 
-    def get_collaborators(self, ds):
-        """
-        Get the collaborators for the given data set as a dictionary with users under the 'users' key
-        and groups under the 'groups' key
-        """
-        id = self._get_id(ds)
-        resp = self._get(self._uri('/{id}/collaborators', id=id))
-        users = [User.from_dict(u, api=self.session) for u in resp['users']]
-        organizations = [self.session.organizations.get(g['id']) for g in resp['organizations']]
-        return {
-            'users': users,
-            'organizations': organizations
-        }
-
-    def add_collaborators(self, ds, *collaborator_ids):
-        """
-        Add the list of user/group ids to this data sets collaborators
-        Returns a dictionary of id -> {success: Bool, message: String}. Message will only be set
-        if success is False.
-        """
-        id = self._get_id(ds)
-        uri = self._uri('/{id}/collaborators', id=id)
-        resp = self._put(uri, json=collaborator_ids)
-        return resp
-
-    def remove_collaborators(self, ds, *collaborator_ids):
-        """
-        Remove the list of user/group ids from this data sets collaborators
-        Returns a dictionary of id -> {success: Bool, message: String}. Message will only be set
-        if success is False.
-        """
-        id = self._get_id(ds)
-        uri = self._uri('/{id}/collaborators', id=id)
-        resp = self._del(uri, json=collaborator_ids)
-        return resp
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Data

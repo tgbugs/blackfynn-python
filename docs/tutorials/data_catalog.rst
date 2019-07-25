@@ -48,8 +48,7 @@ Creating new data
 ^^^^^^^^^^^^^^^^^^
 
 .. note::
-
-   See :ref:`agent` for information about uploading large files and recursive directory structures using the Blackfynn CLI Agent.
+   See :ref:`agent` for more info on uploading data.
 
 We will create a new dataset, upload a file, then read the uploaded file using the client.
 
@@ -228,8 +227,6 @@ spike information, stimulation waveforms and input events, and the NSx file
 containing continuously sampled analog data) Blackynn associates both files as
 one package.
 
-See the :ref:`Client Interface` ``upload()`` section for more
-information about data formats that rely on multiple files.
 
 Deleting and moving items
 ^^^^^^^^^^^^^^^^^^^^^^^^^^

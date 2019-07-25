@@ -16,7 +16,6 @@ import numpy as np
 import pandas as pd
 import pytz
 import requests
-from deprecated import deprecated
 
 import blackfynn.log as log
 from blackfynn.utils import (
@@ -225,7 +224,7 @@ class BaseNode(object):
             elif k_camel_num in class_args:
                 key = k_camel_num
             else:
-               key = k
+                key = k
 
             # assign
             kwargs[key] = v
@@ -637,7 +636,7 @@ class BaseCollection(BaseDataNode):
             use_agent (boolean): If ``True``, and a compatible version of the
                 Agent is installed, uploads will be performed by the
                 Blackfynn CLI Agent. This allows large file upload in excess
-                of 1 hour. Defaults to ``False``.
+                of 1 hour. Defaults to ``True``.
             recursive (boolean): If ``True``, the nested folder structure of
                 the uploaded directory will be preversed. This can only be used
                 with the Blackfynn CLI Agent. Defaults to ``False``.
@@ -1208,7 +1207,7 @@ class TimeSeries(DataPackage):
             use_agent (boolean): If ``True``, and a compatible version of the
                 Agent is installed, uploads will be performed by the
                 Blackfynn CLI Agent. This allows large file upload in excess
-                of 1 hour. Defaults to ``False``.
+                of 1 hour. Defaults to ``True``.
         """
         self._check_exists()
         files = _flatten_file_args(files)
@@ -1916,37 +1915,6 @@ class Dataset(BaseCollection):
     def __repr__(self):
         return u"<Dataset name='{}' id='{}'>".format(self.name, self.id)
 
-    @property
-    @deprecated(version="2.7.2", reason="Manage permissions through the Blackfynn web app")
-    def collaborators(self):
-        """
-        List of collaborators on Dataset.
-        """
-        self._check_exists()
-        return self._api.datasets.get_collaborators(self)
-
-    @deprecated(version="2.7.2", reason="Manage permissions through the Blackfynn web app")
-    def add_collaborators(self, *collaborator_ids):
-        """
-        Add new collaborator(s) to Dataset.
-
-        Args:
-            collaborator_ids: List of collaborator IDs to add (Users, Organizations, Teams)
-        """
-        self._check_exists()
-        return self._api.datasets.add_collaborators(self, *collaborator_ids)
-
-    @deprecated(version="2.7.2", reason="Manage permissions through the Blackfynn web app")
-    def remove_collaborators(self, *collaborator_ids):
-        """
-        Remove collaborator(s) from Dataset.
-
-        Args:
-            collaborator_ids: List of collaborator IDs to remove (Users)
-        """
-        self._check_exists()
-        return self._api.datasets.remove_collaborators(self, *collaborator_ids)
-
     def get_topology(self):
         """ Returns the set of Models and Relationships defined for the dataset
 
@@ -2486,10 +2454,6 @@ class BaseModelProperty(object):
     def type(self, type):
         self._type = ModelPropertyType._build_from(type)
 
-    @deprecated(version="2.14.0", reason="Set 'ModelProperty.type = type' directly")
-    def set_type(self, type):
-        self.type = type
-
     @property
     def unit(self):
         return self._type.unit
@@ -2576,10 +2540,6 @@ class BaseModelValue(object):
     @value.setter
     def value(self, value):
         self._value = self.data_type._decode_value(value)
-
-    @deprecated(version="2.14.0", reason="Set 'ModelValue.value = value' directly")
-    def set_value(self, value):
-        self.value = value
 
     @property
     def type(self):

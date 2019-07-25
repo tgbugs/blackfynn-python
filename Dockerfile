@@ -1,5 +1,11 @@
 FROM python:2.7
 
+# install agent:
+ENV AGENT_VERSION="0.2.6"
+RUN apt-get update && apt-get install sudo
+RUN wget "http://data.blackfynn.io.s3.amazonaws.com/public-downloads/agent/${AGENT_VERSION}/x86_64-unknown-linux-gnu/blackfynn-agent_${AGENT_VERSION}_amd64.deb" -O agent.deb
+RUN sudo dpkg -i agent.deb
+
 ADD requirements.txt /app/requirements.txt
 ADD requirements-test.txt /app/requirements-test.txt
 RUN pip install -r /app/requirements.txt

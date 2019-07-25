@@ -5,8 +5,8 @@ Python Client
    :maxdepth: 2
 
    quickstart
-   tutorials/index
    agent
+   tutorials/index
    configuration
    client
    models
