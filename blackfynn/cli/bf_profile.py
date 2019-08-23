@@ -297,7 +297,6 @@ def show_status(bf):
     print("  User               : {}".format(bf.profile.email))
     print("  Organization       : {} (id: {})".format(bf.context.name, bf.context.id))
     print("  API Location       : {}".format(bf.settings.api_host))
-    print("  Streaming API      : {}".format(bf.settings.streaming_api_host))
 
 
 #Helper functions

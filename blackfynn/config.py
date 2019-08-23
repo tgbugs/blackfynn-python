@@ -57,7 +57,6 @@ The following settings (and their default values) are available under ``[<profil
     'api_secret'                  : None,
 
     'api_host'                    : 'https://api.blackfynn.io',
-    'streaming_api_host'          : 'https://streaming.blackfynn.io',
 
     # I/O
     'max_request_time'            : 120, # two minutes
@@ -137,7 +136,6 @@ Additional environment variables and their corresponding config options:
 
     BLACKFYNN_USE_CACHE: 0  (false) or 1  (true)  # `use_cache`
     BLACKFYNN_API_LOC                             # `api_host`
-    BLACKFYNN_STREAMING_API_LOC                   # `streaming_api_host`
     BLACKFYNN_CACHE_MAX_SIZE                      # `cache_max_size`
     BLACKFYNN_CACHE_INSPECT_EVERY                 # `cache_inspect_interval`
     BLACKFYNN_TS_PAGE_SIZE                        # `ts_page_size`
@@ -156,7 +154,6 @@ CACHE_INDEX_DEFAULT = os.path.join(CACHE_DIR_DEFAULT, 'index.db')
 DEFAULTS = {
     # blackfynn api locations
     'api_host'                    : 'https://api.blackfynn.io',
-    'streaming_api_host'          : 'https://streaming.blackfynn.io',
 
     # blackfynn API token/secret
     'api_token'                   : None,
@@ -193,7 +190,6 @@ DEFAULTS = {
 
 ENVIRONMENT_VARIABLES = {
     'api_host'               : ('BLACKFYNN_API_LOC', str),
-    'streaming_api_host'     : ('BLACKFYNN_STREAMING_API_LOC', str),
     'api_token'              : ('BLACKFYNN_API_TOKEN', str),
     'api_secret'             : ('BLACKFYNN_API_SECRET', str),
     'jwt'                    : ('BLACKFYNN_JWT', str),
@@ -310,8 +306,5 @@ class Settings(object):
     def host(self):
         return self.api_host
 
-    @property
-    def streaming_host(self):
-        return self.streaming_api_host
 
 settings = Settings()

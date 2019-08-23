@@ -30,7 +30,7 @@ class BlackfynnRequest(object):
         self._response = None
 
         self._logger = log.get_logger('blackfynn.base.BlackfynnRequest')
-        
+
     def raise_for_status(self,resp):
         try:
             resp.raise_for_status()
@@ -65,7 +65,6 @@ class BlackfynnRequest(object):
 class ClientSession(object):
     def __init__(self, settings):
         self._host = settings.api_host
-        self._streaming_host = settings.streaming_api_host
         self._api_token = settings.api_token
         self._api_secret = settings.api_secret
         self._jwt = settings.jwt

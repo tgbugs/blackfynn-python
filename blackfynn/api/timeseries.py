@@ -107,8 +107,8 @@ class ChannelPage(object):
         # make request
         args = dict(
             # Note: uses streaming server
-            host     = api._streaming_host,
-            endpoint = '/ts/retrieve/continuous',
+            host     = api._host,
+            endpoint = '/streaming/ts/retrieve/continuous',
             base     = '',
             params   = dict(
                 channel = self.channel.id,
@@ -455,8 +455,8 @@ class TimeSeriesAPI(APIBase):
 
         resp = self._get(
             # Note: uses streaming server
-            host     = self.session._streaming_host,
-            endpoint = '/ts/retrieve/segments',
+            host     = self.session._host,
+            endpoint = '/streaming/ts/retrieve/segments',
             base     = '',
             stream   = True,
             params   = dict(
