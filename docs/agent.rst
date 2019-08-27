@@ -16,7 +16,7 @@ See :ref:`preparing` to download the data used in this example.
    ``use_agent=False`` to the ``.upload()`` and ``.append_files()`` methods. Some
    features such as uploading directories are unsupported by the legacy uploader.
 
-   New in version :ref:`changelog:[3.0.0]`
+   New in version :ref:`changelog:3.0.0`
 
 
 Uploading Files
