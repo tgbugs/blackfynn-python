@@ -4,7 +4,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-Documentation at https://developer.blackfynn.io/python/
+Documentation at <https://developer.blackfynn.io/python/>
+
+## [3.0.0]
+
+### Breaking Changes
+- Uploading now uses the Blackfynn CLI Agent by default. Visit <https://developer.blackfynn.io/agent/> for installation instructions. You can pass `use_agent=True` to continue to use the legacy uploader.
+- Most of the functionality in the `bf` command line script has been removed. The script has been renamed `bf_profile` and only manages Blackfynn profiles. The Blackfynn CLI Agent is now the recommended command line interface to the platform.
+- Removed the deprecated `set_type` and `set_value` methods
+- Removed the `streaming_api_host` argument from the `Blackfynn` client
+- Removed the deprecated `get_collaborators`, `add_collaborators`, and `remove_collaborators` methods
+
+### Fixed
+- Equality checks for Blackfynn objects
 
 ## [2.14.1]
 

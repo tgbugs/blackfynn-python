@@ -131,8 +131,15 @@ Rename it & add some properties::
     pkg.update()
 
 
-Uploading files
+Uploading data
 ----------------
+
+.. warning::
+
+   By default, uploads through the Python client require the Blackfynn Agent to
+   be installed. See :ref:`agent` for more information on uploading data, and
+   instructions on how to use the legacy uploader without the Agent.
+
 
 You can upload into a ``Dataset`` or ``Collection`` using the ``.upload()`` methods::
 
@@ -143,7 +150,6 @@ You can upload into a ``Dataset`` or ``Collection`` using the ``.upload()`` meth
     collection = ds.create_collection('my data folder')
     collection.upload('/path/to/my_data.mef')
 
-See :ref:`agent` for more information on uploading data.
 
 
 Retrieving data

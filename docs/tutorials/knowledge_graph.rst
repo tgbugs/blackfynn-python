@@ -1,4 +1,3 @@
-
 Working with the Knowledge Graph
 ================================
 
@@ -16,7 +15,8 @@ Setup
 
 Let’s start by creating a dataset that we can use for this tutorial. If
 you would like to find out more information about moving, uploading,
-downloading data or other data catalog operations, please see :ref:`Working with the Data Catalog`.
+downloading data or other data catalog operations, please see
+:ref:`tutorials/data_catalog:Working with the Data Catalog`.
 
 Connect to Blackfynn
 ~~~~~~~~~~~~~~~~~~~~
@@ -24,7 +24,7 @@ Connect to Blackfynn
 .. code:: python
 
     from blackfynn import Blackfynn
-    
+
     # create a client instance
     bf = Blackfynn()
 
@@ -57,12 +57,12 @@ with their corresponding properties.
 |   - subject_id
 |   - name
 |   - age
-| 
+|
 | Visit
 |   - visit_id
 |   - date
 |   - reason
-| 
+|
 | EEG
 |   - room_number
 |   - machine_model
@@ -82,12 +82,12 @@ In the following section, we will define each model schema and then use these to
 
 **Allowable data types**
 
-The following values can be used to specify the data type. In Blackfynn, 
+The following values can be used to specify the data type. In Blackfynn,
 there is no distinction between the different values for each data type, e.g. ``long`` and ``int`` will result in the same Blackfynn data type (``Integer``).
 
 :String: ``"string"``, ``str``, or ``unicode`` (if python2)
 :Integer: ``"long"``, ``int``, ``long`` (if python2)
-:Decimal: ``"double"`` or ``float`` 
+:Decimal: ``"double"`` or ``float``
 :Boolean: ``"boolean"`` or ``bool``
 :Date: ``"date"`` or ``datetime.datetime``
 
@@ -103,7 +103,7 @@ Participant
 
     # we will use ModelProperty to define our schemas
     from blackfynn import ModelProperty
-    
+
     participant_schema = [
         ModelProperty('name', title=True),
         ModelProperty('subject_id', data_type=int),
@@ -174,7 +174,7 @@ Here we will create one record for the ``Participant`` model.
 
     # get the the model
     participant = ds.get_model('Participant')
-    
+
     # create a new participant in the graph
     pt_123 = participant.create_record({
         'name': 'Karl',
@@ -199,7 +199,7 @@ We can also create multiple records at the same time through the
         {'name': 'Silvia', 'age': 70, 'subject_id': 300},
         {'name': 'Zach',   'age': 55, 'subject_id': 400},
     ]
-    
+
     participant.create_records(participant_values)
 
 
@@ -225,11 +225,11 @@ And easily transform the result into a Panda's ``DataFrame`` object:
         .dataframe tbody tr th:only-of-type {
             vertical-align: middle;
         }
-    
+
         .dataframe tbody tr th {
             vertical-align: top;
         }
-    
+
         .dataframe thead th {
             text-align: right;
         }
@@ -280,12 +280,12 @@ Relating Records
 Basics (example)
 ~~~~~~~~~~~~~~~~
 
-Relating records is done via ``some_record.relate_to(...)`` method, which will relate ``some_record`` to a single record, a list of records, or a data package. 
+Relating records is done via ``some_record.relate_to(...)`` method, which will relate ``some_record`` to a single record, a list of records, or a data package.
 
 The follow examples showcase this method, but will not work unless ``visit_1``, ``visit_2``, etc. exist.
 
 .. code:: python
-    
+
     pt_123.relate_to(visit_1)
 
 will relate record ``pt_123`` with record ``visit1``. You can relate many records by supplying a list of records:
@@ -307,7 +307,7 @@ Utilizing the methods above, we will create a series of Visits for each Particip
     visit = ds.get_model('Visit')
 
     for pt in participant.get_all():
-        
+
         # create 4 fake visits per participant
         pt_visits = visit.create_records([
             {'visit_id': 1, 'date': datetime(2018,12,1), 'reason': 'screening'},
@@ -315,7 +315,7 @@ Utilizing the methods above, we will create a series of Visits for each Particip
             {'visit_id': 3, 'date': datetime(2018,12,3), 'reason': 'visit 2'},
             {'visit_id': 4, 'date': datetime(2018,12,4), 'reason': 'final visit'},
         ])
-        
+
         # and link the visits to the participant (pt)
         pt.relate_to(pt_visits)
 
@@ -333,17 +333,17 @@ Similarly, for each Visit we will create an EEG record and two Exam records (bef
     exam = ds.get_model('Exam')
 
     for a_visit in visit.get_all():
-        
+
         # One EEG per visit
         visit_eeg = eeg.create_record({
             'room_number': 4128,
             'machine_model': 'Starstim R32',
             'administrator': 'Kevin'
         })
-        
+
         # relate to visit
         a_visit.relate_to(visit_eeg, relationship_type='collected')
-        
+
         # Two exams per visit (before/after EEG)
         visit_exam1 = exam.create_record({
             'context': 'before',
@@ -355,7 +355,7 @@ Similarly, for each Visit we will create an EEG record and two Exam records (bef
             'mood': randint(1,10),
             'motor_skill': round(random()*10, 2)
         })
-        
+
         # relate exams to visit
         a_visit.relate_to([visit_exam1, visit_exam2], relationship_type='collected')
 
@@ -380,5 +380,3 @@ For example, in our current graph, we would likely want each EEG record to relat
 
 
 Congratulations — you have successfully created a knowledge graph on the Blackfynn platform!
-
-

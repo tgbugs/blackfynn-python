@@ -1,7 +1,9 @@
 Working with the Data Catalog
 ===============================
 
-This section provides examples that show how to interact with :ref:`collections <Collection>`, :ref:`datasets <Dataset>` and :ref:`packages <Data Package>`.
+This section provides examples that show how to interact with :ref:`collections
+<models:Collection>`, :ref:`datasets <models:Dataset>` and :ref:`packages
+<models:Data Package>`.
 
 All of the short scripts presented below are fully commented to properly explain each step.
 
@@ -47,8 +49,11 @@ In this example, the only datasets available are ``Test Data`` and ``My Research
 Creating new data
 ^^^^^^^^^^^^^^^^^^
 
-.. note::
-   See :ref:`agent` for more info on uploading data.
+.. warning::
+
+   By default, uploads through the Python client require the Blackfynn Agent to
+   be installed. See :ref:`agent` for more information on uploading data, and
+   instructions on how to use the legacy uploader without the Agent.
 
 We will create a new dataset, upload a file, then read the uploaded file using the client.
 
@@ -184,7 +189,7 @@ their corresponding collections.
    We used the ``get()`` method to retrieve ``col1`` for illustrative purposes. However,
    since we already have the dataset, we can accesss the package objects directly
    through indices. For more information about the ``get()`` method you can visit the
-   :ref:`client interface page <Blackfynn Client Interface>`.
+   :ref:`client interface page <client:Blackfynn Client Interface>`.
 
 At this point, we have uploaded the data to their respective
 collections. We can see all of the content of the dataset by using the

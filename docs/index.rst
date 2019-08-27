@@ -10,3 +10,4 @@ Python Client
    configuration
    client
    models
+   CHANGELOG

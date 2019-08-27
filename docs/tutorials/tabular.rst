@@ -3,8 +3,8 @@ Working with Tabular Data
 
 In this section of the tutorial, we will show how to work with tabular data
 using the Blackfynn Python client. We recommend that, in order to get the
-most out of this tutorial, you look into the :ref:`Working with the data
-catalog` tutorial first. You can find the details about supported file formats
+most out of this tutorial, you look into the :ref:`tutorials/data_catalog:Working with the Data Catalog`
+tutorial first. You can find the details about supported file formats
 in the `Supported File Formats
 <http://help.blackfynn.com/general-information/supported-file-formats>`_
 section.
@@ -163,7 +163,7 @@ demonstrated as follows.
 .. note::
    The maximum default value for ``limit`` is 1000. In order to get larger chunks of data we
    recomend using the ``get_data_iter()`` method, which gets the gata in an iterative manner.
-   The method is fully described in the :ref:`tabular <Tabular>` section of the Data Models page.
+   The method is fully described in the :ref:`tabular <models:Tabular>` section of the Data Models page.
 
 Analyzing the Data
 ^^^^^^^^^^^^^^^^^^^

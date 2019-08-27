@@ -3,7 +3,7 @@
 
 # You can set these variables from the command line.
 SPHINXOPTS  =
-SPHINXBUILD = python -msphinx
+SPHINXBUILD = python -msphinx -W
 SPHINXPROJ  = Blackfynn
 SOURCEDIR   = .
 BUILDDIR    = _build
@@ -12,6 +12,9 @@ BF_VERSION  = $(shell python -c 'from __future__ import print_function; import b
 # default
 .PHONY: clean html
 .DEFAULT_GOAL := all
+
+install:
+	pip install -r requirements.txt
 
 html:
 	$(SPHINXBUILD) $(SOURCEDIR) -b html "$(BUILDDIR)/html/$(BF_VERSION)"

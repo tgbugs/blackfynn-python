@@ -11,7 +11,8 @@ Channels and Data Manipulation Basics
 Let's start by creating a dataset where we can store the data that we
 will be using for this tutorial. If you would like to find out more
 information about moving, uploading, downloading data or other data
-catalog operations, please look into the :ref:`working with the data catalog <Working with the data catalog>` tutorial.
+catalog operations, please look into the
+:ref:`working with the data catalog <tutorials/data_catalog:Working with the data catalog>` tutorial.
 
 .. code-block:: python
    :linenos:
@@ -35,7 +36,7 @@ We will now upload timeseries files to our dataset from the tutorial's data dire
 We have now uploaded two different tiemseries files into the Blackfynn
 platform. Even though these two files are in two different formats (one
 is an EDF file, while the other one is a NEV/NSx file) the Blackfynn importer
-stores them in a general :ref:`Timeseries BF Package <Timeseries>`
+stores them in a general :ref:`Timeseries BF Package <models:Timeseries>`
 with the same attributes and properties.
 
 We will now explore some of the different things that we can do with

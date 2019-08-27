@@ -41,7 +41,8 @@ extensions = [
     'sphinx.ext.autosectionlabel',
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
-    'sphinx.ext.autosummary'
+    'sphinx.ext.autosummary',
+    'recommonmark'
 ]
 
 # template
@@ -92,6 +93,12 @@ exclude_patterns = [
     'CONTRIBUTION_TEMPLATE.md',
     'ISSUE_TEMPLATE.md',
     'PULL_REQUEST_TEMPLATE.md'
+]
+
+autosectionlabel_prefix_document = True
+
+suppress_warnings = [
+    'autosectionlabel.CHANGELOG'
 ]
 
 # The name of the Pygments (syntax highlighting) style to use.

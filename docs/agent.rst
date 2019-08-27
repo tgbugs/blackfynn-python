@@ -3,8 +3,7 @@
 Uploading with the Blackfynn Agent
 ==================================
 
-
-The Blackfynn CLI Agent is a fast native application that integrates with the Python client to provide advanced features.
+The Blackfynn CLI Agent is a native application that integrates with the Python client to provide advanced features.
 
 Visit https://developer.blackfynn.io/agent/ for installation instructions and additional documentation.
 
@@ -16,6 +15,8 @@ See :ref:`preparing` to download the data used in this example.
    If the agent is not installed then the legacy uploader can be used by passing
    ``use_agent=False`` to the ``.upload()`` and ``.append_files()`` methods. Some
    features such as uploading directories are unsupported by the legacy uploader.
+
+   New in version :ref:`changelog:[3.0.0]`
 
 
 Uploading Files
