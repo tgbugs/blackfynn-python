@@ -32,8 +32,7 @@ def test_upload_legacy_to_dataset(dataset):
 
 
 @pytest.mark.parametrize('upload_args,n_files', [
-    (['requirements.txt'], 1),  # Single file
-    ([FILE1], 1),               # Single file with path
+    ([FILE1], 1),               # Single file
     ([[FILE1, FILE2]], 2),      # Multiple files
 ])
 def test_upload_legacy_to_collection(dataset, upload_args, n_files):

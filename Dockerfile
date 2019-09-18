@@ -1,4 +1,4 @@
-FROM python:2.7
+FROM python:3.6
 
 # install agent:
 ENV AGENT_VERSION="0.2.6"
@@ -14,3 +14,5 @@ RUN pip install -r /app/requirements-test.txt
 ADD conftest.py /app/conftest.py
 ADD blackfynn   /app/blackfynn
 ADD tests       /app/tests
+
+ENTRYPOINT pytest -vx /app/tests --skip-agent
