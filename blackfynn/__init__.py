@@ -31,5 +31,5 @@ from .models import (
     TimeSeriesAnnotation,
 )
 
-__title__ = 'blackfynn'
-__version__ = '3.0.0'
+__title__ = "blackfynn"
+__version__ = "3.0.1"
