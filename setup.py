@@ -29,9 +29,8 @@ setup(
     author_email = "mark@blackfynn.com",
     description = "Python client for the Blackfynn Platform",
     long_description = long_description,
-    packages=find_packages(),
+    packages=find_packages(exclude=('tests*',)),
     package_dir={'blackfynn': 'blackfynn'},
-    setup_requires=['cython'],
     install_requires = reqs,
     python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, <4.0',
     entry_points = {

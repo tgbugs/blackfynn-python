@@ -1,3 +1,7 @@
+recursive-include tests *
+exclude .gitignore
+exclude .travis.yml
+exclude MANIFEST.in
 include requirements.txt
 include README.rst
 include INSTALL.rst
