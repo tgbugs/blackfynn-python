@@ -12,8 +12,12 @@ import re
 from concurrent.futures import ThreadPoolExecutor
 from itertools import count, islice
 
-import numpy as np
-import pandas as pd
+try:
+    import numpy as np
+    import pandas as pd
+except ImportError:
+    pass
+
 import requests
 
 # blackfynn
@@ -62,7 +66,10 @@ def parse_timedelta(time):
         # assume already in microseconds
         return time
 
-vec_usecs_to_datetime = np.vectorize(usecs_to_datetime)
+try:
+    vec_usecs_to_datetime = np.vectorize(usecs_to_datetime)
+except NameError:
+    pass
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # TimeSeries Request

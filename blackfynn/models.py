@@ -12,8 +12,12 @@ import sys
 from uuid import uuid4
 
 import dateutil
-import numpy as np
-import pandas as pd
+
+try:
+    import pandas as pd
+except ImportError:
+    pass
+
 import pytz
 import requests
 

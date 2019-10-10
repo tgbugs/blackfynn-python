@@ -5,8 +5,11 @@ from future.utils import string_types, integer_types
 
 import datetime
 
-import numpy as np
-import pandas as pd
+try:
+    import numpy as np
+    import pandas as pd
+except ImportError:
+    pass
 
 # data type helpers
 

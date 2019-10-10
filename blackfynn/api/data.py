@@ -5,7 +5,11 @@ from future.utils import string_types
 import datetime
 import math
 
-import pandas as pd
+try:
+    import pandas as pd
+except ImportError:
+    pass
+
 import requests
 
 import blackfynn.log as log
