@@ -11,7 +11,10 @@ from time import sleep
 
 import semver
 from future.utils import raise_from
-from websocket import create_connection
+try:
+    from websocket import create_connection
+except ImportError:
+    pass
 
 from blackfynn.log import get_logger
 from blackfynn.models import Collection, Dataset, DataPackage
