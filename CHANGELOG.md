@@ -6,13 +6,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 Documentation at <https://developer.blackfynn.io/python/>
 
+## 3.0.3
+
+### Fixed
+- Fixed upload in windows for very long filepaths
+
 ## 3.0.2
 
 ### Fixed
 - Uploading on Windows and Cygwin with the Agent
 
 ## 3.0.1
-
 ### Changed
 - Relaxed requirement on protobuf
 

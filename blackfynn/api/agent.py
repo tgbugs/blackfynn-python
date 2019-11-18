@@ -253,6 +253,8 @@ def agent_upload(destination, files, dataset, append, recursive, display_progres
             except UnboundLocalError:
                 pass
 
+def remove_prefix(text, prefix):
+    return text[text.startswith(prefix) and len(prefix)]
 
 class UploadManager(object):
     """
@@ -287,6 +289,8 @@ class UploadManager(object):
         return progress
 
     def get_tracked_file(self, file, import_id):
+        if sys.platform in ['win32', 'cygwin']:
+            file = remove_prefix(file, "\\\\?\\") #windows OS sometimes prefix the filepath with \\?\, so we remove it if we see if
         if file in self.uploads:
             for p in self.uploads[file]:
                 if p.import_id == import_id:
