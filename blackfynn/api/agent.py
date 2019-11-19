@@ -254,7 +254,7 @@ def agent_upload(destination, files, dataset, append, recursive, display_progres
                 pass
 
 def remove_prefix(text, prefix):
-    return text[text.startswith(prefix) and len(prefix)]
+    return text[text.startswith(prefix) and len(prefix):]
 
 class UploadManager(object):
     """
