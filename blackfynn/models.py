@@ -242,7 +242,6 @@ class BaseNode(object):
         if api is not None:
             item._api = api
             item._api.core.set_local(item)
-
         return item
 
     def __eq__(self, item):
@@ -471,7 +470,6 @@ class BaseDataNode(BaseNode):
     @classmethod
     def from_dict(cls, data, *args, **kwargs):
         item = super(BaseDataNode,cls).from_dict(data, *args, **kwargs)
-
         try:
             item.state = data['content']['state']
         except:
@@ -508,7 +506,6 @@ class BaseDataNode(BaseNode):
                     for prop_entry in entry['properties']:
                         prop = Property.from_dict(prop_entry, category=category)
                         cls_add_property(prop)
-
         return item
 
 
@@ -726,6 +723,8 @@ class BaseCollection(BaseDataNode):
     @classmethod
     def from_dict(cls, data, *args, **kwargs):
         item = super(BaseCollection, cls).from_dict(data, *args, **kwargs)
+
+        item.storage = data.get('storage', None)
         children = []
         if 'children' in data:
             for child in data['children']:
@@ -734,7 +733,6 @@ class BaseCollection(BaseDataNode):
                 pkg = pkg_cls.from_dict(child, *args, **kwargs)
                 children.append(pkg)
         item.add(*children)
-
         return item
 
     @as_native_str()
@@ -1929,6 +1927,21 @@ class Dataset(BaseCollection):
         """ Returns summary metrics about the knowledge graph """
         return self._api.concepts.get_summary(self)
 
+    def published(self):
+        return self._api.datasets.published(self.id)
+
+    def package_count(self):
+        return self._api.datasets.package_count(self.id)
+
+    def team_collaborators(self):
+        return self._api.datasets.team_collaborators(self.id)
+
+    def user_collaborators(self):
+        return self._api.datasets.user_collaborators(self.id)
+
+    def owner(self):
+        return self._api.datasets.owner(self.id)
+
     def models(self):
         """
         Returns:
@@ -2125,6 +2138,84 @@ class Collection(BaseCollection):
     @as_native_str()
     def __repr__(self):
         return u"<Collection name='{}' id='{}'>".format(self.name, self.id)
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# PublishInfo
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+class PublishInfo(BaseNode):
+
+    def __init__(self, status, doi, dataset_id, version_count, last_published):
+        self.status = status
+        self.doi = doi
+
+        self.dataset_id = dataset_id
+        self.version_count = version_count
+        self.last_published = last_published
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            status = data.get('status'),
+            doi = data.get('latest_doi'),
+            dataset_id = data.get('publishedDatasetId'),
+            version_count = data.get('publishedVersionCount'),
+            last_published = data.get('lastPublishedDate')
+        )
+
+    @as_native_str()
+    def __repr__(self):
+        return u"<PublishInfo status='{}' dataset_id='{}' version_count='{}' last_published='{}' doi='{}'>".format(self.status,  self.dataset_id, self.version_count, self.last_published, self.doi)
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Collaborators
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+class UserCollaborator(BaseNode):
+
+    def __init__(self, id, first_name, last_name, email, role):
+        self.id = id
+        self.first_name = first_name
+        self.last_name = last_name
+        self.email = email
+        self.role = role
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            id = data['id'],
+            first_name = data['firstName'],
+            last_name = data['lastName'],
+            email = data['email'],
+            role = data['role'],
+        )
+
+    @property
+    def name(self):
+        return "{} {}".format(self.first_name, self.last_name)
+
+    @as_native_str()
+    def __repr__(self):
+        return u"<UserCollaborator name='{}' email='{}' role='{}' id='{}'>".format(self.name, self.email, self.role, self.id)
+
+class TeamCollaborator(BaseNode):
+
+    def __init__(self, id, name, role):
+        self.id = id
+        self.name = name
+        self.role = role
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            id = data['id'],
+            name = data['name'],
+            role = data['role']
+        )
+
+    @as_native_str()
+    def __repr__(self):
+        return u"<TeamCollaborator name='{}' role='{}' id='{}'>".format(self.name, self.role, self.id)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -7,7 +7,7 @@ import requests
 from blackfynn import Blackfynn
 from blackfynn.base import UnauthorizedException
 # client library
-from blackfynn.models import BaseNode, DataPackage, Dataset, File
+from blackfynn.models import BaseNode, DataPackage, Dataset, File, PublishInfo, UserCollaborator, TeamCollaborator
 
 from .utils import get_test_client
 
@@ -106,6 +106,44 @@ def test_packages_create_delete(client, dataset):
 
     # TODO: (once we auto-remove from parent)
     #assert pkg not in dataset
+
+def test_package_type_count(client,dataset):
+    n = dataset.package_count()
+    pkg = DataPackage('Some MRI', package_type='MRI')
+    assert not pkg.exists
+    # create
+    dataset.add(pkg)
+    assert pkg.exists
+    client.update(pkg)
+
+    pkg = DataPackage('Something else', package_type='TimeSeries')
+    assert not pkg.exists
+    dataset.add(pkg)
+    assert pkg.exists
+    client.update(pkg)
+
+    m = dataset.package_count()
+    assert m == n + 2
+
+def test_publish_info(client,dataset):
+    publish_info = dataset.published()
+    assert publish_info.status =='NOT_PUBLISHED'
+    assert publish_info.version_count == 0
+    assert publish_info.last_published== None
+    assert publish_info.doi == None
+
+def test_owner(client,dataset):
+    owner = dataset.owner()
+    assert owner.email == client.profile.email
+
+def test_collaborator_user(client,dataset):
+    collaborators = dataset.user_collaborators()
+    assert len(collaborators) == 1
+    assert collaborators[0].email == client.profile.email
+
+def test_collaborator_team(client,dataset):
+    collaborators = dataset.team_collaborators()
+    assert len(collaborators) == 0
 
 def test_properties(client, dataset):
 

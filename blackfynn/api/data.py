@@ -19,7 +19,10 @@ from blackfynn.models import (
     Tabular,
     TabularSchema,
     TabularSchemaColumn,
-    User
+    User,
+    PublishInfo,
+    UserCollaborator,
+    TeamCollaborator,
 )
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -37,6 +40,35 @@ class DatasetsAPI(APIBase):
         id = self._get_id(ds)
         resp = self._get( self._uri('/{id}', id=id))
         return Dataset.from_dict(resp, api=self.session)
+
+    def published(self,ds):
+        id = self._get_id(ds)
+        resp = self._get( self._uri('/{id}/published', id=id))
+        if resp['status'] == 'PUBLISH_SUCCEEDED':
+            resp['latest_doi'] = self._get( self._uri('/{id}/doi', id=id))["doi"]
+        return PublishInfo.from_dict(resp)
+
+    def package_count(self,ds):
+        id = self._get_id(ds)
+        resp = self._get( self._uri('/{id}/packageTypeCounts', id=id))
+        file_count = 0
+        for key, value in resp.items():
+            file_count += value
+        return file_count
+
+    def team_collaborators(self,ds):
+        id = self._get_id(ds)
+        resp = self._get( self._uri('/{id}/collaborators/teams', id=id))
+        return [TeamCollaborator.from_dict(t) for t in resp]
+
+    def user_collaborators(self,ds):
+        id = self._get_id(ds)
+        resp = self._get( self._uri('/{id}/collaborators/users', id=id))
+        return [UserCollaborator.from_dict(u) for u in resp]
+
+    def owner(self, ds):
+
+        return next(iter(filter(lambda x: x.role == 'owner', self.user_collaborators(ds))))
 
     def get_by_name_or_id(self, name_or_id):
         """
