@@ -56,6 +56,10 @@ def test_date_formatting():
     d2 = datetime.datetime(2018, 8, 24, 15, 11, 25, 1)
     assert ModelPropertyType(datetime.datetime)._encode_value(d2) == '2018-08-24T15:11:25.000001+00:00'
 
+def test_boolean_string():
+    assert ModelPropertyType(bool)._decode_value("false") == False
+    assert ModelPropertyType(bool)._decode_value("true") == True
+    assert ModelPropertyType(bool)._decode_value("nope") == True
 
 def test_models(dataset):
     schema = [('an_integer', int, 'An Integer', True), ('a_bool', bool), ('a_string', str), ('a_datetime', datetime.datetime)]
@@ -466,6 +470,24 @@ def test_related_records_pagination(dataset):
     gotten = patient1.get_related()
     assert len(gotten) == 200
     assert [r.get("field") for r in gotten] == list(map(str, range(200)))
+
+def test_stringified_boolean_values(dataset):
+    ppatient = dataset.create_model(
+    'potential_patient', description="potential patient", schema=[
+        ModelProperty("name", data_type=ModelPropertyType(data_type=str),
+                      title=True),
+        ModelProperty("sick", data_type=ModelPropertyType(data_type=bool))])
+
+    ppatient.create_record({"name": "Fred", "sick": "false"})
+    ppatient.create_record({"name": "Joe", "sick": "true"})
+    ppatient.create_record({"name": "Adele", "sick": "plop"})
+
+    # Get all records
+    gotten = ppatient.get_all()
+    assert len(gotten) == 3
+    assert gotten[0]._values["sick"].value == False
+    assert gotten[1]._values["sick"].value == True
+    assert gotten[2]._values["sick"].value == True
 
 
 def test_get_topology(simple_graph):

@@ -6,9 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 Documentation at <https://developer.blackfynn.io/python/>
 
+## 3.1.1
+
+### Fixed
+- Fixed a bug in the deserialization of boolean properties
+
 ## 3.1.0
 
-###Added
+### Added
 - Function `published()` for Dataset, returns info about publication on the Discover platform
 - Function `package_count()` for Dataset, returns the total number of Packages
 - Function `team_collaborators()` for Dataset, returns the list of teams that can access the dataset

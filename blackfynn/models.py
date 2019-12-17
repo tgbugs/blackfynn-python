@@ -2343,6 +2343,20 @@ class ModelPropertyType(object):
         if value is None:
             return None
 
+        elif self.data_type == bool :
+            if isinstance(value, bool):
+                return value
+            elif isinstance(value, str):
+                if value.lower() == 'false':
+                    return False
+                elif value.lower() == 'true':
+                    return True
+                else:
+                    return bool(value)
+            else:
+                return bool(value)
+
+
         elif self.data_type in (datetime.date, datetime.datetime):
             if isinstance(value, (datetime.date, datetime.datetime)):
                 return value
@@ -3264,7 +3278,7 @@ class Model(BaseModelNode):
 
         data_keys = set(values.keys())
         schema_keys = set(self.schema.keys())
-        assert len(data_keys & schema_keys) > 0, "An instance of {} must include values for at least one of its propertes: {}".format(self.type, schema_keys)
+        assert len(data_keys & schema_keys) > 0, "An instance of {} must include values for at least one of its properties: {}".format(self.type, schema_keys)
 
         self._validate_values_against_schema(values)
 
