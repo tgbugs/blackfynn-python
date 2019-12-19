@@ -43,6 +43,7 @@ class Blackfynn(object):
         profile (str, optional): Preferred profile to use
         api_token (str, optional): Preferred api token to use
         api_secret (str, optional): Preferred api secret to use
+        model_service_host (str, optional): Preferred model service host to use
         host (str, optional): Preferred host to use
         env_override (bool, optional): Should environment variables override settings
         **overrides (dict, optional): Settings to override
@@ -84,7 +85,7 @@ class Blackfynn(object):
         are properly set.
 
     """
-    def __init__(self, profile=None, api_token=None, api_secret=None, jwt=None, host=None, env_override=True, **overrides):
+    def __init__(self, profile=None, api_token=None, api_secret=None, jwt=None, host=None, model_service_host=None, env_override=True, **overrides):
 
         self._logger = log.get_logger("blackfynn.client.Blackfynn")
 
@@ -92,7 +93,8 @@ class Blackfynn(object):
             'api_token': api_token,
             'api_secret': api_secret,
             'api_host': host,
-            'jwt': jwt
+            'jwt': jwt,
+            'model_service_host': model_service_host
             }.items() if v != None })
         self.settings = Settings(profile, overrides, env_override)
 

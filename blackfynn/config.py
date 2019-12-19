@@ -154,6 +154,7 @@ CACHE_INDEX_DEFAULT = os.path.join(CACHE_DIR_DEFAULT, 'index.db')
 DEFAULTS = {
     # blackfynn api locations
     'api_host'                    : 'https://api.blackfynn.io',
+    'model_service_host'          : None,
 
     # blackfynn API token/secret
     'api_token'                   : None,
@@ -235,6 +236,7 @@ class Settings(object):
 
         # use specific profile if specified
         self._switch_profile(profile)
+
 
         # override with env variables
         if env_override:

@@ -68,7 +68,7 @@ class ClientSession(object):
         self._api_token = settings.api_token
         self._api_secret = settings.api_secret
         self._jwt = settings.jwt
-
+        self._model_service_host = settings.model_service_host
         self._logger = log.get_logger('blackfynn.base.ClientSession')
 
         self._session = None

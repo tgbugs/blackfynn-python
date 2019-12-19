@@ -228,6 +228,9 @@ def test_client_host_overrides():
     with pytest.raises(requests.exceptions.RequestException):
         bf = Blackfynn(host=host)
 
+    bf = Blackfynn(model_service_host=host)
+    assert bf.settings.model_service_host == host
+
 
 def test_exception_raise():
     bf = Blackfynn()
